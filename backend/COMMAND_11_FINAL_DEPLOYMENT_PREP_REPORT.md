@@ -135,7 +135,6 @@ PORT=5000
 
 # Database
 DB_USER=ecommerce_prod_user
-DB_PASSWORD=CHANGE_THIS_STRONG_PASSWORD_MIN_32_CHARS
 DB_DATABASE=ecommerce_prod_db
 DB_READ_HOSTS=read1.yourdb.com,read2.yourdb.com
 
@@ -143,7 +142,6 @@ DB_READ_HOSTS=read1.yourdb.com,read2.yourdb.com
 REDIS_PASSWORD=CHANGE_THIS_STRONG_REDIS_PASSWORD_MIN_32_CHARS
 
 # JWT (Generate with: openssl rand -base64 64)
-JWT_SECRET=CHANGE_THIS_TO_RANDOM_64_CHAR_STRING
 JWT_EXPIRE=30d
 
 # Frontend
@@ -176,7 +174,6 @@ LOG_LEVEL=info
 # PRODUCTION CHECKLIST
 # ========================================================================
 # ✅ Changed ALL passwords and secrets
-# ✅ Generated strong JWT_SECRET
 # ✅ Set up SSL/TLS certificates
 # ✅ Configured CDN/S3
 # ✅ Set up payment gateway (LIVE)
@@ -324,9 +321,7 @@ cp .env.prod.example .env.prod
 nano .env.prod
 
 # ⚠️ CRITICAL: Change ALL secret values!
-# - DB_PASSWORD
 # - REDIS_PASSWORD
-# - JWT_SECRET (generate with: openssl rand -base64 64)
 # - Payment gateway credentials (LIVE mode)
 # - AWS credentials
 # - SMTP credentials

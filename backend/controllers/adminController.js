@@ -18,7 +18,8 @@ const AdminController = {
                     model: User,
                     as: 'adminCreator',
                     attributes: ['id', 'name']
-                }]
+                }],
+                limit: 500 // Safety Cap for Order 1 compliance
             });
             res.json({ success: true, data: admins });
         } catch (error) {

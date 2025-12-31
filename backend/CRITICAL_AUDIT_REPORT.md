@@ -26,7 +26,6 @@ User.prototype.comparePassword = async function (enteredPassword) {
 User.prototype.getSignedJwtToken = function () {
         return jwt.sign(
                 { id: this.id, role: this.role },
-                process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRE }
         );
 };

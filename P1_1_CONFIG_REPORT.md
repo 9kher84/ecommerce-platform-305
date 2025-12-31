@@ -10,7 +10,6 @@ Centralize all environment variables and configuration settings into a single so
 ### 1. Central Configuration (`backend/config/index.js`)
 - Created a unified configuration module loading `.env` once.
 - Defined sections: `server`, `db`, `jwt`, `redis`, `payment`, `security`.
-- Added automatic validation for critical variables (`DB_HOST`, `JWT_SECRET`, etc.) with environment-aware warnings (Error in Prod, Warn in Dev).
 - Added `SystemSetting` and `Payment` models restoration which were identified as missing during verification.
 
 ### 2. Codebase Refactoring

@@ -27,7 +27,6 @@ If the backend certificate changes:
 3. Release a mandatory update immediately.
 
 ### Encryption Keys
-If `realm_encryption_key` is compromised:
 1. The app will fail to decrypt existing data (Data Loss is expected security behavior).
 2. `WipeService` will trigger on failure, forcing a fresh login and DB creation.
 

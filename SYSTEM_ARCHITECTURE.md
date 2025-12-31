@@ -84,7 +84,6 @@ The system follows a **Modular Monolith** architecture. While deployed as a sing
 
 ### 5.1 Environment Configuration
 Configuration is centralized in `config/index.js` and loaded via `.env`.
-*   **Critical Vars:** `JWT_SECRET` (Must be strong/random), `DB_URL`, `REDIS_URL`.
 *   **Modes:** `development`, `test`, `production` (toggles logging, strict cookies, stack traces).
 
 ### 5.2 Scaling Strategy

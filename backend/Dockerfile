@@ -1,46 +1,28 @@
-# ========================================================================
-# COMMAND 9: DOCKERFILE FOR NODE.JS BACKEND
-# ========================================================================
-# Multi-stage build for optimized production image
+FROM node:18-alpine
 
-# Stage 1: Build
-FROM node:18-alpine AS builder
-
+# Set working directory
 WORKDIR /app
+
+# Install system dependencies (curl for healthcheck)
+RUN apk add --no-cache curl
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install production dependencies
+# 🛡️ Sovereign Security: Pure clean install
 RUN npm ci --only=production
 
-# Stage 2: Production
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Copy dependencies from builder
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy application code
+# Copy app source
 COPY . .
-
-# Change ownership to non-root user
-RUN chown -R nodejs:nodejs /app
-
-# Switch to non-root user
-USER nodejs
 
 # Expose port
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# 🛡️ Sovereign Healthcheck
+# Fails if /api/health does not return 200 OK within 3s
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Start application
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

@@ -1,6 +1,6 @@
 const { User, Role, Permission, RolePermission, Delegation, AuditLog, PurchaseRequest, PriceQuote, sequelize } = require('../sequelize_setup');
 const asyncHandler = require('express-async-handler');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const PolicyEngine = require('../policies/PolicyEngine');
 const TraceIntegrity = require('../utils/TraceIntegrity');
 const { Op } = require('sequelize');

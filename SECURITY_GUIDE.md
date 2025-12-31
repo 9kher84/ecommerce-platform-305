@@ -11,7 +11,6 @@
 ### توليد مفاتيح جديدة
 
 ```bash
-# توليد JWT_SECRET جديد:
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 # توليد SESSION_SECRET جديد:
@@ -27,9 +26,7 @@ cp .env.example .env
 
 2. املأ القيم المطلوبة:
 ```env
-JWT_SECRET=<your_generated_secret>
 SESSION_SECRET=<your_generated_secret>
-DB_PASSWORD=<your_db_password>
 ```
 
 3. **لا ترفع `.env` إلى Git أبداً!**
@@ -178,7 +175,6 @@ curl -I https://yourdomain.com
 
 ## 🚨 استكشاف الأخطاء
 
-### مشكلة: "401 Unauthorized" بعد تغيير JWT_SECRET
 
 **الحل:** جميع التوكنات القديمة أصبحت غير صالحة. المستخدمون يحتاجون لتسجيل دخول جديد.
 
@@ -229,7 +225,6 @@ chmod +x scripts/backup.sh
 
 ### ❌ لا تفعل أبداً:
 1. رفع `.env` إلى Git
-2. مشاركة `JWT_SECRET` مع أحد
 3. تعطيل HTTPS في Production
 4. استخدام `COOKIE_SECURE=false` في Production
 5. تجاهل `npm audit` warnings

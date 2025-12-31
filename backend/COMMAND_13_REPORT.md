@@ -171,7 +171,6 @@ npm run dev
 🏭 Payment Gateway Factory initialized in TEST mode
 💳 Payment Service initialized in TEST mode
 🔒 [TEST MODE] Payment system is ready but using test credentials
-⚠️  Replace PAYMENT_WEBHOOK_SECRET and ENCRYPTION_KEY before production
 ✅ تم الاتصال بـ Redis بنجاح
 ✅ Database connected successfully
 ✅ Database synced successfully

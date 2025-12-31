@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # 🦅 Sovereign App Container
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sovereign_app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379
+      # Secrets should be injected via Vault in real prod, using env for Docker demo
+      - JWT_SECRET=${JWT_SECRET}
+      - OWNER_ID=${OWNER_ID}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 1G # 🛡️ Sovereign Limit
+    networks:
+      - sovereign_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 🗄️ Database Fortress
+  db:
+    image: postgres:14-alpine
+    container_name: sovereign_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - sovereign_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ⚡ Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: sovereign_redis
+    restart: always
+    volumes:
+      - redisdata:/data
+    networks:
+      - sovereign_net
+
+volumes:
+  pgdata:
+  redisdata:
+
+
+networks:
+  sovereign_net:
+    driver: bridge

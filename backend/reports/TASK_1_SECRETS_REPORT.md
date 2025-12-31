@@ -1,7 +1,6 @@
 # T1: Secrets Purge Report
 
 ## Actions Taken
-1. **Removed Secrets from .env**: The `.env` file has been stripped of `JWT_SECRET`, `ENCRYPTION_KEY`, and `DB_PASSWORD`.
 2. **Simulated Vault Integration**: Created `backend/config/vault_secrets.json` to act as a secure vault (simulated).
 3. **Initialization Script**: Created `backend/scripts/secrets-init.js` which loads secrets into `process.env` at runtime from the secure source.
 4. **Config Update**: Updated `backend/config/index.js` to invoke the secrets initializer before loading the app config.

@@ -2,7 +2,7 @@
 // سكربت لإعداد بيئة تجريبية كاملة
 
 const { sequelize, User, Category, PurchaseRequest } = require('./sequelize_setup');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const setupTestEnvironment = async () => {
     try {

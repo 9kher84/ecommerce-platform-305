@@ -49,7 +49,6 @@ DB_DATABASE=ecommerce_db  // ✓
 ```
 
 **الحل المطبق:**
-تم إصلاح `sequelize_setup.js` لاستخدام الأسماء الصحيحة: `DB_DATABASE` و `DB_PASSWORD`.
 
 ---
 

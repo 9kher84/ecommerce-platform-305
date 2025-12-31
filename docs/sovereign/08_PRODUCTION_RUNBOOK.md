@@ -9,9 +9,7 @@ If the Owner Panel is compromised or under legal hold:
 4.  **Effect**: All `/api/owner` endpoints immediately return `503 Service Unavailable`.
 
 ## 2. Rotating Sovereign Secrets
-If `JWT_SECRET` or `SIGNATURE_KEY` is leaked:
 1.  **Generate New Keys**: Use high-entropy random generation (e.g., `openssl rand -hex 64`).
-2.  **Update Env**: Update `JWT_SECRET` and `SIGNATURE_KEY` in production environment.
 3.  **Deploy**: Rolling restart.
 4.  **Impact**: All existing Owner Sessions are invalidated. All export verifications prior to rotation require the *Old Key* for verification (archive old keys securely!).
 

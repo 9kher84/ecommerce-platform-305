@@ -604,19 +604,40 @@ class RequestService {
   // =========================
   // GET BUYER REQUESTS
   // =========================
+  // =========================
+  // GET BUYER REQUESTS
+  // =========================
   static async getBuyerRequests(buyerId, filters = {}) {
     const where = { userId: buyerId };
     if (filters.status) where.status = filters.status;
     if (filters.categoryId) where.categoryId = filters.categoryId;
 
-    return await PurchaseRequest.findAll({
+    const page = parseInt(filters.page) || 1;
+    const limit = Math.min(parseInt(filters.limit) || 20, 100);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await PurchaseRequest.findAndCountAll({
       where,
       include: [
         { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier'] },
         { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
     });
+
+    return {
+      data: rows,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalCount: count,
+        totalPages: Math.ceil(count / limit),
+        hasNextPage: page < Math.ceil(count / limit),
+        hasPreviousPage: page > 1
+      }
+    };
   }
 
   // =========================

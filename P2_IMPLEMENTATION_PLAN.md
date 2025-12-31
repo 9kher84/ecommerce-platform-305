@@ -367,7 +367,6 @@ jobs:
           DB_PORT: 5432
           DB_DATABASE: ecommerce_test
           DB_USER: postgres
-          DB_PASSWORD: postgres
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3

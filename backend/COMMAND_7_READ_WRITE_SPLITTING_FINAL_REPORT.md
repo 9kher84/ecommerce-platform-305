@@ -82,21 +82,18 @@ if (hasReadReplicas) {
     sequelize = new Sequelize(
         process.env.DB_DATABASE,
         process.env.DB_USER,
-        process.env.DB_PASSWORD,
         {
             ...sequelizeConfig,
             replication: {
                 read: readHosts.map(host => ({
                     host: host,
                     username: process.env.DB_USER,
-                    password: process.env.DB_PASSWORD,
                     database: process.env.DB_DATABASE,
                     port: process.env.DB_PORT || 5432
                 })),
                 write: {
                     host: process.env.DB_HOST,
                     username: process.env.DB_USER,
-                    password: process.env.DB_PASSWORD,
                     database: process.env.DB_DATABASE,
                     port: process.env.DB_PORT || 5432
                 }
@@ -108,7 +105,6 @@ if (hasReadReplicas) {
     sequelize = new Sequelize(
         process.env.DB_DATABASE,
         process.env.DB_USER,
-        process.env.DB_PASSWORD,
         {
             ...sequelizeConfig,
             host: process.env.DB_HOST,
@@ -206,7 +202,6 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_DATABASE=ecommerce_db
 DB_USER=postgres
-DB_PASSWORD=your_password
 DB_READ_HOSTS=
 ```
 
@@ -228,7 +223,6 @@ DB_HOST=master.yourdb.com
 DB_PORT=5432
 DB_DATABASE=ecommerce_db
 DB_USER=postgres
-DB_PASSWORD=your_password
 DB_READ_HOSTS=read1.yourdb.com,read2.yourdb.com,read3.yourdb.com
 ```
 

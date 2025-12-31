@@ -1,5 +1,5 @@
 const { sequelize, User } = require('../sequelize_setup');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 async function fixPasswords() {
     await sequelize.authenticate();

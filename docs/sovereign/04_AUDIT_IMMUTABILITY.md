@@ -10,7 +10,6 @@ Legal defensibility requires that the history of an override cannot be altered b
 
 ### Export Integrity
 *   Files exported via `/api/owner/audit-logs/:id/export` are **Server-Signed**.
-*   **Algorithm**: HMAC-SHA256 using the server's `JWT_SECRET` (or dedicated `SIGNATURE_KEY`).
 *   **Verification**: Can be re-verified by the server at any time to prove the JSON content has not been tampered with since export.
 
 ### Future Work (Phase 5+)

@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const asyncHandler = require('express-async-handler');
 const { User } = require('../sequelize_setup');
 
@@ -92,15 +92,25 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
  * @access محمي / مقيد للمسؤولين فقط
  */
 exports.getAllUsers = asyncHandler(async (req, res) => {
-    const users = await User.findAll({
+    // 🛡️ D.1 Query Lockdown: Enforce Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // Strict Max 100
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await User.findAndCountAll({
         attributes: { exclude: ['password'] },
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset
     });
 
     res.status(200).json({
         success: true,
-        count: users.length,
-        users
+        count: rows.length,
+        total: count,
+        page,
+        totalPages: Math.ceil(count / limit),
+        users: rows
     });
 });
 

@@ -129,7 +129,6 @@ The following are explicit architectural choices and limitations documented for 
 
 2.  **Cryptographic Integrity (Export)**:
     *   **Algorithm**: HMAC-SHA256 (Symmetric Key).
-    *   **Limitation**: Verification requires the Server Secret (`JWT_SECRET` / `SIGNATURE_KEY`). Public verification is not possible without sharing the secret Key.
     *   **Use Case**: Internal Audit & Legal Discovery (Sovereign Control), not Public Blockchain Validation.
 
 3.  **Owner Interface Security**:

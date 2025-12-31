@@ -1,4 +1,5 @@
 const Redis = require('ioredis');
+const logger = require('../utils/logger'); // Sovereign Logger
 
 class CacheService {
     constructor() {
@@ -15,7 +16,11 @@ class CacheService {
         this.client.on('error', (err) => {
             // Only log once to avoid spamming
             if (!this.useMemoryCache) {
-                console.warn('⚠️ Redis error (falling back to memory):', err.message);
+                logger.error('🚨 CRITICAL: Redis Connection Failed! Falling back to IN-MEMORY cache.', {
+                    component: 'Redis',
+                    error: err.message,
+                    timestamp: new Date().toISOString()
+                });
             }
             this.useMemoryCache = true;
         });

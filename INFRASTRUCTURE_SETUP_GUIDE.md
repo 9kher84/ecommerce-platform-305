@@ -25,8 +25,6 @@ cp .env.example .env
 # Minimum required:
 # - DB_HOST=localhost
 # - DB_USER=postgres
-# - DB_PASSWORD=your_password
-# - JWT_SECRET=your_secret_key
 
 # Start server
 npm run dev
@@ -184,7 +182,6 @@ pg_isready
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=your_password
 ```
 
 ### "Port 5000 already in use"

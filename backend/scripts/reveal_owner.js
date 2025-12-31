@@ -1,6 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const { initSequelize, User } = require('../sequelize_setup');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 async function reveal() {
     await initSequelize();

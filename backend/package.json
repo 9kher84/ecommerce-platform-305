@@ -2,6 +2,9 @@
   "name": "ecommerce-platform-backend",
   "version": "2.0.0",
   "description": "E-commerce platform backend with payment system",
+  "overrides": {
+    "qs": "^6.14.1"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -17,7 +20,9 @@
     "load-test:health": "node scripts/loadTest.js health",
     "db:analyze": "node scripts/analyzeDatabase.js",
     "perf:baseline": "node scripts/baselineTest.js",
-    "lint:security": "eslint . --plugin security --rule 'security/detect-object-injection: warn'"
+    "test:security": "jest ../tests/final-red-team.test.js --forceExit --verbose",
+    "lint:security": "eslint . --plugin security --rule 'security/detect-object-injection: warn'",
+    "security-gate": "node scripts/audit-gate.js"
   },
   "dependencies": {
     "@apollo/server": "^5.2.0",
@@ -25,12 +30,8 @@
     "axios": "^1.13.2",
     "axios-cookiejar-support": "^6.0.5",
     "bcrypt": "^6.0.0",
-    "bcryptjs": "^2.4.3",
-    "bullmq": "^4.0.0",
-    "casl": "^0.2.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "crypto-js": "^4.2.0",
     "dotenv": "^16.6.1",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
@@ -54,8 +55,8 @@
     "ssrf-req-filter": "^1.1.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "tough-cookie": "^6.0.0",
     "uuid": "8.3.2",
+    "winston": "^3.19.0",
     "xss": "^1.0.14"
   },
   "devDependencies": {
@@ -63,7 +64,9 @@
     "autocannon": "^8.0.0",
     "cross-env": "^10.1.0",
     "eslint-plugin-security": "^3.0.1",
+    "husky": "^9.1.7",
     "jest": "^29.5.0",
+    "lint-staged": "^16.2.7",
     "nodemon": "^3.1.11",
     "supertest": "^7.1.4"
   },

@@ -1,21 +1,23 @@
 {
   "development": {
     "username": "postgres",
-    "password": "sghl@hkh&fihk$",
+    "password": null,
     "database": "ecommerce_db",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres",
-    "logging": true
+    "logging": true,
+    "use_env_variable": "DATABASE_URL"
   },
   "test": {
     "username": "postgres",
-    "password": "sghl@hkh&fihk$",
+    "password": null,
     "database": "ecommerce_test",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres",
-    "logging": false
+    "logging": false,
+    "use_env_variable": "DATABASE_URL"
   },
   "production": {
     "use_env_variable": "DATABASE_URL",

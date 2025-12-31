@@ -119,7 +119,6 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-ecommerce_db}
     ports:
       - "${DB_PORT:-5432}:5432"

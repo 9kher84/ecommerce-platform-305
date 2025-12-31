@@ -7,7 +7,10 @@ const { Category } = require('../sequelize_setup');
 // 2. جلب جميع التصنيفات (متاح للعامة)
 // ----------------------------------------------------------------------
 exports.getAllCategories = catchAsync(async (req, res, next) => {
-    const categories = await Category.findAll();
+    const categories = await Category.findAll({
+        attributes: ['id', 'name_ar', 'name_en'], // Sovereign Optimization: Fetch only needed fields
+        limit: 100 // Sovereign Safety Cap
+    });
 
     res.status(200).json({
         status: 'success',

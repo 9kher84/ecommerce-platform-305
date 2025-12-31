@@ -15,6 +15,7 @@ const { Op } = require('sequelize');
 exports.getProducts = asyncHandler(async (req, res) => {
     const products = await Product.findAll({
         where: { sellerId: req.user.id },
+        attributes: ['id', 'name', 'estimatedPrice', 'stockLevel', 'image', 'categoryId', 'createdAt'], // Lean Selection
         include: [{ model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }],
         order: [['createdAt', 'DESC']]
     });
@@ -61,7 +62,7 @@ exports.addProduct = asyncHandler(async (req, res) => {
     // B. Encryption (Purchase Price)
     let encryptedPurchasePrice = null;
     if (purchasePrice) {
-        encryptedPurchasePrice = encrypt(purchasePrice.toString());
+        encryptedPurchasePrice = await encrypt(purchasePrice.toString());
     }
 
     // 2. Create Product
@@ -152,7 +153,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 
     // Encrypt sensitive update
     if (purchasePrice) {
-        updates.purchasePrice = encrypt(purchasePrice.toString());
+        updates.purchasePrice = await encrypt(purchasePrice.toString());
     }
 
     // AI/Tier B logic - SOVEREIGN SERVICE CHECK
@@ -251,7 +252,7 @@ exports.bulkUpload = asyncHandler(async (req, res) => {
     const mockData = req.body.data || []; // Expecting JSON for this mock step
 
     // 2. Do NOT Save automatically - Cache with Service
-    const { token, expiresInSeconds } = cacheBulkData(mockData);
+    const { token, expiresInSeconds } = await cacheBulkData(mockData);
 
     // Return preview to user
     res.status(200).json({
@@ -277,7 +278,7 @@ exports.confirmBulkUpload = asyncHandler(async (req, res) => {
     }
 
     // 1. Retrieve cached preview data using sovereign service (One-time use)
-    const data = retrieveAndInvalidate(previewToken);
+    const data = await retrieveAndInvalidate(previewToken);
 
     if (!data) {
         res.status(400);

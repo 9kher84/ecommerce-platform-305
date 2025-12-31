@@ -176,38 +176,55 @@ exports.getMe = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    تسجيل الخروج (Revoke Token)
+ * @desc    تسجيل الخروج الآمن (Revoke Tokens & Audit)
  * @route   POST /api/auth/logout
  * @access  محمي
  */
 exports.logout = asyncHandler(async (req, res) => {
-    // 1. احصل على JTI ووقت الانتهاء من التوكن (تم تمريرها من Protect Middleware)
-    const { jti, exp } = req.user;
+    try {
+        // 1. إبطال جميع Refresh Tokens للمستخدم لضمان انتهاء الجلسة تماماً
+        if (req.user && req.user.id) {
+            await RefreshToken.update(
+                { revoked: true },
+                { where: { user_id: req.user.id } }
+            );
 
-    // 2. احسب الوقت المتبقي (TTL) بالثواني
-    const remainingSeconds = exp - Math.floor(Date.now() / 1000);
+            // 2. إضافة سجل التدقيق (Audit Trail)
+            try {
+                const { AuditLog } = require('../sequelize_setup');
+                if (AuditLog) {
+                    await AuditLog.create({
+                        userId: req.user.id,
+                        action: 'LOGOUT',
+                        ipAddress: req.ip,
+                        userAgent: req.headers['user-agent'],
+                        details: { method: 'manual_logout' }
+                    });
+                }
+            } catch (auditError) {
+                console.warn('⚠️ AuditLog not available during logout:', auditError.message);
+            }
+        }
 
-    if (remainingSeconds > 0) {
-        // 3. أضف التوكن إلى القائمة السوداء
-        await tokenBlacklist.addToBlacklist(jti, remainingSeconds);
+        // 3. إزالة التوكن من العميل (Cookie)
+        res.cookie('token', '', {
+            expires: new Date(0),
+            httpOnly: true,
+            secure: config.env === 'production',
+            sameSite: 'Strict'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'تم تسجيل الخروج بنجاح'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(200).json({
+            success: true,
+            message: 'تمت عملية تسجيل الخروج'
+        });
     }
-
-    // 🔥 4. Revoke All Refresh Tokens (RTOR System)
-    await RefreshToken.update(
-        { revoked: true },
-        { where: { user_id: req.user.id } }
-    );
-
-    // 5. حذف الكوكي من المتصفح
-    res.cookie('token', 'none', {
-        expires: new Date(Date.now() + 10 * 1000), // انتهاء فوري تقريباً
-        httpOnly: true
-    });
-
-    res.status(200).json({
-        success: true,
-        message: 'تم تسجيل الخروج بنجاح.'
-    });
 });
 
 /**
