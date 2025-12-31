@@ -1,0 +1,376 @@
+# ========================================================================
+# GRAPHQL SCHEMA DOCUMENTATION
+# ========================================================================
+# Complete GraphQL schema for E-commerce Platform
+# Optimized for mobile apps and AI agents
+
+# ========================================================================
+# TYPES
+# ========================================================================
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: UserRole!
+  subscriptionTier: SubscriptionTier!
+  rank: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  lastLogin: DateTime
+  
+  # Relations
+  requests: [PurchaseRequest!]
+  quotes: [PriceQuote!]
+  deals: [Deal!]
+  givenRatings: [Rating!]
+  receivedRatings: [Rating!]
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  ADMIN
+  SUPER_ADMIN
+  MARKETER
+}
+
+enum SubscriptionTier {
+  FREE
+  PLAN_A
+  PLAN_B
+}
+
+type PurchaseRequest {
+  id: ID!
+  title: String!
+  description: String
+  quantity: Float
+  unit: String
+  status: RequestStatus!
+  categoryId: Int
+  buyerId: ID!
+  
+  # Metadata
+  viewCount: Int!
+  quoteCount: Int!
+  expiresAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  buyer: User!
+  category: Category
+  quotes: [PriceQuote!]
+  deal: Deal
+}
+
+enum RequestStatus {
+  DRAFT
+  PUBLISHED
+  NEGOTIATING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+type Category {
+  id: ID!
+  name_ar: String!
+  name_en: String!
+  description_ar: String
+  description_en: String
+  isActive: Boolean!
+  
+  # Relations
+  requests: [PurchaseRequest!]
+}
+
+type PriceQuote {
+  id: ID!
+  amount: Float
+  priceType: PriceType!
+  fixedPrice: Float
+  priceRangeMin: Float
+  priceRangeMax: Float
+  currency: String!
+  status: QuoteStatus!
+  
+  # Delivery
+  canDeliver: Boolean!
+  canInstall: Boolean!
+  deliveryCost: Float
+  deliveryDate: DateTime
+  
+  # Metadata
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  seller: User!
+  request: PurchaseRequest!
+  deal: Deal
+}
+
+enum PriceType {
+  FIXED
+  FLEXIBLE
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  WITHDRAWN
+  NEGOTIATING
+}
+
+type Deal {
+  id: ID!
+  finalAmount: Float
+  agreedDeliveryDate: DateTime
+  status: DealStatus!
+  notes: String
+  
+  # Metadata
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  purchaseRequest: PurchaseRequest!
+  priceQuote: PriceQuote!
+  seller: User!
+  buyer: User!
+  ratings: [Rating!]
+}
+
+enum DealStatus {
+  PROCESSING
+  PAID
+  DELIVERED
+  CANCELLED
+  COMPLETED
+  DISPUTE
+  RESOLVED
+}
+
+type Rating {
+  id: ID!
+  rating: Int!
+  comment: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  
+  # Relations
+  rater: User!
+  ratedUser: User!
+  deal: Deal!
+}
+
+type Notification {
+  id: ID!
+  title: String!
+  message: String!
+  type: String!
+  isRead: Boolean!
+  entityId: ID
+  createdAt: DateTime!
+  
+  # Relations
+  user: User!
+}
+
+# ========================================================================
+# QUERIES
+# ========================================================================
+
+type Query {
+  # User Queries
+  me: User
+  user(id: ID!): User
+  users(
+    role: UserRole
+    subscriptionTier: SubscriptionTier
+    limit: Int
+    offset: Int
+  ): [User!]!
+  
+  # Purchase Request Queries
+  request(id: ID!): PurchaseRequest
+  requests(
+    status: RequestStatus
+    categoryId: Int
+    buyerId: ID
+    limit: Int
+    offset: Int
+  ): [PurchaseRequest!]!
+  myRequests(status: RequestStatus): [PurchaseRequest!]!
+  publishedRequests(categoryId: Int, limit: Int): [PurchaseRequest!]!
+  
+  # Price Quote Queries
+  quote(id: ID!): PriceQuote
+  quotes(
+    requestId: ID
+    sellerId: ID
+    status: QuoteStatus
+  ): [PriceQuote!]!
+  myQuotes(status: QuoteStatus): [PriceQuote!]!
+  requestQuotes(requestId: ID!): [PriceQuote!]!
+  
+  # Deal Queries
+  deal(id: ID!): Deal
+  deals(status: DealStatus): [Deal!]!
+  myDeals(status: DealStatus): [Deal!]!
+  
+  # Category Queries
+  category(id: ID!): Category
+  categories(isActive: Boolean): [Category!]!
+  
+  # Notification Queries
+  notifications(isRead: Boolean, limit: Int): [Notification!]!
+  unreadNotificationCount: Int!
+  
+  # Admin Queries
+  platformStats: PlatformStats
+}
+
+type PlatformStats {
+  totalUsers: Int!
+  totalRequests: Int!
+  totalQuotes: Int!
+  totalDeals: Int!
+  activeUsers: Int!
+  revenueThisMonth: Float!
+}
+
+# ========================================================================
+# MUTATIONS
+# ========================================================================
+
+type Mutation {
+  # Authentication
+  register(input: RegisterInput!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+  
+  # Purchase Request Mutations
+  createRequest(input: CreateRequestInput!): PurchaseRequest!
+  updateRequest(id: ID!, input: UpdateRequestInput!): PurchaseRequest!
+  publishRequest(id: ID!): PurchaseRequest!
+  cancelRequest(id: ID!): PurchaseRequest!
+  transitionRequestStatus(id: ID!, newStatus: RequestStatus!): PurchaseRequest!
+  
+  # Price Quote Mutations
+  createQuote(input: CreateQuoteInput!): PriceQuote!
+  updateQuote(id: ID!, input: UpdateQuoteInput!): PriceQuote!
+  acceptQuote(id: ID!): PriceQuote!
+  rejectQuote(id: ID!, reason: String): PriceQuote!
+  withdrawQuote(id: ID!, reason: String): PriceQuote!
+  
+  # Deal Mutations
+  updateDealStatus(id: ID!, status: DealStatus!): Deal!
+  completeDeal(id: ID!): Deal!
+  
+  # Rating Mutations
+  createRating(input: CreateRatingInput!): Rating!
+  
+  # Notification Mutations
+  markNotificationAsRead(id: ID!): Notification!
+  markAllNotificationsAsRead: Boolean!
+  
+  # Admin Mutations
+  updateUserTier(userId: ID!, tier: SubscriptionTier!): User!
+  updateUserStatus(userId: ID!, isActive: Boolean!): User!
+}
+
+# ========================================================================
+# INPUT TYPES
+# ========================================================================
+
+input RegisterInput {
+  name: String!
+  email: String!
+  password: String!
+  role: UserRole!
+}
+
+input CreateRequestInput {
+  title: String!
+  description: String
+  quantity: Float!
+  unit: String!
+  categoryId: Int!
+  deliveryDates: [DateTime!]
+  requiresDelivery: Boolean
+  requiresInstallation: Boolean
+}
+
+input UpdateRequestInput {
+  title: String
+  description: String
+  quantity: Float
+  unit: String
+  deliveryDates: [DateTime!]
+}
+
+input CreateQuoteInput {
+  purchaseRequestId: ID!
+  amount: Float
+  priceType: PriceType!
+  fixedPrice: Float
+  priceRangeMin: Float
+  priceRangeMax: Float
+  canDeliver: Boolean
+  canInstall: Boolean
+  deliveryCost: Float
+  deliveryDate: DateTime
+  notes: String
+}
+
+input UpdateQuoteInput {
+  amount: Float
+  fixedPrice: Float
+  priceRangeMin: Float
+  priceRangeMax: Float
+  deliveryDate: DateTime
+  notes: String
+}
+
+input CreateRatingInput {
+  dealId: ID!
+  ratedUserId: ID!
+  rating: Int!
+  comment: String
+}
+
+# ========================================================================
+# PAYLOAD TYPES
+# ========================================================================
+
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+# ========================================================================
+# SCALAR TYPES
+# ========================================================================
+
+scalar DateTime
+
+# ========================================================================
+# SUBSCRIPTIONS (Real-time)
+# ========================================================================
+
+type Subscription {
+  # Notification subscriptions
+  notificationReceived(userId: ID!): Notification!
+  
+  # Request subscriptions
+  requestUpdated(requestId: ID!): PurchaseRequest!
+  newQuoteReceived(requestId: ID!): PriceQuote!
+  
+  # Deal subscriptions
+  dealStatusChanged(dealId: ID!): Deal!
+}

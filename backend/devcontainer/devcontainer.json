@@ -1,0 +1,34 @@
+{
+    // مرجع لملف Dockerfile الذي تم إنشاؤه في نفس المجلد
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+
+    // تعيين دليل العمل داخل الحاوية
+    "workspaceFolder": "/usr/src/app",
+
+    // توجيه المنافذ: هذا يسمح لنا بالوصول إلى تطبيق React
+    // من خلال المتصفح على جهازك المضيف عند تشغيله داخل الحاوية.
+    // (عادةً ما يعمل React على منفذ 3000، وVite على 5173)
+    "forwardPorts": [3000, 5173],
+
+    // أمر التشغيل بعد إنشاء الحاوية لأول مرة
+    // هذا الأمر يقوم بتثبيت جميع تبعيات المشروع (node_modules) داخل الحاوية.
+    "postCreateCommand": "npm install",
+
+    // إعدادات مخصصة لـ VS Code داخل هذه البيئة
+    "customizations": {
+        "vscode": {
+            // ملحقات VS Code التي يجب تثبيتها تلقائياً
+            "extensions": [
+                "dbaeumer.vscode-eslint",         // مدقق الكود
+                "esbenp.prettier-vscode",         // منسق الكود
+                "dsznajder.es7-react-js-snippets" // مقتطفات React
+            ],
+            // إعدادات المحرر لضمان توحيد التنسيق
+            "settings": {
+                "editor.formatOnSave": true
+            }
+        }
+    }
+}

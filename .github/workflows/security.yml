@@ -1,0 +1,34 @@
+name: Security Compliance
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Static Security Analysis (ESLint Security)
+        working-directory: ./backend
+        run: npm run lint:security
+
+      - name: Security Unit Tests
+        working-directory: ./backend
+        run: npm test tests/security
+
+      - name: Run NPM Audit
+        working-directory: ./backend
+        run: npm audit --audit-level=high

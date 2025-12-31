@@ -1,0 +1,634 @@
+const { Sequelize, DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+// إعداد الاتصال بقاعدة البيانات
+const sequelize = new Sequelize(
+    process.env.DB_DATABASE,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+        host: process.env.DB_HOST,
+        dialect: 'postgres',
+        logging: false,
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        }
+    }
+);
+
+// ============================================================
+// 1. 🔥 DEFINE MODELS (تعريف الجداول)
+// ============================================================
+
+// User Model
+const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true
+        }
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    // 🔥 أضف هذا الحقل:
+    businessName: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    role: {
+        type: DataTypes.ENUM('buyer', 'seller', 'admin', 'super_admin', 'marketer'),
+        defaultValue: 'buyer'
+    },
+    subscriptionTier: {
+        type: DataTypes.ENUM('free', 'plan_a', 'plan_b'),
+        defaultValue: 'free'
+    },
+    rank: {
+        type: DataTypes.STRING,
+        defaultValue: 'Bronze'
+    },
+    customRankTitle: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    is_restricted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    non_serious_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    referrer_code: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    lastLogin: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    },
+    // 🔥 New Fields for Subscription Service
+    subscriptionExpiresAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    weeklyPostCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    lastWeekReset: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    },
+    withdrawalCount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+    }
+}, {
+    paranoid: true,
+    timestamps: true
+});
+
+// 🔥 User Model Instance Methods (CRITICAL FOR SECURITY)
+User.beforeSave(async (user) => {
+    if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+    }
+
+    // توليد businessName تلقائياً إذا لم يكن موجوداً
+    if (!user.businessName && user.name) {
+        user.businessName = `${user.name} التجارية`;
+    }
+});
+
+
+
+User.prototype.comparePassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+User.prototype.getSignedJwtToken = function () {
+    return jwt.sign(
+        { id: this.id, role: this.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE }
+    );
+};
+
+User.prototype.hasActiveSubscription = function () {
+    if (this.subscriptionTier === 'free') return true;
+    if (!this.subscriptionExpiresAt) return true;
+    return new Date(this.subscriptionExpiresAt) > new Date();
+};
+
+// Category Model
+const Category = sequelize.define('Category', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    name_ar: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    name_en: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    description_ar: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    description_en: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    }
+});
+
+// PurchaseRequest Model (The Post Model)
+const PurchaseRequest = sequelize.define('PurchaseRequest', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    title: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    quantity: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    unit: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM('draft', 'published', 'negotiating', 'accepted', 'completed', 'cancelled', 'expired'),
+        defaultValue: 'draft'
+    },
+    // 🔥 New Fields (Command 2)
+    post_type: {
+        type: DataTypes.ENUM('quick', 'standard', 'direct', 'reorder', 'scheduled'),
+        defaultValue: 'standard'
+    },
+    auction_type: {
+        type: DataTypes.ENUM('public', 'secret'),
+        defaultValue: 'public'
+    },
+    delivery_city: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    pdfAttachments: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    },
+    // Command 6: Fixed Price
+    fixed_price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    targetSellerId: {
+        type: DataTypes.UUID,
+        allowNull: true
+    },
+    viewCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    quoteCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    expiresAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    modificationRequested: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    modificationReason: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    lastModifiedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+    }
+}, {
+    paranoid: true,
+    timestamps: true
+});
+
+// 🔥 PurchaseRequest Instance Methods
+PurchaseRequest.prototype.canReceiveQuotes = function () {
+    return this.status === 'published' && (!this.expiresAt || new Date(this.expiresAt) > new Date());
+};
+
+PurchaseRequest.prototype.canBeModified = function () {
+    return this.status === 'draft' || this.quoteCount === 0;
+};
+
+// PriceQuote Model
+const PriceQuote = sequelize.define('PriceQuote', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    priceType: {
+        type: DataTypes.ENUM('fixed', 'flexible'),
+        defaultValue: 'fixed'
+    },
+    fixedPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    priceRangeMin: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    priceRangeMax: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    flexibilityReason: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    currency: {
+        type: DataTypes.STRING,
+        defaultValue: 'SAR'
+    },
+    canDeliver: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    canInstall: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    deliveryCost: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+    },
+    proposedDates: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    },
+    technicalDetails: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    invoiceImage: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    notes: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'countered', 'withdrawn', 'negotiating'),
+        defaultValue: 'pending'
+    },
+    deliveryDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    warrantyMonths: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    is_alternate_seller: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    buyerCounterOffer: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    buyerCounterDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    negotiationHistory: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    },
+    modifiedAfterRejection: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    originalQuoteId: {
+        type: DataTypes.UUID,
+        allowNull: true
+    },
+    withdrawnAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    withdrawalReason: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    }
+});
+
+// 🔥 PriceQuote Instance Methods
+PriceQuote.prototype.canBeWithdrawn = function () {
+    return ['pending', 'negotiating'].includes(this.status);
+};
+
+PriceQuote.prototype.canBeModified = function () {
+    return this.status === 'rejected' && !this.modifiedAfterRejection;
+};
+
+PriceQuote.prototype.getFinalPrice = function () {
+    if (this.priceType === 'fixed') {
+        return this.fixedPrice || this.amount;
+    }
+    return this.buyerCounterOffer || this.priceRangeMin;
+};
+
+// Deal Model
+const Deal = sequelize.define('Deal', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    finalAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    agreedDeliveryDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM('processing', 'paid', 'delivered', 'cancelled', 'completed', 'dispute', 'resolved'),
+        defaultValue: 'processing'
+    },
+    notes: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    deliveryProof: {
+        type: DataTypes.JSONB,
+        allowNull: true
+    },
+    invoiceData: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        comment: 'Snapshot of buyer/seller info at deal time (Electronic Invoice)'
+    }
+}, {
+    paranoid: true,
+    timestamps: true
+});
+
+// Rating Model
+const Rating = sequelize.define('Rating', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    rating: {
+        type: DataTypes.INTEGER,
+        validate: {
+            min: 1,
+            max: 5
+        },
+        allowNull: false
+    },
+    comment: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    }
+});
+
+// Notification Model
+const Notification = sequelize.define('Notification', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    title: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    message: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    type: {
+        type: DataTypes.STRING,
+        defaultValue: 'info'
+    },
+    isRead: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    entityId: {
+        type: DataTypes.UUID,
+        allowNull: true
+    }
+});
+
+// Report Model
+const Report = sequelize.define('Report', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    type: {
+        type: DataTypes.ENUM('bad_post', 'impersonation', 'fraud', 'deal_corruption', 'other'),
+        allowNull: false
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    attachmentUrl: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM('pending', 'investigating', 'resolved', 'dismissed'),
+        defaultValue: 'pending'
+    }
+}, {
+    timestamps: true
+});
+
+// SmartPricingMatrix Model (Command 7 - New Structure)
+const SmartPricingMatrix = sequelize.define('SmartPricingMatrix', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    minQuantity: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    maxQuantity: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    unitPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    deliveryCost: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0
+    },
+    cityTarget: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    }
+});
+
+// ============================================================
+// 2. 🔥 DEFINE ASSOCIATIONS (العلاقات)
+// ============================================================
+
+// User Associations
+User.hasMany(PurchaseRequest, { foreignKey: 'userId', as: 'requests' });
+User.hasMany(PriceQuote, { foreignKey: 'sellerId', as: 'quotes' });
+User.hasMany(Deal, { foreignKey: 'sellerId', as: 'sellerDeals' });
+User.hasMany(Deal, { foreignKey: 'buyerId', as: 'buyerDeals' });
+User.hasMany(Rating, { foreignKey: 'raterId', as: 'givenRatings' });
+User.hasMany(Rating, { foreignKey: 'ratedUserId', as: 'receivedRatings' });
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+User.hasMany(Report, { foreignKey: 'reporterId', as: 'submittedReports' });
+User.hasMany(Report, { foreignKey: 'reportedUserId', as: 'receivedReports' });
+
+// SmartPricingMatrix Associations (Command 7)
+User.hasMany(SmartPricingMatrix, {
+    foreignKey: 'sellerId',
+    as: 'pricingMatrices',
+    onDelete: 'CASCADE'
+});
+SmartPricingMatrix.belongsTo(User, {
+    foreignKey: 'sellerId',
+    as: 'seller'
+});
+
+// Category Associations
+Category.hasMany(PurchaseRequest, { foreignKey: 'categoryId', as: 'requests' });
+
+// PurchaseRequest Associations
+PurchaseRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+PurchaseRequest.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+PurchaseRequest.hasMany(PriceQuote, { foreignKey: 'purchaseRequestId', as: 'quotes' });
+PurchaseRequest.hasOne(Deal, { foreignKey: 'purchaseRequestId', as: 'deal' });
+PurchaseRequest.belongsTo(User, { foreignKey: 'targetSellerId', as: 'targetSeller' });
+
+// PriceQuote Associations
+PriceQuote.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
+PriceQuote.belongsTo(PurchaseRequest, { foreignKey: 'purchaseRequestId', as: 'request' });
+PriceQuote.hasOne(Deal, { foreignKey: 'priceQuoteId', as: 'deal' });
+
+// Deal Associations
+Deal.belongsTo(PurchaseRequest, { foreignKey: 'purchaseRequestId', as: 'purchaseRequest' });
+Deal.belongsTo(PriceQuote, { foreignKey: 'priceQuoteId', as: 'priceQuote' });
+Deal.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
+Deal.belongsTo(User, { foreignKey: 'buyerId', as: 'buyer' });
+
+// Rating Associations
+Rating.belongsTo(User, { foreignKey: 'raterId', as: 'rater' });
+Rating.belongsTo(User, { foreignKey: 'ratedUserId', as: 'ratedUser' });
+Rating.belongsTo(Deal, { foreignKey: 'dealId', as: 'deal' });
+
+// Notification Associations
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Report Associations
+Report.belongsTo(User, { foreignKey: 'reporterId', as: 'reporter' });
+Report.belongsTo(User, { foreignKey: 'reportedUserId', as: 'reportedUser' });
+
+// ============================================================
+// 3. 🔥 EXPORT MODELS & INIT FUNCTION
+// ============================================================
+
+const initSequelize = async () => {
+    try {
+        await sequelize.authenticate();
+        console.log('✅ Database connection established successfully.');
+        // Sync models with database
+        // alter: true updates tables to match models without dropping data
+        await sequelize.sync({ alter: true });
+        console.log('✅ Database synchronized successfully.');
+    } catch (error) {
+        console.error('❌ Unable to connect to the database:', error);
+        throw error;
+    }
+};
+
+module.exports = {
+    sequelize,
+    initSequelize,
+    User,
+    Category,
+    PurchaseRequest,
+    PriceQuote,
+    Deal,
+    Rating,
+    Notification,
+    Report,
+    SmartPricingMatrix
+};

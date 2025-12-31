@@ -1,0 +1,189 @@
+# ========================================================================
+# COMMAND 11: PRODUCTION DOCKER COMPOSE
+# ========================================================================
+# Secure production configuration with hardened security settings
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Master) - Production
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecommerce-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      # Security: Disable trust authentication
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432" # Bind to localhost only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Remove init-db mount for production
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Security: Run as non-root user
+    user: postgres
+    # Security: Read-only root filesystem
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  # Redis (for caching, sessions, and WebSockets) - Production
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis-prod
+    restart: always
+    command: >
+      redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --appendfsync everysec --maxmemory 512mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10 --save 60 10000
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379" # Bind to localhost only
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    # Security: Run as non-root user
+    user: redis
+
+  # Node.js Backend - Production
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    container_name: ecommerce-backend-prod
+    restart: always
+    ports:
+      - "127.0.0.1:${PORT:-5000}:5000" # Bind to localhost only (use nginx proxy)
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-5000}
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_READ_HOSTS: ${DB_READ_HOSTS:-}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # JWT (MUST be changed in production)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE:-30d}
+
+      # Frontend URL (for CORS)
+      FRONTEND_URL: ${FRONTEND_URL}
+
+      # Payment Gateway (LIVE MODE)
+      PAYMENT_GATEWAY_URL: ${PAYMENT_GATEWAY_URL}
+      PAYMENT_API_KEY: ${PAYMENT_API_KEY}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+
+      # CDN/S3 Configuration
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      CDN_URL: ${CDN_URL:-}
+
+      # Email Service
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
+      # Monitoring & Logging
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    volumes:
+      # Production: Use CDN/S3 instead of local uploads
+      # Only mount logs for monitoring
+      - ./logs:/app/logs:rw
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    # Security: Read-only root filesystem (except for logs)
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.npm
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: ecommerce-nginx-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx:rw
+    depends_on:
+      - backend
+    networks:
+      - ecommerce-network
+    # Security: Read-only root filesystem
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+
+networks:
+  ecommerce-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ========================================================================
+# PRODUCTION SECURITY NOTES
+# ========================================================================
+# 1. All services bind to localhost only (use nginx as reverse proxy)
+# 2. All services run as non-root users
+# 3. Read-only root filesystems where possible
+# 4. Resource limits enforced
+# 5. Secrets managed via environment variables
+# 6. No development mounts (uploads should use CDN/S3)
+# 7. Health checks enabled for all services
+# 8. Automatic restart on failure

@@ -1,0 +1,86 @@
+  // =========================
+  // GET ALL REQUESTS (FOR HOMEPAGE) - OPTIMIZED
+  // =========================
+  static async getAllRequests(userRole = null, userTier = null, filters = {}, user = null) {
+    const where = {};
+
+    // أ) منطق الدور (Role Logic) - PRESERVED EXACTLY
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      // جميع الطلبات ما عدا المسودات
+      where.status = { [Op.ne]: 'draft' };
+    } else if (userRole === 'seller' || userRole === 'buyer') {
+      // فقط المنشورة أو قيد التفاوض
+      where.status = { [Op.in]: ['published', 'negotiating'] };
+      where.expiresAt = { [Op.gt]: new Date() };
+    } else {
+      // الزوار: نفس البائع/المشتري
+      where.status = { [Op.in]: ['published', 'negotiating'] };
+      where.expiresAt = { [Op.gt]: new Date() };
+    }
+
+    // ج) فلتر التصنيف - PRESERVED EXACTLY
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    // د) فلتر البحث النصي - PRESERVED EXACTLY
+    if (filters.searchQuery && filters.searchQuery.trim()) {
+      const searchKeyword = `%${filters.searchQuery.trim()}%`;
+      const currentConditions = { ...where };
+      // هـ) فلتر المدينة - PRESERVED EXACTLY
+      if (filters.city) {
+        where.delivery_city = filters.city;
+      }
+      where[Op.and] = [
+        currentConditions,
+        {
+          [Op.or]: [
+            { title: { [Op.iLike]: searchKeyword } },
+            { description: { [Op.iLike]: searchKeyword } }
+          ]
+        }
+      ];
+
+      // حذف الشروط المكررة - PRESERVED EXACTLY
+      delete where.status;
+      delete where.expiresAt;
+      if (where.userId) delete where.userId;
+      if (where.categoryId) delete where.categoryId;
+    }
+
+    // Extract pagination parameters
+    const page = parseInt(filters.page) || 1;
+    const limit = Math.min(parseInt(filters.limit) || 20, 100);
+    const offset = (page - 1) * limit;
+
+    // ب) قيود الخطة المجانية (Free Tier Logic) - NOW AT DATABASE LEVEL
+    if (userRole === 'buyer' && userTier === 'free') {
+      // Use raw SQL with ROW_NUMBER for performance
+      return await this.executeFreeTierQuery(where, limit, offset);
+    }
+
+    // For all other users: standard Sequelize query with pagination
+    const { count, rows } = await PurchaseRequest.findAndCountAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier', 'rank'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      distinct: true
+    });
+
+    return {
+      data: rows,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalCount: count,
+        totalPages: Math.ceil(count / limit),
+        hasNextPage: page < Math.ceil(count / limit),
+        hasPreviousPage: page > 1
+      }
+    };
+  }

@@ -1,0 +1,399 @@
+const { PurchaseRequest, User, Category, Deal, PriceQuote } = require('../sequelize_setup');
+const SubscriptionService = require('./subscriptionService');
+const { Op } = require('sequelize');
+
+const STATUS_TRANSITIONS = {
+  draft: ['published', 'cancelled'],
+  published: ['negotiating', 'cancelled'],
+  negotiating: ['accepted', 'cancelled'],
+  accepted: ['completed', 'failed', 'cancelled'],
+  completed: [],
+  failed: [],
+  cancelled: []
+};
+
+class RequestService {
+  // =========================
+  // CREATE REQUEST
+  // =========================
+  static async createRequest(buyerId, requestData) {
+    const user = await User.findByPk(buyerId);
+    if (!user) throw new Error('User not found');
+    if (user.role !== 'buyer') throw new Error('Only buyers can create purchase requests');
+
+    if (user.subscriptionTier === 'free' && requestData.post_type === 'direct') {
+      const error = new Error('الشراء المباشر يتطلب خطة أ أو خطة ب');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const canCreate = await SubscriptionService.canCreateRequest(buyerId);
+    if (!canCreate.canCreate) throw new Error(canCreate.reason);
+
+    this.validateContactNumbers(user.subscriptionTier, requestData);
+    this.validateDeliveryLocations(user.subscriptionTier, requestData);
+    this.validateAttachments(user.subscriptionTier, requestData);
+    this.validatePrivacySettings(user.subscriptionTier, requestData);
+    this.validateDirectPurchase(user.subscriptionTier, requestData);
+    this.validateWrittenNumbers(requestData);
+
+    const request = await PurchaseRequest.create({
+      userId: buyerId,
+      title: requestData.title,
+      categoryId: requestData.categoryId,
+      description: requestData.description,
+      quantity: requestData.quantity,
+      unit: requestData.unit,
+      deliveryLocations: requestData.deliveryLocations || [],
+      deliveryDates: requestData.deliveryDates,
+      requiresDelivery: requestData.requiresDelivery !== false,
+      requiresInstallation: requestData.requiresInstallation || false,
+      contactNumbers: requestData.contactNumbers || [],
+      images: requestData.images || [],
+      pdfAttachments: requestData.pdfAttachments || [],
+      hideOffers: requestData.hideOffers || false,
+      hidePersonalInfo: requestData.hidePersonalInfo || false,
+      directPurchase: requestData.directPurchase || false,
+      targetSellerId: requestData.targetSellerId || null,
+      status: 'draft',
+      post_type: requestData.post_type || 'standard',
+      auction_type: requestData.auction_type || 'public',
+      delivery_city: requestData.delivery_city,
+      delivery_date: requestData.delivery_date,
+      contact_number: requestData.contact_number,
+      attachments: requestData.attachments || [],
+      price_range_min: requestData.price_range_min,
+      price_range_max: requestData.price_range_max,
+      fixed_price: requestData.fixed_price,
+      advanced_options: requestData.advanced_options || {},
+      is_active: true
+    });
+
+    await SubscriptionService.incrementPostCount(buyerId);
+    return request;
+  }
+
+  // =========================
+  // EDIT REQUEST
+  // =========================
+  static async editRequest(requestId, buyerId, updates) {
+    const request = await PurchaseRequest.findByPk(requestId);
+    if (!request) throw new Error('Request not found');
+
+    if (request.userId !== buyerId) {
+      throw new Error('Unauthorized: You can only edit your own requests');
+    }
+
+    const user = await User.findByPk(buyerId);
+    const currentStatus = request.status;
+    const isPremiumBuyer = user.subscriptionTier === 'plan_a' || user.subscriptionTier === 'plan_b';
+
+    // Premium users can edit published/negotiating requests
+    if (currentStatus === 'published' || currentStatus === 'negotiating') {
+      if (!isPremiumBuyer) {
+        throw new Error(
+          `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
+          `This requires Plan A or Plan B subscription.`
+        );
+      }
+    } else if (currentStatus !== 'draft') {
+      // If not draft, check quotes (even for premium in other statuses like accepted)
+      const quoteCount = await PriceQuote.count({
+        where: { purchaseRequestId: requestId }
+      });
+
+      if (quoteCount > 0) {
+        throw new Error(
+          'Cannot edit request after receiving quotes. Request modification requires admin intervention.'
+        );
+      }
+    }
+
+    if (updates.images || updates.pdfAttachments) {
+      this.validateAttachments(user.subscriptionTier, {
+        images: updates.images || request.images,
+        pdfAttachments: updates.pdfAttachments || request.pdfAttachments
+      });
+    }
+
+    const allowedFields = [
+      'title', 'description', 'quantity', 'unit',
+      'deliveryLocations', 'deliveryDates',
+      'requiresDelivery', 'requiresInstallation',
+      'contactNumbers', 'images', 'pdfAttachments',
+      'hideOffers', 'hidePersonalInfo', 'fixed_price'
+    ];
+
+    const updateData = {};
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        updateData[field] = updates[field];
+      }
+    });
+
+    updateData.lastModifiedAt = new Date();
+    await request.update(updateData);
+    return request;
+  }
+
+  // =========================
+  // REQUEST MODIFICATION (ADMIN)
+  // =========================
+  static async requestModification(requestId, buyerId, reason) {
+    const request = await PurchaseRequest.findByPk(requestId);
+    if (!request) throw new Error('Request not found');
+
+    if (request.userId !== buyerId) {
+      throw new Error('Unauthorized');
+    }
+
+    if (request.canBeModified()) {
+      throw new Error('You can edit this request directly. No admin approval needed.');
+    }
+
+    await request.update({
+      modificationRequested: true,
+      modificationReason: reason
+    });
+
+    return request;
+  }
+
+  // =========================
+  // GET BUYER REQUESTS
+  // =========================
+  static async getBuyerRequests(buyerId, filters = {}) {
+    const where = { userId: buyerId };
+    if (filters.status) where.status = filters.status;
+    if (filters.categoryId) where.categoryId = filters.categoryId;
+
+    return await PurchaseRequest.findAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+  }
+
+  // =========================
+  // GET PUBLISHED REQUESTS
+  // =========================
+  static async getPublishedRequests(categoryId = null, filters = {}) {
+    const where = {
+      status: 'published',
+      expiresAt: { [Op.gt]: new Date() }
+    };
+    if (categoryId) where.categoryId = categoryId;
+
+    return await PurchaseRequest.findAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier', 'rank'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+  static async getRequestDetails(requestId, userId) {
+          const request = await PurchaseRequest.findByPk(requestId, {
+            include: [
+              { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier', 'rank', 'email', 'createdAt'] },
+              { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] },
+              {
+                model: PriceQuote,
+                as: 'quotes',
+                include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'businessName', 'rating'] }]
+              }
+            ]
+          });
+          if(!request) throw new Error('Request not found');
+
+          const plainReq = request.get({ plain: true });
+          const user = userId ? await User.findByPk(userId) : null;
+          const isOwner = user && user.id === plainReq.userId;
+          const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+          const isSeller = user && user.role === 'seller';
+
+          if(!isOwner && !isAdmin) {
+      plainReq.contactNumbers = [];
+      plainReq.contact_number = null;
+      if (plainReq.user) {
+        delete plainReq.user.email;
+        delete plainReq.user.phone;
+      }
+    }
+
+    if (!isOwner && !isAdmin) {
+      if (isSeller) {
+        if (plainReq.auction_type === 'secret') {
+          plainReq.quotes = plainReq.quotes.filter(q => q.sellerId === user.id);
+        } else {
+          plainReq.quotes = plainReq.quotes.map(q => {
+            if (q.sellerId === user.id) return q;
+            const anonQuote = { ...q };
+            anonQuote.seller = { name: 'بائع آخر', businessName: '---', rating: null };
+            return anonQuote;
+          });
+        }
+      } else {
+        plainReq.quotes = [];
+      }
+    }
+
+    return plainReq;
+  }
+
+  // =========================
+  // TRANSITION STATUS
+  // =========================
+  static async transitionRequestStatus(requestId, newStatus, user) {
+    const request = await PurchaseRequest.findByPk(requestId, {
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'email', 'subscriptionTier'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+      ]
+    });
+    if (!request) throw new Error('Request not found');
+
+    const currentStatus = request.status;
+
+    // إذا كان Admin أو Super Admin
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      await request.update({ status: newStatus });
+      return request;
+    }
+
+    // تحقق من الانتقالات المسموحة
+    const allowedTransitions = STATUS_TRANSITIONS[currentStatus];
+    if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
+      throw new Error(
+        `❌ FORBIDDEN STATUS TRANSITION: Cannot change request status from "${currentStatus}" to "${newStatus}".`
+      );
+    }
+
+    // تحقق من الملكية 
+    if (request.userId !== user.id) {
+      throw new Error('UNAUTHORIZED: Only the request owner can change its status');
+    }
+
+    // حالة قبول الطلب
+    if (newStatus === 'accepted') {
+      const acceptedQuote = await PriceQuote.findOne({
+        where: { purchaseRequestId: requestId, status: 'accepted' },
+        include: [{ model: User, as: 'seller' }]
+      });
+
+      if (!acceptedQuote) {
+        throw new Error('Cannot accept request: No accepted quote found. You must accept a quote first.');
+      }
+
+      // إنشاء فاتورة إلكترونية
+      const invoiceData = {
+        invoiceNumber: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        date: new Date(),
+        buyer: {
+          id: request.user.id,
+          name: request.user.name,
+          email: request.user.email,
+          contactNumbers: request.contactNumbers
+        },
+        seller: {
+          id: acceptedQuote.seller.id,
+          name: acceptedQuote.seller.name,
+          businessName: acceptedQuote.seller.businessName,
+          email: acceptedQuote.seller.email
+        },
+        items: [
+          {
+            description: request.title,
+            quantity: request.quantity,
+            unit: request.unit,
+            price: acceptedQuote.amount
+          }
+        ],
+        totalAmount: acceptedQuote.amount,
+        currency: acceptedQuote.currency,
+        terms: acceptedQuote.notes
+      };
+
+      await Deal.create({
+        purchaseRequestId: requestId,
+        priceQuoteId: acceptedQuote.id,
+        buyerId: request.userId,
+        sellerId: acceptedQuote.sellerId,
+        finalAmount: acceptedQuote.amount,
+        status: 'processing',
+        invoiceData
+      });
+    }
+
+    await request.update({ status: newStatus });
+    return request;
+  }
+
+  // =========================
+  // VALIDATION HELPERS
+  // =========================
+  static validateContactNumbers(tier, requestData) {
+    const maxNumbers = { free: 1, plan_a: 2, plan_b: Infinity };
+    const contactNumbers = requestData.contactNumbers || [];
+    if (contactNumbers.length > maxNumbers[tier]) {
+      throw new Error(`الخطة ${tier} تسمح بـ ${maxNumbers[tier]} رقم تواصل فقط`);
+    }
+  }
+
+  static validateDeliveryLocations(tier, requestData) {
+    const locations = requestData.deliveryLocations || [];
+    if ((tier === 'free' || tier === 'plan_a') && locations.length > 1) {
+      throw new Error('مواقع التسليم المتعددة تتطلب خطة ب');
+    }
+  }
+
+  static validateAttachments(tier, requestData) {
+    const images = requestData.images || [];
+    const pdfs = requestData.pdfAttachments || [];
+    const locations = requestData.deliveryLocations || [];
+
+    if (tier === 'free') {
+      if (images.length > 0) throw new Error('الصور تتطلب خطة أ أو خطة ب');
+      if (pdfs.length > 1) throw new Error('الخطة المجانية تسمح بملف PDF واحد فقط');
+    } else if (tier === 'plan_a') {
+      if (images.length > 1) throw new Error('خطة أ تسمح بصورة واحدة فقط');
+      if (pdfs.length > 1) throw new Error('خطة أ تسمح بملف PDF واحد فقط');
+    } else if (tier === 'plan_b') {
+      locations.forEach((loc, idx) => {
+        const locAttachments = loc.attachments || [];
+        const locImages = locAttachments.filter(a => a.type === 'image').length;
+        const locPDFs = locAttachments.filter(a => a.type === 'pdf').length;
+        if (locImages > 2) throw new Error(`الموقع ${idx + 1}: خطة ب تسمح بصورتين فقط لكل موقع`);
+        if (locPDFs > 1) throw new Error(`الموقع ${idx + 1}: خطة ب تسمح بملف PDF واحد لكل موقع`);
+      });
+    }
+  }
+
+  static validateDirectPurchase(tier, requestData) {
+    if (requestData.directPurchase) {
+      if (tier === 'free') throw new Error('الشراء المباشر من بائع محدد يتطلب خطة أ أو خطة ب');
+      if (!requestData.targetSellerId) throw new Error('يجب تحديد البائع المستهدف للشراء المباشر');
+    }
+  }
+
+  static validatePrivacySettings(tier, requestData) {
+    if (tier === 'free') {
+      if (requestData.hideOffers && requestData.status !== 'draft') {
+        throw new Error('Free tier can only hide offers before publishing');
+      }
+      if (requestData.hidePersonalInfo) {
+        throw new Error('Hiding personal info requires Plan A or Plan B');
+      }
+    }
+  }
+
+  static validateWrittenNumbers(requestData) {
+    const writtenNumbersRegex = /(صفر|واحد|اثنان|اثنين|اثنتين|ثلاثة|ثلاث|اربعة|اربع|أربعة|أربع|خمسة|خمس|ستة|ست|سبعة|سبع|ثمانية|ثمان|تسعة|تسع|عشرة|عشر)/gi;
+    const errors = [];
+    if (requestData.title && writtenNumbersRegex.test(requestData.title)) errors.push('⛔ يمنع كتابة الأرقام حرفياً في العنوان');
+    if (requestData.description && writtenNumbersRegex.test(requestData.description)) errors.push('⛔ يمنع كتابة الأرقام حرفياً في الوصف');
+    if (errors.length > 0) throw new Error(errors.join('. '));
+  }
+}
+
+module.exports = RequestService;

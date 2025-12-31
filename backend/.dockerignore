@@ -1,0 +1,36 @@
+# Docker
+node_modules/
+npm-debug.log
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (will be mounted as volume)
+uploads/
+
+# Temporary files
+tmp/
+temp/

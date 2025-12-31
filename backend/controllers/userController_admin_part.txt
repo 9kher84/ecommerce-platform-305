@@ -1,0 +1,122 @@
+﻿// ----------------------------------------------------------------------
+// 2. ظˆط¸ط§ط¦ظپ ط§ظ„ظ…ط³ط¤ظˆظ„ (Admin) - ط¥ط¯ط§ط±ط© ط¬ظ…ظٹط¹ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
+// ----------------------------------------------------------------------
+
+/**
+ * @desc آ  ط¬ظ„ط¨ ط¬ظ…ظٹط¹ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
+ * @route آ GET /api/users/admin/all
+ * @access ظ…ط­ظ…ظٹ / ظ…ظ‚ظٹط¯ ظ„ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ظپظ‚ط·
+ */
+exports.getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.findAll({
+        attributes: { exclude: ['password'] },
+        order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({
+        success: true,
+        count: users.length,
+        users
+    });
+});
+
+/**
+ * @desc آ  ط¬ظ„ط¨ ظ…ط³طھط®ط¯ظ… ط¨ظˆط§ط³ط·ط© ID
+ * @route آ GET /api/users/admin/:id
+ * @access ظ…ط­ظ…ظٹ / ظ…ظ‚ظٹط¯ ظ„ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ظپظ‚ط·
+ */
+exports.getUserById = asyncHandler(async (req, res) => {
+    const user = await User.findByPk(req.params.id, {
+        attributes: { exclude: ['password'] }
+    });
+
+    if (user) {
+        res.status(200).json({ success: true, user });
+    } else {
+        res.status(404);
+        throw new Error('ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ….');
+    }
+});
+
+/**
+ * @desc آ  طھط­ط¯ظٹط« ظ…ط³طھط®ط¯ظ… ط¨ظˆط§ط³ط·ط© ID (طھط؛ظٹظٹط± ط§ظ„ط¯ظˆط±طŒ ط§ظ„ط­ط¸ط±طŒ ط§ظ„ط§ط´طھط±ط§ظƒ)
+ * @route آ PUT /api/users/admin/:id
+ * @access ظ…ط­ظ…ظٹ / ظ…ظ‚ظٹط¯ ظ„ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ظپظ‚ط·
+ */
+exports.updateUserById = asyncHandler(async (req, res) => {
+    const user = await User.findByPk(req.params.id);
+    const { name, email, role, isActive, subscriptionTier } = req.body;
+
+    if (user) {
+        // ط­ظ‚ظˆظ„ ظٹظ…ظƒظ† ظ„ظ„ظ…ط³ط¤ظˆظ„ طھط­ط¯ظٹط«ظ‡ط§
+        user.name = name || user.name;
+        user.email = email || user.email;
+
+        // ظٹط¬ط¨ ط¹ظ„ظ‰ ط§ظ„ظ…ط³ط¤ظˆظ„ ط§ظ„ط£ط¹ظ„ظ‰ ظپظ‚ط· طھط؛ظٹظٹط± ط¯ظˆط± ط§ظ„ظ…ط³طھط®ط¯ظ…
+        if (req.user.role === 'super_admin' && role) {
+            user.role = role;
+        }
+
+        // ظٹظ…ظƒظ† ظ„ظ„ظ…ط³ط¤ظˆظ„ظٹظ† طھظپط¹ظٹظ„/طھط¹ط·ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
+        if (isActive !== undefined) {
+            // ظ…ظ†ط¹ ط§ظ„ظ…ط³ط¤ظˆظ„ ظ…ظ† طھط¹ط·ظٹظ„ ظ†ظپط³ظ‡
+            if (user.id === req.user.id) {
+                res.status(400);
+                throw new Error('ظ„ط§ ظٹظ…ظƒظ†ظƒ طھط¹ط·ظٹظ„ ط­ط³ط§ط¨ظƒ ط§ظ„ط®ط§طµ.');
+            }
+            user.isActive = isActive;
+        }
+
+        // طھط­ط¯ظٹط« ط®ط·ط© ط§ظ„ط§ط´طھط±ط§ظƒ
+        if (subscriptionTier) {
+            if (['free', 'plan_a', 'plan_b'].includes(subscriptionTier)) {
+                user.subscriptionTier = subscriptionTier;
+            } else {
+                res.status(400);
+                throw new Error('ط®ط·ط© ط§ط´طھط±ط§ظƒ ط؛ظٹط± طµط§ظ„ط­ط©');
+            }
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: `طھظ… طھط­ط¯ظٹط« ط§ظ„ظ…ط³طھط®ط¯ظ… ${user.id} ط¨ظ†ط¬ط§ط­.`,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive,
+                subscriptionTier: user.subscriptionTier
+            }
+        });
+
+    } else {
+        res.status(404);
+        throw new Error('ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ….');
+    }
+});
+
+/**
+ * @desc آ  ط­ط°ظپ ظ…ط³طھط®ط¯ظ… ط¨ظˆط§ط³ط·ط© ID
+ * @route آ DELETE /api/users/admin/:id
+ * @access ظ…ط­ظ…ظٹ / ظ…ظ‚ظٹط¯ ظ„ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ظپظ‚ط·
+ */
+exports.deleteUser = asyncHandler(async (req, res) => {
+    const user = await User.findByPk(req.params.id);
+
+    if (user) {
+        // ط­ظ…ط§ظٹط©: ظ…ظ†ط¹ ط­ط°ظپ ط§ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ط§ظ„ط¢ط®ط±ظٹظ† ظ…ظ† ظ‚ط¨ظ„ ظ…ط³ط¤ظˆظ„ ط¹ط§ط¯ظٹ
+        if (user.role === 'admin' && req.user.role !== 'super_admin') {
+            res.status(403);
+            throw new Error('ط؛ظٹط± ظ…طµط±ط­ ظ„ظƒ: ط§ظ„ظ…ط³ط¤ظˆظ„ظˆظ† ط§ظ„ط¹ط§ط¯ظٹظˆظ† ظ„ط§ ظٹظ…ظƒظ†ظ‡ظ… ط­ط°ظپ ظ…ط³ط¤ظˆظ„ظٹظ† ط¢ط®ط±ظٹظ†.');
+        }
+
+        await user.destroy();
+        res.status(200).json({ success: true, message: 'طھظ… ط­ط°ظپ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­.' });
+    } else {
+        res.status(404);
+        throw new Error('ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ….');
+    }
+});

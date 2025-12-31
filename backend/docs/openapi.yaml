@@ -1,0 +1,506 @@
+openapi: 3.0.0
+info:
+  title: E-commerce Platform API
+  description: REST API for B2B E-commerce Platform with Purchase Requests, Price Quotes, and Deals
+  version: 2.0.0
+  contact:
+    name: API Support
+    email: support@ecommerce-platform.com
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+  - url: https://api.ecommerce-platform.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Requests
+    description: Purchase request management
+  - name: Quotes
+    description: Price quote management
+  - name: Deals
+    description: Deal lifecycle management
+  - name: Admin
+    description: Admin operations
+  - name: Payments
+    description: Payment webhooks and status
+
+paths:
+  # ========================================================================
+  # AUTHENTICATION
+  # ========================================================================
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                role:
+                  type: string
+                  enum: [buyer, seller]
+                  example: "buyer"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========================================================================
+  # PURCHASE REQUESTS
+  # ========================================================================
+  /requests:
+    get:
+      tags: [Requests]
+      summary: Get all purchase requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published, negotiating, accepted, completed, cancelled]
+        - in: query
+          name: categoryId
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of purchase requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PurchaseRequest'
+
+    post:
+      tags: [Requests]
+      summary: Create new purchase request
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequestInput'
+      responses:
+        '201':
+          description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PurchaseRequest'
+
+  /requests/{id}:
+    get:
+      tags: [Requests]
+      summary: Get request by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PurchaseRequest'
+
+    put:
+      tags: [Requests]
+      summary: Update purchase request
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequestInput'
+      responses:
+        '200':
+          description: Request updated successfully
+
+  /requests/{id}/publish:
+    post:
+      tags: [Requests]
+      summary: Publish request (draft → published)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request published successfully
+
+  # ========================================================================
+  # PRICE QUOTES
+  # ========================================================================
+  /quotes:
+    post:
+      tags: [Quotes]
+      summary: Submit price quote
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteInput'
+      responses:
+        '201':
+          description: Quote submitted successfully
+
+  /quotes/{id}:
+    get:
+      tags: [Quotes]
+      summary: Get quote by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote details
+
+  /quotes/{id}/accept:
+    post:
+      tags: [Quotes]
+      summary: Accept price quote
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote accepted successfully
+
+  # ========================================================================
+  # DEALS
+  # ========================================================================
+  /deals:
+    get:
+      tags: [Deals]
+      summary: Get user deals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of deals
+
+  /deals/{id}:
+    get:
+      tags: [Deals]
+      summary: Get deal by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deal details
+
+  # ========================================================================
+  # ADMIN
+  # ========================================================================
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of users
+
+  /admin/users/{id}/tier:
+    put:
+      tags: [Admin]
+      summary: Update user subscription tier
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subscriptionTier:
+                  type: string
+                  enum: [free, plan_a, plan_b]
+      responses:
+        '200':
+          description: Tier updated successfully
+
+  # ========================================================================
+  # PAYMENTS
+  # ========================================================================
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Payment webhook (external)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                dealId:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  enum: [success, failed, cancelled]
+                amount:
+                  type: number
+                currency:
+                  type: string
+      responses:
+        '200':
+          description: Webhook processed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PurchaseRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [draft, published, negotiating, accepted, completed, cancelled]
+        categoryId:
+          type: integer
+        buyerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateRequestInput:
+      type: object
+      required: [title, categoryId, quantity, unit]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        categoryId:
+          type: integer
+        deliveryDates:
+          type: array
+          items:
+            type: string
+            format: date
+
+    UpdateRequestInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: number
+
+    CreateQuoteInput:
+      type: object
+      required: [purchaseRequestId, amount]
+      properties:
+        purchaseRequestId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        priceType:
+          type: string
+          enum: [fixed, flexible]
+        deliveryDate:
+          type: string
+          format: date
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+            role:
+              type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Not authorized"

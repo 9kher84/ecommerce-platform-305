@@ -1,0 +1,528 @@
+const debug = require('debug')('app:requestService');
+const { PurchaseRequest, User, Category, Deal, PriceQuote } = require('../sequelize_setup');
+const SubscriptionService = require('./subscriptionService');
+const { Op } = require('sequelize');
+
+const STATUS_TRANSITIONS = {
+  draft: ['published', 'cancelled'],
+  published: ['negotiating', 'cancelled'],
+  negotiating: ['accepted', 'cancelled'],
+  accepted: ['completed', 'failed', 'cancelled'],
+  completed: [],
+  failed: [],
+  cancelled: []
+};
+
+class RequestService {
+  // =========================
+  // CREATE REQUEST
+  // =========================
+  static async createRequest(buyerId, requestData) {
+    const user = await User.findByPk(buyerId);
+    if (!user) throw new Error('User not found');
+    if (user.role !== 'buyer') throw new Error('Only buyers can create purchase requests');
+
+    if (user.subscriptionTier === 'free' && requestData.post_type === 'direct') {
+      const error = new Error('الشراء المباشر يتطلب خطة أ أو خطة ب');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const canCreate = await SubscriptionService.canCreateRequest(buyerId);
+    if (!canCreate.canCreate) throw new Error(canCreate.reason);
+
+    this.validateContactNumbers(user.subscriptionTier, requestData);
+    this.validateDeliveryLocations(user.subscriptionTier, requestData);
+    this.validateAttachments(user.subscriptionTier, requestData);
+    this.validatePrivacySettings(user.subscriptionTier, requestData);
+    this.validateDirectPurchase(user.subscriptionTier, requestData);
+    this.validateWrittenNumbers(requestData);
+
+    const request = await PurchaseRequest.create({
+      userId: buyerId,
+      title: requestData.title,
+      categoryId: requestData.categoryId,
+      description: requestData.description,
+      quantity: requestData.quantity,
+      unit: requestData.unit,
+      deliveryLocations: requestData.deliveryLocations || [],
+      deliveryDates: requestData.deliveryDates,
+      requiresDelivery: requestData.requiresDelivery !== false,
+      requiresInstallation: requestData.requiresInstallation || false,
+      contactNumbers: requestData.contactNumbers || [],
+      images: requestData.images || [],
+      pdfAttachments: requestData.pdfAttachments || [],
+      hideOffers: requestData.hideOffers || false,
+      hidePersonalInfo: requestData.hidePersonalInfo || false,
+      directPurchase: requestData.directPurchase || false,
+      targetSellerId: requestData.targetSellerId || null,
+      status: 'draft',
+      post_type: requestData.post_type || 'standard',
+      auction_type: requestData.auction_type || 'public',
+      delivery_city: requestData.delivery_city,
+      delivery_date: requestData.delivery_date,
+      contact_number: requestData.contact_number,
+      attachments: requestData.attachments || [],
+      price_range_min: requestData.price_range_min,
+      price_range_max: requestData.price_range_max,
+      fixed_price: requestData.fixed_price,
+      advanced_options: requestData.advanced_options || {},
+      is_active: true
+    });
+
+    await SubscriptionService.incrementPostCount(buyerId);
+    return request;
+  }
+
+  // =========================
+  // EDIT REQUEST
+  // =========================
+  static async editRequest(requestId, buyerId, updates) {
+    const request = await PurchaseRequest.findByPk(requestId);
+    if (!request) throw new Error('Request not found');
+
+    if (request.userId !== buyerId) {
+      throw new Error('Unauthorized: You can only edit your own requests');
+    }
+
+    const user = await User.findByPk(buyerId);
+    const currentStatus = request.status;
+    const isPremiumBuyer = user.subscriptionTier === 'plan_a' || user.subscriptionTier === 'plan_b';
+
+    // Premium users can edit published/negotiating requests
+    if (currentStatus === 'published' || currentStatus === 'negotiating') {
+      if (!isPremiumBuyer) {
+        throw new Error(
+          `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
+          `This requires Plan A or Plan B subscription.`
+        );
+      }
+    } else if (currentStatus !== 'draft') {
+      throw new Error(`Cannot edit request in status "${currentStatus}"`);
+    }
+
+    // Validate updates
+    if (updates.contactNumbers || updates.title || updates.description) {
+      this.validateContactNumbers(user.subscriptionTier, { ...request.toJSON(), ...updates });
+      this.validateWrittenNumbers({ ...request.toJSON(), ...updates });
+    }
+
+    await request.update(updates);
+    return request;
+  }
+
+  // =========================
+  // HELPER: Build SQL WHERE clause from Sequelize conditions
+  // =========================
+  static buildWhereClause(whereConditions, replacements = {}) {
+    const clauses = [];
+    let paramCounter = Object.keys(replacements).length + 1;
+
+    const processCondition = (key, value) => {
+      if (key === Op.and) {
+        const andClauses = value.map(cond => {
+          const subClauses = [];
+          Object.keys(cond).forEach(subKey => {
+            if (subKey === Op.or) {
+              const orClauses = cond[subKey].map(orCond => {
+                const orSubClauses = [];
+                Object.keys(orCond).forEach(orKey => {
+                  const orResult = processCondition(orKey, orCond[orKey]);
+                  if (orResult) orSubClauses.push(orResult);
+                });
+                return orSubClauses.length > 0 ? `(${orSubClauses.join(' AND ')})` : null;
+              }).filter(Boolean);
+              if (orClauses.length > 0) {
+                subClauses.push(`(${orClauses.join(' OR ')})`);
+              }
+            } else {
+              const result = processCondition(subKey, cond[subKey]);
+              if (result) subClauses.push(result);
+            }
+          });
+          return subClauses.length > 0 ? `(${subClauses.join(' AND ')})` : null;
+        }).filter(Boolean);
+        return andClauses.length > 0 ? andClauses.join(' AND ') : null;
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        if (value[Op.in]) {
+          const paramName = `param${paramCounter++}`;
+          replacements[paramName] = value[Op.in];
+          return `"${key}" IN (:${paramName})`;
+        }
+        if (value[Op.ne]) {
+          const paramName = `param${paramCounter++}`;
+          replacements[paramName] = value[Op.ne];
+          return `"${key}" != :${paramName}`;
+        }
+        if (value[Op.gt]) {
+          const paramName = `param${paramCounter++}`;
+          replacements[paramName] = value[Op.gt];
+          return `"${key}" > :${paramName}`;
+        }
+        if (value[Op.iLike]) {
+          const paramName = `param${paramCounter++}`;
+          replacements[paramName] = value[Op.iLike];
+          return `"${key}" ILIKE :${paramName}`;
+        }
+      } else {
+        const paramName = `param${paramCounter++}`;
+        replacements[paramName] = value;
+        return `"${key}" = :${paramName}`;
+      }
+      return null;
+    };
+
+    Object.keys(whereConditions).forEach(key => {
+      const result = processCondition(key, whereConditions[key]);
+      if (result) clauses.push(result);
+    });
+
+    return { sql: clauses.join(' AND '), replacements };
+  }
+
+  // =========================
+  // HELPER: Execute Free Tier Query with ROW_NUMBER
+  // =========================
+  static async executeFreeTierQuery(whereConditions, limit, offset) {
+    const { sequelize } = require('../sequelize_setup');
+    const { sql: whereSql, replacements } = this.buildWhereClause(whereConditions);
+
+    // ✅ إضافة logging للتشخيص
+    console.log('[DEBUG] Generated WHERE clause:', whereSql);
+    console.log('[DEBUG] Replacements:', replacements);
+
+    // Add pagination params to replacements
+    replacements.limit = limit;
+    replacements.offset = offset;
+
+    const query = `
+    WITH base_filtered AS (
+      SELECT pr.*
+      FROM "PurchaseRequests" pr
+      WHERE ${whereSql}
+    ),
+    ranked_requests AS (
+      SELECT *,
+        ROW_NUMBER() OVER (
+          PARTITION BY "categoryId" 
+          ORDER BY "createdAt" DESC
+        ) as row_num
+      FROM base_filtered
+    )
+    SELECT 
+      id, "userId", "categoryId", title, description, quantity, unit,
+      "deliveryLocations", "deliveryDates", status, "post_type", "auction_type",
+      "delivery_city", "pdfAttachments", "fixed_price", "targetSellerId",
+      "viewCount", "quoteCount", "expiresAt", "modificationRequested",
+      "modificationReason", "lastModifiedAt", "createdAt", "updatedAt",
+      "hideOffers", "hidePersonalInfo", "directPurchase", "images",
+      "contactNumbers", "requiresDelivery", "requiresInstallation",
+      "attachments", "price_range_min", "price_range_max", "advanced_options",
+      "is_active", "contact_number", "delivery_date"
+    FROM ranked_requests
+    WHERE row_num <= 3
+    ORDER BY "createdAt" DESC
+    LIMIT :limit OFFSET :offset;
+  `;
+
+    const results = await sequelize.query(query, {
+      replacements,
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Get total count for pagination
+    const countQuery = `
+    WITH base_filtered AS (
+      SELECT pr.*
+      FROM "PurchaseRequests" pr
+      WHERE ${whereSql}
+    ),
+    ranked_requests AS (
+      SELECT *,
+        ROW_NUMBER() OVER (
+          PARTITION BY "categoryId" 
+          ORDER BY "createdAt" DESC
+        ) as row_num
+      FROM base_filtered
+    )
+    SELECT COUNT(*) as count
+    FROM ranked_requests
+    WHERE row_num <= 3;
+  `;
+
+    const [countResult] = await sequelize.query(countQuery, {
+      replacements,
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    const totalCount = parseInt(countResult.count);
+
+    // Manually load associations for raw query results
+    const requestIds = results.map(r => r.id);
+    if (requestIds.length > 0) {
+      const users = await User.findAll({
+        where: { id: { [Op.in]: results.map(r => r.userId) } },
+        attributes: ['id', 'name', 'subscriptionTier', 'rank']
+      });
+      const categories = await Category.findAll({
+        where: { id: { [Op.in]: results.map(r => r.categoryId) } },
+        attributes: ['id', 'name_ar', 'name_en']
+      });
+
+      const userMap = {};
+      users.forEach(u => { userMap[u.id] = u; });
+      const categoryMap = {};
+      categories.forEach(c => { categoryMap[c.id] = c; });
+
+      results.forEach(r => {
+        r.user = userMap[r.userId] || null;
+        r.category = categoryMap[r.categoryId] || null;
+      });
+    }
+
+    return {
+      data: results,
+      pagination: {
+        currentPage: Math.floor(offset / limit) + 1,
+        pageSize: limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: offset + limit < totalCount,
+        hasPreviousPage: offset > 0
+      }
+    };
+  }
+
+  // =========================
+  // GET ALL REQUESTS (FOR HOMEPAGE) - OPTIMIZED
+  // =========================
+  static async getAllRequests(userRole = null, userTier = null, filters = {}, user = null) {
+    const where = {};
+
+    // أ) منطق الدور (Role Logic) - PRESERVED EXACTLY
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      // جميع الطلبات ما عدا المسودات
+      where.status = { [Op.ne]: 'draft' };
+    } else if (userRole === 'seller' || userRole === 'buyer') {
+      // فقط المنشورة أو قيد التفاوض
+      where.status = { [Op.in]: ['published', 'negotiating'] };
+      where.expiresAt = { [Op.gt]: new Date() };
+    } else {
+      // الزوار: نفس البائع/المشتري
+      where.status = { [Op.in]: ['published', 'negotiating'] };
+      where.expiresAt = { [Op.gt]: new Date() };
+    }
+
+    // ج) فلتر التصنيف - PRESERVED EXACTLY
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    // هـ) فلتر المدينة - يجب أن يكون خارج كتلة البحث
+    if (filters.city) {
+      where.delivery_city = filters.city;
+    }
+
+    // د) فلتر البحث النصي - PRESERVED EXACTLY
+    if (filters.searchQuery && filters.searchQuery.trim()) {
+      const searchKeyword = `%${filters.searchQuery.trim()}%`;
+      const currentConditions = { ...where };
+      
+      where[Op.and] = [
+        currentConditions,
+        {
+          [Op.or]: [
+            { title: { [Op.iLike]: searchKeyword } },
+            { description: { [Op.iLike]: searchKeyword } }
+          ]
+        }
+      ];
+
+      // حذف الشروط المكررة - PRESERVED EXACTLY
+      delete where.status;
+      delete where.expiresAt;
+      if (where.userId) delete where.userId;
+      if (where.categoryId) delete where.categoryId;
+      // لا نحذف delivery_city لأنه جزء من currentConditions
+    }
+
+    // Extract pagination parameters
+    const page = parseInt(filters.page) || 1;
+    const limit = Math.min(parseInt(filters.limit) || 20, 100);
+    const offset = (page - 1) * limit;
+
+    // ب) قيود الخطة المجانية (Free Tier Logic) - NOW AT DATABASE LEVEL
+    if (userRole === 'buyer' && userTier === 'free') {
+      // Use raw SQL with ROW_NUMBER for performance
+      return await this.executeFreeTierQuery(where, limit, offset);
+    }
+
+    // For all other users: standard Sequelize query with pagination
+    const { count, rows } = await PurchaseRequest.findAndCountAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier', 'rank'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      distinct: true
+    });
+
+    return {
+      data: rows,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalCount: count,
+        totalPages: Math.ceil(count / limit),
+        hasNextPage: page < Math.ceil(count / limit),
+        hasPreviousPage: page > 1
+      }
+    };
+  }
+
+  // GET PUBLISHED REQUESTS (جديدة ومعدلة)
+  // =========================
+  static async getPublishedRequests(categoryId = null, filters = {}) {
+    const where = {
+      status: 'published',
+      expiresAt: { [Op.gt]: new Date() }
+    };
+    if (categoryId) where.categoryId = categoryId;
+
+    return await PurchaseRequest.findAll({
+      where,
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'subscriptionTier', 'rank'] },
+        { model: Category, as: 'category', attributes: ['id', 'name_ar', 'name_en'] }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: filters.limit || 50 // حد معقول افتراضي
+    });
+  }
+
+  // =========================
+  // GET REQUEST DETAILS
+  // =========================
+  static async getRequestDetails(requestId, userId) {
+    console.log(`Fetching request details for ID: ${requestId}, User ID: ${userId}`);
+
+    try {
+      // إعداد الـ includes الأساسية
+      const includes = [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'subscriptionTier', 'rank', 'businessName']
+        },
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name_ar', 'name_en']
+        }
+      ];
+
+      // جلب الطلب الأساسي بدون quotes أولاً
+      const request = await PurchaseRequest.findByPk(requestId, {
+        include: includes
+      });
+
+      if (!request) {
+        console.error(`Request not found: ${requestId}`);
+        throw new Error('Request not found');
+      }
+
+      const plainReq = request.get({ plain: true });
+      console.log(`Request found: ${plainReq.id}, Status: ${plainReq.status}`);
+
+      // تحديد صلاحيات المستخدم
+      const user = userId ? await User.findByPk(userId) : null;
+      const isOwner = user && user.id === plainReq.userId;
+      const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+      const isSeller = user && user.role === 'seller';
+
+      // جلب الـ quotes بناءً على الصلاحيات
+      let quotes = [];
+      const quoteWhere = { purchaseRequestId: requestId };
+
+      if (isOwner || isAdmin) {
+        // المالك أو الأدمن: يرون جميع الـ quotes
+        quotes = await PriceQuote.findAll({
+          where: quoteWhere,
+          include: [
+            {
+              model: User,
+              as: 'seller',
+              attributes: ['id', 'name', 'businessName', 'rank']
+            }
+          ],
+          order: [['createdAt', 'DESC']]
+        });
+      } else if (isSeller) {
+        // البائع: يرون فقط الـ quotes الخاصة بهم في المزاد السري
+        if (plainReq.auction_type === 'secret') {
+          quoteWhere.sellerId = userId;
+        }
+
+        quotes = await PriceQuote.findAll({
+          where: quoteWhere,
+          include: [
+            {
+              model: User,
+              as: 'seller',
+              attributes: ['id', 'name', 'businessName', 'rank']
+            }
+          ],
+          order: [['createdAt', 'DESC']]
+        });
+
+        // في المزاد العام، إخفاء معلومات البائعين الآخرين
+        if (plainReq.auction_type === 'public' && quotes.length > 0) {
+          quotes = quotes.map(quote => {
+            const quoteData = quote.get({ plain: true });
+            if (quoteData.sellerId !== userId) {
+              // إخفاء معلومات البائع الآخر
+              quoteData.seller = {
+                id: null,
+                name: 'بائع آخر',
+                businessName: '---',
+                rank: null
+              };
+              quoteData.amount = null;
+              quoteData.notes = 'عرض مخفي';
+            }
+            return quoteData;
+          });
+        }
+      }
+
+      // إضافة الـ quotes للطلب
+      plainReq.quotes = quotes;
+      plainReq.quoteCount = quotes.length;
+
+      // إخفاء معلومات الاتصال إذا لم يكن مالك أو أدمن
+      if (!isOwner && !isAdmin) {
+        if (plainReq.contactNumbers) plainReq.contactNumbers = [];
+        if (plainReq.contact_number) plainReq.contact_number = null;
+        if (plainReq.user && plainReq.user.email) {
+          delete plainReq.user.email;
+        }
+      }
+
+      console.log(`Returning request with ${plainReq.quotes.length} quotes`);
+      return plainReq;
+
+    } catch (error) {
+      console.error('Error in getRequestDetails:', error);
+      throw error;
+    }
+  }
+
+  // =========================
+  // TRANSITION STATUS
+  // =========================
+  static async transitionRequestStatus(requestId, newStatus, user) {
