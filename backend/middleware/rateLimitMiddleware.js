@@ -5,12 +5,18 @@ const { getRedisClient } = require("../config/redis");
 const createStore = () => {
   const client = getRedisClient();
 
-  if (process.env.NODE_ENV === "production") {
-    return new RedisStore({
-      sendCommand: (...args) => client.call(...args),
-    });
+  if (process.env.NODE_ENV === "production" && process.env.RENDER !== "true" && process.env.BYPASS_REDIS_CHECK !== "true") {
+    try {
+      const Store = RedisStore.default || RedisStore;
+      return new Store({
+        sendCommand: (...args) => client.call(...args),
+      });
+    } catch (err) {
+      console.warn("⚠️ Failed to initialize RedisStore, falling back to MemoryStore.");
+      return undefined;
+    }
   }
-  return undefined; // Default to MemoryStore in dev
+  return undefined; // Default to MemoryStore in dev or on Render
 };
 
 const commonOptions = {
