@@ -115,12 +115,12 @@ const runChecks = async () => {
     });
     console.log("✅ Redis Infrastructure Verified.");
   } catch (err) {
-    if (isProd) {
+    if (isProd && process.env.BYPASS_REDIS_CHECK !== "true" && process.env.RENDER !== "true") {
       console.error(`❌ CRITICAL: Redis Connection Failed: ${err.message}`);
       failed = true;
     } else {
       console.warn(
-        `⚠️  [DEVELOPMENT] Redis Connection Failed: ${err.message}. System will continue without Redis features.`,
+        `⚠️  [RENDER/DEVELOPMENT] Redis Connection Failed: ${err.message}. System will continue without Redis features.`,
       );
       redis.disconnect();
     }

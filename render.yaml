@@ -1,8 +1,4 @@
 services:
-  - type: redis
-    name: ecommerce-redis-305
-    ipAllowList: []
-
   - type: web
     name: ecommerce-backend-305
     runtime: node
@@ -24,16 +20,6 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: ecommerce-redis-305
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: ecommerce-redis-305
-          property: port
       - key: JWT_SECRET
         generateValue: true
       - key: SIGNATURE_KEY
