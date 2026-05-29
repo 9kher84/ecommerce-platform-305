@@ -431,7 +431,12 @@ RegionAssignment.belongsTo(User, { foreignKey: "assigned_by", as: "assigner" });
 
 const initSequelize = async () => {
   await sequelize.authenticate();
-  await sequelize.sync({ alter: false, force: false });
+  if (process.env.RENDER !== "true") {
+    // Only auto-sync in development. On Render, we use render-bootstrap.js
+    await sequelize.sync({ alter: false, force: false });
+  } else {
+    console.log("✅ Render environment detected. Skipping auto-sync on startup.");
+  }
 };
 
 // ============================================================
