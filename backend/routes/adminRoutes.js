@@ -1,7 +1,7 @@
 // routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
-const AdminController = require("../controllers/AdminController");
+const AdminController = require("../controllers/adminController");
 const { Invoice } = require("../sequelize_setup");
 const { appendEventLog } = require("../services/eventLogService");
 const { protect } = require("../middleware/authMiddleware");
@@ -228,7 +228,7 @@ router.post(
 );
 
 // 🔥 أدوات النظام الأخرى
-const systemController = require("../controllers/systemController");
+const systemController = require("../controllers/SystemController");
 router.post("/kill-switch", systemController.toggleKillSwitch);
 
 router.get("/logs", protect, hasPermission("view_logs"), (req, res) => {
