@@ -1,0 +1,75 @@
+databases:
+  - name: ecommerce-db-305
+    databaseName: ecommerce_305
+    user: ecommerce_user
+    plan: free
+
+services:
+  - type: redis
+    name: ecommerce-redis-305
+    plan: free
+
+  - type: web
+    name: ecommerce-backend-305
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: true
+      - key: DB_HOST
+        fromDatabase:
+          name: ecommerce-db-305
+          property: host
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        fromDatabase:
+          name: ecommerce-db-305
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: ecommerce-db-305
+          property: username
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: ecommerce-db-305
+          property: password
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: ecommerce-redis-305
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: ecommerce-redis-305
+          property: port
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SIGNATURE_KEY
+        generateValue: true
+      - key: OWNER_BOOTSTRAP_ENABLED
+        value: "false"
+      - key: OWNER_ID
+        sync: false
+      - key: DB_ENCRYPTION_KEY
+        sync: false
+
+  - type: web
+    name: ecommerce-frontend-305
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: build
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: ecommerce-backend-305
+          property: host
