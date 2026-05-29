@@ -60,9 +60,8 @@ services:
       - key: DB_ENCRYPTION_KEY
         sync: false
 
-  - type: web
+  - type: static
     name: ecommerce-frontend-305
-    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
