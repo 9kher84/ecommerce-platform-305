@@ -64,7 +64,7 @@ export const getSystemLockStatus = async () => {
   }
 };
 
-const ownerService = {
+export const ownerService = {
   ownerBootstrapLogin,
   getCommandData,
   getMatchRadar,
