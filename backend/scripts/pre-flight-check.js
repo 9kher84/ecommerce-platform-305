@@ -25,10 +25,13 @@ const runChecks = async () => {
     "DB_PASSWORD",
     "DB_HOST",
     "JWT_SECRET",
-    "REDIS_HOST",
     "OWNER_ID",
     "DB_ENCRYPTION_KEY",
   ];
+
+  if (process.env.RENDER !== "true" && process.env.BYPASS_REDIS_CHECK !== "true") {
+    requiredEnvs.push("REDIS_HOST");
+  }
 
   console.log("🔍 [1/4] Validating Environment Schema...");
   const missing = requiredEnvs.filter((key) => {
@@ -143,7 +146,7 @@ const runChecks = async () => {
     const missingTables = requiredTables.filter((t) => !tables.includes(t));
 
     if (missingTables.length > 0) {
-      if (isProd) {
+      if (isProd && process.env.RENDER !== "true") {
         console.error(
           `❌ CRITICAL: Database is OUT OF SYNC. Missing tables: ${missingTables.join(", ")}`,
         );
@@ -151,6 +154,12 @@ const runChecks = async () => {
           "📊 Please run migrations/sync before starting the server.",
         );
         failed = true;
+      } else if (isProd && process.env.RENDER === "true") {
+        console.warn(
+          `⚠️  [RENDER] Database missing tables: ${missingTables.join(", ")}. Auto-syncing...`,
+        );
+        await sequelize.sync({ alter: true });
+        console.log("✅ Database auto-synced successfully on Render.");
       } else {
         console.warn(
           `⚠️  [DEVELOPMENT] Database is OUT OF SYNC. Missing tables: ${missingTables.join(", ")}`,

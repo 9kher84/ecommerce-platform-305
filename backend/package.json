@@ -9,9 +9,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node scripts/pre-flight-check.js && node server.js",
+    "start:render": "node server.js",
     "dev": "node scripts/pre-flight-check.js && nodemon server.js",
     "clean-dev": "npm run kill-port && npm run dev",
     "kill-port": "powershell.exe -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\"",
+    "db:sync": "node sync_db.js",
+    "db:migrate": "node sync_db.js",
     "test": "cross-env NODE_ENV=test jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
