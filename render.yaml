@@ -8,6 +8,7 @@ services:
   - type: redis
     name: ecommerce-redis-305
     plan: free
+    ipAllowList: []
 
   - type: web
     name: ecommerce-backend-305
@@ -34,7 +35,7 @@ services:
       - key: DB_USER
         fromDatabase:
           name: ecommerce-db-305
-          property: username
+          property: user
       - key: DB_PASSWORD
         fromDatabase:
           name: ecommerce-db-305
