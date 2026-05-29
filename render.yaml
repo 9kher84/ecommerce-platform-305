@@ -7,13 +7,11 @@ databases:
 services:
   - type: redis
     name: ecommerce-redis-305
-    plan: free
     ipAllowList: []
 
   - type: web
     name: ecommerce-backend-305
     runtime: node
-    plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
@@ -64,7 +62,6 @@ services:
   - type: web
     name: ecommerce-frontend-305
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: build
