@@ -60,12 +60,13 @@ services:
       - key: DB_ENCRYPTION_KEY
         sync: false
 
-  - type: static
+  - type: web
     name: ecommerce-frontend-305
+    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishDir: build
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
         fromService:
