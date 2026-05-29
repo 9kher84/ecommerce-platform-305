@@ -49,6 +49,15 @@ const RFQsPage = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await apiService.getCategories();
+      setCategories(response.data || response || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -116,7 +125,7 @@ const RFQsPage = () => {
             <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
             <p className="text-gray-500">جاري تحميل الطلبات...</p>
           </div>
-        ) : filteredRFQs.length === 0 ? (
+        ) : rfqs.length === 0 ? (
           <div className="bg-white p-20 rounded-2xl shadow-sm text-center border-2 border-dashed border-gray-200">
             <Package className="w-20 h-20 mx-auto text-gray-200 mb-6" />
             <h3 className="text-xl font-bold text-gray-900">
