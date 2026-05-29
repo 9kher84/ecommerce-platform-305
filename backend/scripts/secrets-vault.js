@@ -36,6 +36,19 @@ const loadSecrets = async () => {
   try {
     console.log("🔐 Initializing Secrets from HashiCorp Vault...");
 
+    // Bypass Vault if running on Render or BYPASS_VAULT is set
+    if (process.env.RENDER === "true" || process.env.BYPASS_VAULT === "true") {
+      console.log("ℹ️  [RENDER/CLOUD] Skipping Vault connection. Using environment variables directly.");
+      const criticalKeys = ["JWT_SECRET", "DB_PASSWORD"];
+      const missing = criticalKeys.filter((k) => !process.env[k]);
+      if (missing.length > 0) {
+        console.error(`❌ Critical secrets missing in environment: ${missing.join(", ")}`);
+        process.exit(1);
+      }
+      console.log("✅ Environment Secrets verified present.");
+      return;
+    }
+
     // Check production requirements first
     ensureProductionSecrets();
 
