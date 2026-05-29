@@ -1,13 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const requestController = require('../controllers/requestController');
-const requestStatusController = require('../controllers/requestStatusController');
-const { protect, restrictTo } = require('../middleware/authMiddleware');
-const validateRequest = require('../middleware/validatorMiddleware');
-const { createRequestSchema } = require('../validators/requestValidators');
-const authorize = require('../middleware/authorize');
-const loadResource = require('../middleware/resourceLoader');
-const { PurchaseRequest } = require('../sequelize_setup');
+const requestController = require("../controllers/requestController");
+const requestStatusController = require("../controllers/requestStatusController");
+const { protect, restrictTo } = require("../middleware/authMiddleware");
+const validateRequest = require("../middleware/validatorMiddleware");
+const { createRequestSchema } = require("../validators/requestValidators");
+const authorize = require("../middleware/authorize");
+const loadResource = require("../middleware/resourceLoader");
+const { PurchaseRequest } = require("../sequelize_setup");
 
 // ============================================================
 // PURCHASE REQUEST ROUTES
@@ -37,12 +37,13 @@ const { PurchaseRequest } = require('../sequelize_setup');
  *       201:
  *         description: Request created
  */
-router.get('/', requestController.getAllRequests);
-router.post('/',
-    protect,
-    authorize('CREATE_REQUEST'), // Permission check only
-    validateRequest(createRequestSchema),
-    requestController.createRequest
+router.get("/", requestController.getAllRequests);
+router.post(
+  "/",
+  protect,
+  authorize("CREATE_REQUEST"), // Permission check only
+  validateRequest(createRequestSchema),
+  requestController.createRequest,
 );
 
 /**
@@ -57,10 +58,11 @@ router.post('/',
  *       200:
  *         description: User's requests
  */
-router.get('/my-requests',
-    protect,
-    authorize('VIEW_REQUESTS'),
-    requestController.getMyRequests
+router.get(
+  "/my-requests",
+  protect,
+  authorize("VIEW_REQUESTS"),
+  requestController.getMyRequests,
 );
 
 /**
@@ -75,10 +77,11 @@ router.get('/my-requests',
  *       200:
  *         description: Published requests
  */
-router.get('/published',
-    protect,
-    authorize(null, 'Request', 'viewPublished'),
-    requestController.getPublishedRequests
+router.get(
+  "/published",
+  protect,
+  authorize(null, "Request", "viewPublished"),
+  requestController.getPublishedRequests,
 );
 
 /**
@@ -113,18 +116,20 @@ router.get('/published',
  *       201:
  *         description: Quote submitted
  */
-router.get('/:id/quotes',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize('viewQuotes', 'Request'),
-    requestController.getRequestQuotes
+router.get(
+  "/:id/quotes",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize("viewQuotes", "Request"),
+  requestController.getRequestQuotes,
 );
 
-router.post('/:id/quotes',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize('CREATE_QUOTE', 'Request', 'submitQuote'),
-    requestController.submitQuoteForRequest
+router.post(
+  "/:id/quotes",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize("CREATE_QUOTE", "Request", "submitQuote"),
+  requestController.submitQuoteForRequest,
 );
 
 // ============================================================
@@ -158,11 +163,12 @@ router.post('/:id/quotes',
  *       200:
  *         description: Status updated
  */
-router.put('/:id/status',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'update'),
-    requestStatusController.updateRequestStatus
+router.put(
+  "/:id/status",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "update"),
+  requestStatusController.updateRequestStatus,
 );
 
 /**
@@ -183,11 +189,12 @@ router.put('/:id/status',
  *       200:
  *         description: Status history
  */
-router.get('/:id/status-history',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'view'),
-    requestStatusController.getStatusHistory
+router.get(
+  "/:id/status-history",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "view"),
+  requestStatusController.getStatusHistory,
 );
 
 /**
@@ -208,11 +215,12 @@ router.get('/:id/status-history',
  *       200:
  *         description: Allowed statuses
  */
-router.get('/:id/allowed-statuses',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'view'),
-    requestStatusController.getAllowedStatuses
+router.get(
+  "/:id/allowed-statuses",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "view"),
+  requestStatusController.getAllowedStatuses,
 );
 
 // ============================================================
@@ -263,13 +271,14 @@ router.get('/:id/allowed-statuses',
  *       200:
  *         description: Request cancelled
  */
-router.get('/:id', requestController.getRequestById);
+router.get("/:id", requestController.getRequestById);
 
-router.put('/:id',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'update'),
-    requestController.editRequest
+router.put(
+  "/:id",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "update"),
+  requestController.editRequest,
 );
 
 /**
@@ -290,11 +299,12 @@ router.put('/:id',
  *       200:
  *         description: Request published
  */
-router.post('/:id/publish',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'publish'),
-    requestController.publishRequest
+router.post(
+  "/:id/publish",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "publish"),
+  requestController.publishRequest,
 );
 
 /**
@@ -315,18 +325,20 @@ router.post('/:id/publish',
  *       200:
  *         description: Modification requested
  */
-router.post('/:id/request-modification',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'requestModification'),
-    requestController.requestModification
+router.post(
+  "/:id/request-modification",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "requestModification"),
+  requestController.requestModification,
 );
 
-router.delete('/:id',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'cancel'),
-    requestController.cancelRequest
+router.delete(
+  "/:id",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "cancel"),
+  requestController.cancelRequest,
 );
 
 /**
@@ -347,11 +359,43 @@ router.delete('/:id',
  *       200:
  *         description: Request reposted
  */
-router.post('/:id/repost',
-    protect,
-    loadResource(PurchaseRequest),
-    authorize(null, 'Request', 'repost'),
-    requestController.repostRequest
+router.post(
+  "/:id/repost",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "repost"),
+  requestController.repostRequest,
+);
+
+/**
+ * @swagger
+ * /api/requests/{id}/price-radar:
+ *   get:
+ *     summary: Get price radar statistics (Premium)
+ *     tags: [Requests]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Price radar stats
+ */
+router.get(
+  "/:id/price-radar",
+  protect,
+  // restrictTo('seller', 'admin'), // Buyer might want to see it too if Premium?
+  // Prompt said "Seller can see...". Let's restrict to seller/admin for now as per prompt implied context logic.
+  // Actually, Prompt said "make it available... check subscription...".
+  // I will allow 'seller' and 'admin'.
+  // restrictTo('seller', 'admin'), BUT restrictTo logic isn't strictly imported or configured here fully?
+  // restrictTo IS imported at line 5.
+  restrictTo("seller", "admin"),
+  requestController.getRadarData,
 );
 
 module.exports = router;

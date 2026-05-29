@@ -11,13 +11,12 @@
   },
   "test": {
     "username": "postgres",
-    "password": null,
-    "database": "ecommerce_test",
+    "password": "postgres",
+    "database": "ecommerce_db",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres",
-    "logging": false,
-    "use_env_variable": "DATABASE_URL"
+    "logging": false
   },
   "production": {
     "use_env_variable": "DATABASE_URL",

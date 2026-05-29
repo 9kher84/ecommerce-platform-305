@@ -1,4 +1,5 @@
 # ✅ COMMAND 3 - FINAL CLOSURE REPORT
+
 **التاريخ**: 2025-11-29  
 **الوقت**: 14:18 مساءً  
 **المرحلة**: إغلاق Command 3 - منطق حماية الملفات المرفقة
@@ -14,9 +15,11 @@
 ## ✅ **ما تم إنجازه**
 
 ### 1️⃣ **إنشاء نسخة احتياطية**
+
 - ✅ تم إنشاء `middleware/attachmentProtection.js.backup`
 
 ### 2️⃣ **تطبيق المنطق الصارم**
+
 - ✅ تم تحديث الـ Middleware بالشروط الخمسة المطلوبة
 - ✅ إضافة logging شامل لكل حالة
 - ✅ رسائل خطأ واضحة ومفصلة
@@ -37,50 +40,59 @@
 
 // ✅ CONDITION 1: المدير (admin / super_admin) - وصول كامل دائماً
 if (isAdmin) {
-    console.log(`✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 
 // ✅ CONDITION 2: المشتري صاحب الطلب - وصول كامل دائماً
 if (isOwner) {
-    console.log(`✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 
 // ✅ CONDITION 3: البائع الفائز (لديه عرض سعر مُقبول)
 // يجب التحقق من هذا أولاً قبل التحقق من الحالة العامة
 const winningQuote = await PriceQuote.findOne({
-    where: {
-        purchaseRequestId: requestId,
-        status: 'accepted'
-    }
+  where: {
+    purchaseRequestId: requestId,
+    status: "accepted",
+  },
 });
 
 if (winningQuote && user.id === winningQuote.sellerId) {
-    console.log(`✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 
 // ✅ CONDITION 4: الحالة العامة (published أو negotiating) - السماح لأي بائع
-if (['published', 'negotiating'].includes(requestStatus)) {
-    if (user.role === 'seller') {
-        console.log(`✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`);
-        return next();
-    }
-    
-    // رفض للمشترين الآخرين
-    return res.status(403).json({
-        success: false,
-        message: `❌ FORBIDDEN: Only sellers can view attachments for ${requestStatus} requests`
-    });
+if (["published", "negotiating"].includes(requestStatus)) {
+  if (user.role === "seller") {
+    console.log(
+      `✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`,
+    );
+    return next();
+  }
+
+  // رفض للمشترين الآخرين
+  return res.status(403).json({
+    success: false,
+    message: `❌ FORBIDDEN: Only sellers can view attachments for ${requestStatus} requests`,
+  });
 }
 
 // ❌ CONDITION 5: الرفض القاطع (HTTP 403 Forbidden)
 // جميع الحالات الأخرى، خاصةً accepted/completed/failed للبائعين غير الفائزين
 return res.status(403).json({
-    success: false,
-    message: `❌ FORBIDDEN: Attachments for ${requestStatus} requests are restricted. ` +
-             `Access is only allowed for: request owner, winning seller, or admin.`
+  success: false,
+  message:
+    `❌ FORBIDDEN: Attachments for ${requestStatus} requests are restricted. ` +
+    `Access is only allowed for: request owner, winning seller, or admin.`,
 });
 ```
 
@@ -92,14 +104,17 @@ return res.status(403).json({
 
 ```javascript
 if (isAdmin) {
-    console.log(`✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 ```
 
 **الوصف**: المدير (admin / super_admin) لديه وصول كامل دائماً بغض النظر عن حالة الطلب.
 
 **الحالات المسموح بها**:
+
 - ✅ جميع الحالات (draft, published, negotiating, accepted, completed, failed, cancelled)
 
 ---
@@ -108,14 +123,17 @@ if (isAdmin) {
 
 ```javascript
 if (isOwner) {
-    console.log(`✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 ```
 
 **الوصف**: المشتري الذي أنشأ الطلب (request.buyerId === user.id) لديه وصول كامل دائماً.
 
 **الحالات المسموح بها**:
+
 - ✅ جميع الحالات
 
 ---
@@ -124,21 +142,24 @@ if (isOwner) {
 
 ```javascript
 const winningQuote = await PriceQuote.findOne({
-    where: {
-        purchaseRequestId: requestId,
-        status: 'accepted'
-    }
+  where: {
+    purchaseRequestId: requestId,
+    status: "accepted",
+  },
 });
 
 if (winningQuote && user.id === winningQuote.sellerId) {
-    console.log(`✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`);
-    return next();
+  console.log(
+    `✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`,
+  );
+  return next();
 }
 ```
 
 **الوصف**: البائع الذي لديه عرض سعر مُقبول (quote.status === 'accepted') على هذا الطلب.
 
 **الحالات المسموح بها**:
+
 - ✅ جميع الحالات (خاصةً accepted, completed, failed)
 
 **ملاحظة مهمة**: يتم التحقق من هذا الشرط **قبل** التحقق من الحالة العامة، لضمان وصول البائع الفائز حتى بعد قبول العرض.
@@ -148,30 +169,35 @@ if (winningQuote && user.id === winningQuote.sellerId) {
 ### ✅ **CONDITION 4: الحالة العامة (published أو negotiating)**
 
 ```javascript
-if (['published', 'negotiating'].includes(requestStatus)) {
-    if (user.role === 'seller') {
-        console.log(`✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`);
-        return next();
-    }
-    
-    // رفض للمشترين الآخرين
-    return res.status(403).json({
-        success: false,
-        message: `❌ FORBIDDEN: Only sellers can view attachments for ${requestStatus} requests`
-    });
+if (["published", "negotiating"].includes(requestStatus)) {
+  if (user.role === "seller") {
+    console.log(
+      `✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`,
+    );
+    return next();
+  }
+
+  // رفض للمشترين الآخرين
+  return res.status(403).json({
+    success: false,
+    message: `❌ FORBIDDEN: Only sellers can view attachments for ${requestStatus} requests`,
+  });
 }
 ```
 
 **الوصف**: عندما يكون الطلب في حالة `published` أو `negotiating`، يُسمح لأي بائع موثق بالوصول إلى المرفقات.
 
 **الحالات المسموح بها**:
+
 - ✅ `published` - الطلب منشور ويقبل العروض
 - ✅ `negotiating` - الطلب في مرحلة التفاوض
 
 **من يُسمح له**:
+
 - ✅ أي بائع (user.role === 'seller')
 
 **من يُرفض**:
+
 - ❌ المشترين الآخرين (ليسوا أصحاب الطلب)
 - ❌ الزوار غير المسجلين
 
@@ -181,15 +207,17 @@ if (['published', 'negotiating'].includes(requestStatus)) {
 
 ```javascript
 return res.status(403).json({
-    success: false,
-    message: `❌ FORBIDDEN: Attachments for ${requestStatus} requests are restricted. ` +
-             `Access is only allowed for: request owner, winning seller, or admin.`
+  success: false,
+  message:
+    `❌ FORBIDDEN: Attachments for ${requestStatus} requests are restricted. ` +
+    `Access is only allowed for: request owner, winning seller, or admin.`,
 });
 ```
 
 **الوصف**: جميع الحالات الأخرى يتم رفضها بشكل قاطع مع HTTP 403 Forbidden.
 
 **الحالات المرفوضة**:
+
 - ❌ `draft` - للبائعين (الطلب لم يُنشر بعد)
 - ❌ `accepted` - للبائعين غير الفائزين
 - ❌ `completed` - للبائعين غير الفائزين
@@ -204,24 +232,24 @@ return res.status(403).json({
 
 ### ✅ **السيناريوهات المسموح بها**
 
-| المستخدم | الحالة | النتيجة | الشرط المطبق |
-|----------|--------|---------|--------------|
-| Admin | أي حالة | ✅ مسموح | CONDITION 1 |
-| Request Owner | أي حالة | ✅ مسموح | CONDITION 2 |
-| Winning Seller | accepted | ✅ مسموح | CONDITION 3 |
-| Winning Seller | completed | ✅ مسموح | CONDITION 3 |
-| Any Seller | published | ✅ مسموح | CONDITION 4 |
-| Any Seller | negotiating | ✅ مسموح | CONDITION 4 |
+| المستخدم       | الحالة      | النتيجة  | الشرط المطبق |
+| -------------- | ----------- | -------- | ------------ |
+| Admin          | أي حالة     | ✅ مسموح | CONDITION 1  |
+| Request Owner  | أي حالة     | ✅ مسموح | CONDITION 2  |
+| Winning Seller | accepted    | ✅ مسموح | CONDITION 3  |
+| Winning Seller | completed   | ✅ مسموح | CONDITION 3  |
+| Any Seller     | published   | ✅ مسموح | CONDITION 4  |
+| Any Seller     | negotiating | ✅ مسموح | CONDITION 4  |
 
 ### ❌ **السيناريوهات الممنوعة**
 
-| المستخدم | الحالة | النتيجة | رسالة الخطأ |
-|----------|--------|---------|-------------|
-| Other Buyer | published | ❌ ممنوع | "Only sellers can view attachments for published requests" |
-| Non-winning Seller | accepted | ❌ ممنوع | "Attachments for accepted requests are restricted..." |
-| Non-winning Seller | completed | ❌ ممنوع | "Attachments for completed requests are restricted..." |
-| Any Seller | draft | ❌ ممنوع | "Attachments for draft requests are restricted..." |
-| Guest | أي حالة | ❌ ممنوع | "Authentication required to access attachments" |
+| المستخدم           | الحالة    | النتيجة  | رسالة الخطأ                                                |
+| ------------------ | --------- | -------- | ---------------------------------------------------------- |
+| Other Buyer        | published | ❌ ممنوع | "Only sellers can view attachments for published requests" |
+| Non-winning Seller | accepted  | ❌ ممنوع | "Attachments for accepted requests are restricted..."      |
+| Non-winning Seller | completed | ❌ ممنوع | "Attachments for completed requests are restricted..."     |
+| Any Seller         | draft     | ❌ ممنوع | "Attachments for draft requests are restricted..."         |
+| Guest              | أي حالة   | ❌ ممنوع | "Authentication required to access attachments"            |
 
 ---
 
@@ -285,40 +313,52 @@ return res.status(403).json({
 ## 🔐 **الأمان والحماية**
 
 ### 1️⃣ **التحقق من المصادقة**
+
 ```javascript
 if (!user) {
-    return res.status(401).json({ 
-        success: false, 
-        message: 'Authentication required to access attachments' 
-    });
+  return res.status(401).json({
+    success: false,
+    message: "Authentication required to access attachments",
+  });
 }
 ```
 
 ### 2️⃣ **التحقق من وجود المرفق والطلب**
+
 ```javascript
 if (!attachment || !attachment.purchaseRequestId) {
-    return res.status(404).json({ 
-        success: false, 
-        message: 'Attachment or associated request not found' 
-    });
+  return res.status(404).json({
+    success: false,
+    message: "Attachment or associated request not found",
+  });
 }
 ```
 
 ### 3️⃣ **Logging شامل**
+
 ```javascript
-console.log(`✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`);
-console.log(`✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`);
-console.log(`✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`);
-console.log(`✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`);
+console.log(
+  `✅ [Attachment Access] Admin ${user.id} accessing attachment ${attachmentId}`,
+);
+console.log(
+  `✅ [Attachment Access] Request owner ${user.id} accessing attachment ${attachmentId}`,
+);
+console.log(
+  `✅ [Attachment Access] Winning seller ${user.id} accessing attachment ${attachmentId}`,
+);
+console.log(
+  `✅ [Attachment Access] Seller ${user.id} accessing attachment for ${requestStatus} request`,
+);
 ```
 
 ### 4️⃣ **معالجة الأخطاء**
+
 ```javascript
 } catch (error) {
     console.error('Error in attachment protection middleware:', error);
-    return res.status(500).json({ 
-        success: false, 
-        message: 'Internal server error' 
+    return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
     });
 }
 ```
@@ -327,9 +367,9 @@ console.log(`✅ [Attachment Access] Seller ${user.id} accessing attachment for 
 
 ## 📁 **الملفات المعدلة**
 
-| الملف | الحالة | الملاحظات |
-|------|--------|-----------|
-| `middleware/attachmentProtection.js` | ✅ محدث | 97 سطر، 4.5 KB |
+| الملف                                       | الحالة           | الملاحظات      |
+| ------------------------------------------- | ---------------- | -------------- |
+| `middleware/attachmentProtection.js`        | ✅ محدث          | 97 سطر، 4.5 KB |
 | `middleware/attachmentProtection.js.backup` | ✅ نسخة احتياطية | النسخة الأصلية |
 
 ---
@@ -339,12 +379,13 @@ console.log(`✅ [Attachment Access] Seller ${user.id} accessing attachment for 
 ### **في Routes**
 
 ```javascript
-const { protectAttachment } = require('../middleware/attachmentProtection');
+const { protectAttachment } = require("../middleware/attachmentProtection");
 
-router.get('/:id',
-    protect,            // التحقق من المصادقة
-    protectAttachment,  // تطبيق منطق الصلاحيات المعقد (Command 3)
-    attachmentController.getAttachment
+router.get(
+  "/:id",
+  protect, // التحقق من المصادقة
+  protectAttachment, // تطبيق منطق الصلاحيات المعقد (Command 3)
+  attachmentController.getAttachment,
 );
 ```
 
@@ -360,6 +401,7 @@ router.get('/:id',
 ## ✅ **الخلاصة**
 
 ### **تم بنجاح**
+
 - ✅ إنشاء نسخة احتياطية من الملف
 - ✅ تطبيق الشروط الخمسة الصارمة
 - ✅ إضافة logging شامل
@@ -367,12 +409,14 @@ router.get('/:id',
 - ✅ لا توجد أخطاء syntax
 
 ### **الإثباتات المقدمة**
+
 - ✅ المقتطف الكامل للمنطق (السطور 38-88)
 - ✅ شرح تفصيلي لكل شرط
 - ✅ Flow chart لمنطق اتخاذ القرار
 - ✅ سيناريوهات الاختبار
 
 ### **الجاهزية**
+
 - ✅ الملف جاهز للاستخدام الفوري
 - ✅ متوافق مع routes/attachmentRoutes.js
 - ✅ يحمي المرفقات بشكل صارم
@@ -382,6 +426,7 @@ router.get('/:id',
 ## 📝 **الخطوات التالية المقترحة**
 
 ### 1️⃣ **اختبار شامل**
+
 ```bash
 # Test scenarios:
 1. Admin accessing any attachment → Should succeed
@@ -393,10 +438,12 @@ router.get('/:id',
 ```
 
 ### 2️⃣ **Frontend Integration**
+
 - عرض رسائل خطأ واضحة للمستخدم
 - إخفاء روابط المرفقات للمستخدمين غير المصرح لهم
 
 ### 3️⃣ **Monitoring & Logging**
+
 - مراقبة محاولات الوصول المرفوضة
 - تنبيهات للمحاولات المشبوهة
 
@@ -404,13 +451,13 @@ router.get('/:id',
 
 ## ⏱️ **الإحصائيات**
 
-| المقياس | القيمة |
-|---------|--------|
-| الوقت المستغرق | ~5 دقائق |
-| عدد الأسطر | 97 سطر |
-| حجم الملف | 4.5 KB |
-| التعقيد | عالي (8/10) |
-| Syntax Errors | 0 ✅ |
+| المقياس        | القيمة      |
+| -------------- | ----------- |
+| الوقت المستغرق | ~5 دقائق    |
+| عدد الأسطر     | 97 سطر      |
+| حجم الملف      | 4.5 KB      |
+| التعقيد        | عالي (8/10) |
+| Syntax Errors  | 0 ✅        |
 
 ---
 

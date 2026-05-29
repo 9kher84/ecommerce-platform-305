@@ -1,76 +1,58 @@
-module.exports = (sequelize, DataTypes) => {
-    const AuditLog = sequelize.define('AuditLog', {
-        id: {
-            type: DataTypes.UUID,
-            defaultValue: DataTypes.UUIDV4,
-            primaryKey: true,
-        },
-        userId: {
-            type: DataTypes.UUID,
-            allowNull: true, // Can be null for system events
-        },
-        action: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        details: {
-            type: DataTypes.JSON,
-            allowNull: true,
-        },
-        ipAddress: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        userAgent: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        resourceId: {
-            type: DataTypes.STRING, // ID of the resource being affected (e.g., Deal ID)
-            allowNull: true,
-        },
-        resourceType: {
-            type: DataTypes.STRING, // e.g., 'Deal', 'User', 'Payment'
-            allowNull: true,
-        },
-        context: {
-            type: DataTypes.JSONB,
-            allowNull: true,
-            comment: 'Context snapshot (City/Region) at time of action'
-        },
-        actorId: {
-            type: DataTypes.UUID,
-            allowNull: true,
-            comment: 'The actual user performing the action (Delegate)'
-        },
-        principalId: {
-            type: DataTypes.UUID,
-            allowNull: true,
-            comment: 'The user whose authority is being exercised (Owner)'
-        },
-        delegationId: {
-            type: DataTypes.UUID,
-            allowNull: true,
-            comment: 'Reference to the delegation record used (if any)'
-        },
-        targetType: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        targetId: {
-            type: DataTypes.UUID,
-            allowNull: true
-        }
-    }, {
-        tableName: 'audit_logs',
-        timestamps: true,
-        updatedAt: false, // Immutable: No updates allowed
-        hooks: {
-            beforeUpdate: (record, options) => {
-                throw new Error('Audit logs are immutable and cannot be updated.');
-            }
-        }
-    });
+const { DataTypes } = require("sequelize");
 
-    return AuditLog;
+module.exports = (sequelize) => {
+  return sequelize.define(
+    "AuditLog",
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      user_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      organization_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      action: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      entity_type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      entity_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      old_data: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+      new_data: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+      ip_address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      user_agent: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+    },
+    {
+      tableName: "audit_logs",
+      timestamps: false,
+    },
+  );
 };

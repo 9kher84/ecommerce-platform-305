@@ -1,6 +1,6 @@
-const bcrypt = require('bcrypt');
-const asyncHandler = require('express-async-handler');
-const { User } = require('../sequelize_setup');
+const bcrypt = require("bcrypt");
+const asyncHandler = require("express-async-handler");
+const { User } = require("../sequelize_setup");
 
 // ----------------------------------------------------------------------
 // 1. الوظائف الأساسية (جلب وتحديث الملف الشخصي)
@@ -12,36 +12,36 @@ const { User } = require('../sequelize_setup');
  * @access محمي
  */
 exports.getUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.user.id, {
-        attributes: { exclude: ['password', 'emailVerificationToken', 'newEmail'] }
-    });
+  const user = await User.findByPk(req.user.id, {
+    attributes: { exclude: ["password", "emailVerificationToken", "newEmail"] },
+  });
 
-    if (user) {
-        res.status(200).json({
-            success: true,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                mobile: user.mobile,
-                businessName: user.businessName,
-                jobTitle: user.jobTitle,
-                commercialRegister: user.commercialRegister,
-                city: user.city,
-                role: user.role,
-                subscriptionTier: user.subscriptionTier,
-                registrationDate: user.createdAt,
-                publishedRequestsCount: user.publishedRequestsCount,
-                buyerRating: user.buyerRating,
-                completedDealsCount: user.completedDealsCount,
-                notificationSettings: user.notificationSettings,
-                rank: user.rank
-            }
-        });
-    } else {
-        res.status(404);
-        throw new Error('لم يتم العثور على المستخدم.');
-    }
+  if (user) {
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        businessName: user.businessName,
+        jobTitle: user.jobTitle,
+        commercialRegister: user.commercialRegister,
+        city: user.city,
+        role: user.role,
+        subscriptionTier: user.subscriptionTier,
+        registrationDate: user.createdAt,
+        publishedRequestsCount: user.publishedRequestsCount,
+        buyerRating: user.buyerRating,
+        completedDealsCount: user.completedDealsCount,
+        notificationSettings: user.notificationSettings,
+        rank: user.rank,
+      },
+    });
+  } else {
+    res.status(404);
+    throw new Error("لم يتم العثور على المستخدم.");
+  }
 });
 
 /**
@@ -50,37 +50,38 @@ exports.getUserProfile = asyncHandler(async (req, res) => {
  * @access محمي
  */
 exports.updateUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.user.id);
+  const user = await User.findByPk(req.user.id);
 
-    // استدعاء الـ DTO لمرة واحدة فقط لتطهير البيانات (Sanitization)
-    const UserUpdateDTO = require('../dto/UserUpdateDTO');
-    const updateDto = new UserUpdateDTO(req.body);
+  // استدعاء الـ DTO لمرة واحدة فقط لتطهير البيانات (Sanitization)
+  const UserUpdateDTO = require("../dto/UserUpdateDTO");
+  const updateDto = new UserUpdateDTO(req.body);
 
-    // تنفيذ الفحص الأمني ومنع تمرير أي حقول غير مصرح بها (الخط الأحمر للقيادة)
-    const { valid, sanitizedData, illegalFields } = updateDto.validate();
+  // تنفيذ الفحص الأمني ومنع تمرير أي حقول غير مصرح بها (الخط الأحمر للقيادة)
+  const { valid, sanitizedData, illegalFields } = updateDto.validate();
 
-    if (user) {
-        // تحديث الحقول المسموح بها فقط بعد التطهير
-        if (sanitizedData.name) user.name = sanitizedData.name;
-        if (sanitizedData.mobile) user.mobile = sanitizedData.mobile;
-        if (sanitizedData.businessName) user.businessName = sanitizedData.businessName;
-        if (sanitizedData.jobTitle) user.jobTitle = sanitizedData.jobTitle;
-        if (sanitizedData.commercialRegister) user.commercialRegister = sanitizedData.commercialRegister;
-        if (sanitizedData.city) user.city = sanitizedData.city;
+  if (user) {
+    // تحديث الحقول المسموح بها فقط بعد التطهير
+    if (sanitizedData.name) user.name = sanitizedData.name;
+    if (sanitizedData.mobile) user.mobile = sanitizedData.mobile;
+    if (sanitizedData.businessName)
+      user.businessName = sanitizedData.businessName;
+    if (sanitizedData.jobTitle) user.jobTitle = sanitizedData.jobTitle;
+    if (sanitizedData.commercialRegister)
+      user.commercialRegister = sanitizedData.commercialRegister;
+    if (sanitizedData.city) user.city = sanitizedData.city;
 
-        // ... تكملة منطق حفظ البيانات وحماية كلمة المرور
-        await user.save();
+    // ... تكملة منطق حفظ البيانات وحماية كلمة المرور
+    await user.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'تم تحديث الملف الشخصي بنجاح وتطبيق فلاتر التطهير المركزية.'
-        });
-    } else {
-        res.status(404);
-        throw new Error('المستخدم غير موجود.');
-    }
+    res.status(200).json({
+      success: true,
+      message: "تم تحديث الملف الشخصي بنجاح وتطبيق فلاتر التطهير المركزية.",
+    });
+  } else {
+    res.status(404);
+    throw new Error("المستخدم غير موجود.");
+  }
 });
-
 
 // ----------------------------------------------------------------------
 // 2. وظائف المسؤول (Admin) - إدارة جميع المستخدمين
@@ -92,26 +93,26 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
  * @access محمي / مقيد للمسؤولين فقط
  */
 exports.getAllUsers = asyncHandler(async (req, res) => {
-    // 🛡️ D.1 Query Lockdown: Enforce Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // Strict Max 100
-    const offset = (page - 1) * limit;
+  // 🛡️ D.1 Query Lockdown: Enforce Pagination
+  const page = parseInt(req.query.page) || 1;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // Strict Max 100
+  const offset = (page - 1) * limit;
 
-    const { count, rows } = await User.findAndCountAll({
-        attributes: { exclude: ['password'] },
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset
-    });
+  const { count, rows } = await User.findAndCountAll({
+    attributes: { exclude: ["password"] },
+    order: [["createdAt", "DESC"]],
+    limit,
+    offset,
+  });
 
-    res.status(200).json({
-        success: true,
-        count: rows.length,
-        total: count,
-        page,
-        totalPages: Math.ceil(count / limit),
-        users: rows
-    });
+  res.status(200).json({
+    success: true,
+    count: rows.length,
+    total: count,
+    page,
+    totalPages: Math.ceil(count / limit),
+    users: rows,
+  });
 });
 
 /**
@@ -120,16 +121,16 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
  * @access محمي / مقيد للمسؤولين فقط
  */
 exports.getUserById = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.params.id, {
-        attributes: { exclude: ['password'] }
-    });
+  const user = await User.findByPk(req.params.id, {
+    attributes: { exclude: ["password"] },
+  });
 
-    if (user) {
-        res.status(200).json({ success: true, user });
-    } else {
-        res.status(404);
-        throw new Error('لم يتم العثور على المستخدم.');
-    }
+  if (user) {
+    res.status(200).json({ success: true, user });
+  } else {
+    res.status(404);
+    throw new Error("لم يتم العثور على المستخدم.");
+  }
 });
 
 /**
@@ -138,53 +139,68 @@ exports.getUserById = asyncHandler(async (req, res) => {
  * @access محمي / مقيد للمسؤولين فقط
  */
 exports.updateUserById = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.params.id);
-    const { name, email, role, isActive, subscriptionTier } = req.body;
+  const user = await User.findByPk(req.params.id);
+  const { name, email, role, isActive, subscriptionTier } = req.body;
 
-    if (user) {
-        user.name = name || user.name;
-        user.email = email || user.email;
+  if (user) {
+    user.name = name || user.name;
+    user.email = email || user.email;
 
-        if (req.user.role === 'super_admin' && role) {
-            user.role = role;
-        }
-
-        if (isActive !== undefined) {
-            if (user.id === req.user.id) {
-                res.status(400);
-                throw new Error('لا يمكنك تعطيل حسابك الخاص.');
-            }
-            user.isActive = isActive;
-        }
-
-        if (subscriptionTier) {
-            if (['free', 'plan_a', 'plan_b'].includes(subscriptionTier)) {
-                user.subscriptionTier = subscriptionTier;
-            } else {
-                res.status(400);
-                throw new Error('خطة اشتراك غير صالحة');
-            }
-        }
-
-        await user.save();
-
-        res.status(200).json({
-            success: true,
-            message: `تم تحديث المستخدم ${user.id} بنجاح.`,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                isActive: user.isActive,
-                subscriptionTier: user.subscriptionTier
-            }
-        });
-
-    } else {
-        res.status(404);
-        throw new Error('لم يتم العثور على المستخدم.');
+    if (req.user.role === "super_admin" && role) {
+      user.role = role;
     }
+
+    if (isActive !== undefined) {
+      if (user.id === req.user.id) {
+        res.status(400);
+        throw new Error("لا يمكنك تعطيل حسابك الخاص.");
+      }
+      user.isActive = isActive;
+    }
+
+    if (subscriptionTier) {
+      if (["free", "plan_a", "plan_b"].includes(subscriptionTier)) {
+        user.subscriptionTier = subscriptionTier;
+      } else {
+        res.status(400);
+        throw new Error("خطة اشتراك غير صالحة");
+      }
+    }
+
+    await user.save();
+
+    try {
+      const { AuditLog } = require("../sequelize_setup");
+      await AuditLog.create({
+        user_id: req.user.id,
+        organization_id: req.user.organization_id || null,
+        action: "USER_RESTRICTION_CHANGE",
+        entity_type: "User",
+        entity_id: user.id,
+        new_data: {
+          isActive: user.isActive,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier,
+        },
+      });
+    } catch (e) {}
+
+    res.status(200).json({
+      success: true,
+      message: `تم تحديث المستخدم ${user.id} بنجاح.`,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        subscriptionTier: user.subscriptionTier,
+      },
+    });
+  } else {
+    res.status(404);
+    throw new Error("لم يتم العثور على المستخدم.");
+  }
 });
 
 /**
@@ -193,18 +209,20 @@ exports.updateUserById = asyncHandler(async (req, res) => {
  * @access محمي / مقيد للمسؤولين فقط
  */
 exports.deleteUser = asyncHandler(async (req, res) => {
-    const user = await User.findByPk(req.params.id);
+  const user = await User.findByPk(req.params.id);
 
-    if (user) {
-        if (user.role === 'admin' && req.user.role !== 'super_admin') {
-            res.status(403);
-            throw new Error('غير مصرح لك: المسؤولون العاديون لا يمكنهم حذف مسؤولين آخرين.');
-        }
-
-        await user.destroy();
-        res.status(200).json({ success: true, message: 'تم حذف المستخدم بنجاح.' });
-    } else {
-        res.status(404);
-        throw new Error('لم يتم العثور على المستخدم.');
+  if (user) {
+    if (user.role === "admin" && req.user.role !== "super_admin") {
+      res.status(403);
+      throw new Error(
+        "غير مصرح لك: المسؤولون العاديون لا يمكنهم حذف مسؤولين آخرين.",
+      );
     }
+
+    await user.destroy();
+    res.status(200).json({ success: true, message: "تم حذف المستخدم بنجاح." });
+  } else {
+    res.status(404);
+    throw new Error("لم يتم العثور على المستخدم.");
+  }
 });

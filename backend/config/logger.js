@@ -1,9 +1,21 @@
-const logger = {
-    info: (msg) => console.log(`[INFO] ${new Date().toISOString()}: ${msg}`),
-    warn: (msg) => console.warn(`[WARN] ${new Date().toISOString()}: ${msg}`),
-    error: (msg) => console.error(`[ERROR] ${new Date().toISOString()}: ${msg}`),
-    fatal: (msg) => console.error(`[FATAL] ${new Date().toISOString()}: ${msg}`),
-    debug: (msg) => console.debug(`[DEBUG] ${new Date().toISOString()}: ${msg}`)
-};
+const winston = require("winston");
+require("winston-daily-rotate-file");
+
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.DailyRotateFile({
+      filename: "logs/app-%DATE%.log",
+      datePattern: "YYYY-MM-DD",
+      maxSize: "20m",
+      maxFiles: "14d",
+    }),
+  ],
+});
 
 module.exports = logger;

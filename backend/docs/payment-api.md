@@ -1,6 +1,7 @@
 # Payment System API Documentation 📚
 
 ## Overview
+
 Complete RESTful API for payment processing with PCI DSS compliance.
 
 **Base URL:** `/api/payment`  
@@ -11,21 +12,24 @@ Complete RESTful API for payment processing with PCI DSS compliance.
 ## Endpoints
 
 ### 1. Initiate Payment
+
 **POST** `/initiate`
 
 Initiates a new payment transaction.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "dealId": 123,
-  "amount": 1500.00,
+  "amount": 1500.0,
   "currency": "SAR",
   "paymentGateway": "mada",
   "paymentMethodId": "uuid-optional",
@@ -36,6 +40,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -43,7 +48,7 @@ Content-Type: application/json
   "transaction": {
     "id": "uuid",
     "transactionId": "txn_timestamp_random",
-    "amount": 1500.00,
+    "amount": 1500.0,
     "currency": "SAR",
     "status": "pending",
     "gateway": "mada"
@@ -56,16 +61,19 @@ Content-Type: application/json
 ---
 
 ### 2. Process Payment
+
 **POST** `/process/:transactionId`
 
 Processes a payment after gateway callback.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "gatewayResponse": {
@@ -76,6 +84,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -94,23 +103,26 @@ Authorization: Bearer <jwt_token>
 ---
 
 ### 3. Get Payment Status
+
 **GET** `/status/:transactionId`
 
 Retrieves the current status of a payment transaction.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
   "transaction": {
     "id": "uuid",
     "transactionId": "txn_...",
-    "amount": 1500.00,
+    "amount": 1500.0,
     "currency": "SAR",
     "status": "completed",
     "gateway": "mada",
@@ -118,7 +130,7 @@ Authorization: Bearer <jwt_token>
     "completedAt": "2025-11-23T23:00:00Z",
     "deal": {
       "id": 123,
-      "finalAmount": 1500.00
+      "finalAmount": 1500.0
     }
   }
 }
@@ -127,16 +139,19 @@ Authorization: Bearer <jwt_token>
 ---
 
 ### 4. Cancel Payment
+
 **POST** `/cancel/:transactionId`
 
 Cancels a pending payment transaction.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -152,17 +167,20 @@ Authorization: Bearer <jwt_token>
 ---
 
 ### 5. Save Payment Method
+
 **POST** `/methods`
 
 Saves a tokenized payment method for future use.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "type": "card",
@@ -178,6 +196,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -196,16 +215,19 @@ Content-Type: application/json
 ---
 
 ### 6. Get Payment Methods
+
 **GET** `/methods`
 
 Retrieves all active payment methods for the user.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -229,16 +251,19 @@ Authorization: Bearer <jwt_token>
 ---
 
 ### 7. Delete Payment Method
+
 **DELETE** `/methods/:id`
 
 Soft deletes a payment method.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -249,17 +274,20 @@ Authorization: Bearer <jwt_token>
 ---
 
 ### 8. Payment Webhook
+
 **POST** `/webhook`
 
 Receives callbacks from payment gateways.
 
 **Headers:**
+
 ```
 X-Payment-Signature: <hmac_signature>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "gateway": "mada",
@@ -272,6 +300,7 @@ Content-Type: application/json
 ```
 
 **Response (200):**
+
 ```json
 {
   "received": true,
@@ -286,6 +315,7 @@ Content-Type: application/json
 ## Error Responses
 
 ### 400 Bad Request
+
 ```json
 {
   "success": false,
@@ -294,6 +324,7 @@ Content-Type: application/json
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "success": false,
@@ -302,6 +333,7 @@ Content-Type: application/json
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "success": false,
@@ -310,6 +342,7 @@ Content-Type: application/json
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "success": false,
@@ -318,6 +351,7 @@ Content-Type: application/json
 ```
 
 ### 429 Too Many Requests
+
 ```json
 {
   "success": false,
@@ -326,6 +360,7 @@ Content-Type: application/json
 ```
 
 ### 503 Service Unavailable
+
 ```json
 {
   "success": false,
@@ -337,30 +372,34 @@ Content-Type: application/json
 
 ## Transaction Statuses
 
-| Status | Description |
-|--------|-------------|
-| `pending` | Payment initiated, awaiting processing |
-| `processing` | Being processed by gateway |
-| `completed` | Successfully completed |
-| `failed` | Payment failed |
-| `cancelled` | Cancelled by user |
-| `refunded` | Payment refunded |
+| Status       | Description                            |
+| ------------ | -------------------------------------- |
+| `pending`    | Payment initiated, awaiting processing |
+| `processing` | Being processed by gateway             |
+| `completed`  | Successfully completed                 |
+| `failed`     | Payment failed                         |
+| `cancelled`  | Cancelled by user                      |
+| `refunded`   | Payment refunded                       |
 
 ---
 
 ## Security
 
 ### Authentication
+
 All endpoints (except webhook) require JWT authentication via Bearer token.
 
 ### Rate Limiting
+
 - Payment operations: 5 requests / 15 minutes
 - Webhooks: 20 requests / 1 minute
 
 ### Webhook Verification
+
 Webhooks must include valid HMAC-SHA256 signature in `X-Payment-Signature` header.
 
 ### PCI DSS Compliance
+
 - NO card numbers stored
 - All sensitive data encrypted (AES-256-GCM)
 - Tokenization for payment methods
@@ -371,6 +410,7 @@ Webhooks must include valid HMAC-SHA256 signature in `X-Payment-Signature` heade
 ## Examples
 
 ### cURL Example
+
 ```bash
 curl -X POST https://api.example.com/api/payment/initiate \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -384,19 +424,20 @@ curl -X POST https://api.example.com/api/payment/initiate \
 ```
 
 ### JavaScript Example
+
 ```javascript
-const response = await fetch('/api/payment/initiate', {
-  method: 'POST',
+const response = await fetch("/api/payment/initiate", {
+  method: "POST",
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
     dealId: 123,
-    amount: 1500.00,
-    currency: 'SAR',
-    paymentGateway: 'mada'
-  })
+    amount: 1500.0,
+    currency: "SAR",
+    paymentGateway: "mada",
+  }),
 });
 
 const data = await response.json();

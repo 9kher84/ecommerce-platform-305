@@ -10,6 +10,7 @@
 أثناء محاولة تطبيق **Command 2 (Strict Status Transition Logic)**، تعرض ملف `services/requestService.js` للتلف بسبب خطأ في عملية الاستبدال.
 
 ### الملفات المتأثرة:
+
 - ✅ `services/requestService.js` - **تالف** (يحتاج إلى استعادة)
 - ✅ `services/requestService.js.backup` - **تالف أيضاً** (نفس المشكلة)
 
@@ -22,6 +23,7 @@
 يجب استعادة ملف `services/requestService.js` من نسخة احتياطية صحيحة. إذا لم تكن متوفرة، يجب إعادة إنشاء الملف.
 
 **الخيارات**:
+
 1. استعادة من version control (إن وُجد)
 2. استعادة من نسخة احتياطية خارجية
 3. إعادة كتابة الملف من الصفر (غير مستحسن)
@@ -37,10 +39,16 @@
 في **بداية الملف** (بعد الـ imports وقبل تعريف الـ class):
 
 ```javascript
-const { PurchaseRequest, User, Category, Deal, PriceQuote } = require('../sequelize_setup');
-const SubscriptionService = require('./subscriptionService');
-const StatusTransitionService = require('./statusTransitionService');
-const { Op } = require('sequelize');
+const {
+  PurchaseRequest,
+  User,
+  Category,
+  Deal,
+  PriceQuote,
+} = require("../sequelize_setup");
+const SubscriptionService = require("./subscriptionService");
+const StatusTransitionService = require("./statusTransitionService");
+const { Op } = require("sequelize");
 
 /**
  * ========================================================================
@@ -51,24 +59,24 @@ const { Op } = require('sequelize');
  * المدير (admin) فقط يمكنه تجاوز هذه القيود
  */
 const STATUS_TRANSITIONS = {
-    'draft': ['published', 'cancelled'],
-    'published': ['negotiating', 'cancelled'],
-    'negotiating': ['accepted', 'cancelled'],
-    'accepted': ['completed', 'failed', 'cancelled'],
-    // الحالات النهائية - لا يمكن التحويل منها
-    'completed': [],
-    'failed': [],
-    'cancelled': []
+  draft: ["published", "cancelled"],
+  published: ["negotiating", "cancelled"],
+  negotiating: ["accepted", "cancelled"],
+  accepted: ["completed", "failed", "cancelled"],
+  // الحالات النهائية - لا يمكن التحويل منها
+  completed: [],
+  failed: [],
+  cancelled: [],
 };
 
 /**
  * RequestService
- * 
+ *
  * Manages purchase requests (buyers posting what they want to buy)
  * Includes Commands 4 & 5: Completed posts visibility logic
  */
 class RequestService {
-    // ... rest of the class
+  // ... rest of the class
 }
 ```
 
@@ -169,13 +177,13 @@ static async transitionRequestStatus(requestId, newStatus, user) {
 
 ```javascript
 const STATUS_TRANSITIONS = {
-    'draft': ['published', 'cancelled'],
-    'published': ['negotiating', 'cancelled'],
-    'negotiating': ['accepted', 'cancelled'],
-    'accepted': ['completed', 'failed', 'cancelled'],
-    'completed': [],
-    'failed': [],
-    'cancelled': []
+  draft: ["published", "cancelled"],
+  published: ["negotiating", "cancelled"],
+  negotiating: ["accepted", "cancelled"],
+  accepted: ["completed", "failed", "cancelled"],
+  completed: [],
+  failed: [],
+  cancelled: [],
 };
 ```
 
@@ -185,16 +193,16 @@ const STATUS_TRANSITIONS = {
 // داخل دالة transitionRequestStatus
 
 // التحقق من صلاحية المدير لتجاوز القيود
-if (user.role !== 'admin') {
-    const allowedTransitions = STATUS_TRANSITIONS[request.status];
+if (user.role !== "admin") {
+  const allowedTransitions = STATUS_TRANSITIONS[request.status];
 
-    // ⚠️ تطبيق المنطق الصارم
-    if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
-        throw new Error(
-            `Forbidden Status Transition: Cannot change request status from ${request.status} to ${newStatus}. ` +
-            `Allowed: ${allowedTransitions.join(', ')}`
-        );
-    }
+  // ⚠️ تطبيق المنطق الصارم
+  if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
+    throw new Error(
+      `Forbidden Status Transition: Cannot change request status from ${request.status} to ${newStatus}. ` +
+        `Allowed: ${allowedTransitions.join(", ")}`,
+    );
+  }
 }
 ```
 
@@ -205,30 +213,33 @@ if (user.role !== 'admin') {
 بعد التطبيق، يجب اختبار السيناريوهات التالية:
 
 ### ✅ **سيناريوهات النجاح**
+
 1. `draft` → `published` ✅
 2. `published` → `negotiating` ✅
 3. `negotiating` → `accepted` ✅
 4. `accepted` → `completed` ✅
 
 ### ❌ **سيناريوهات الفشل (يجب أن ترفض)**
+
 1. `published` → `completed` ❌ (تخطي negotiating/accepted)
 2. `draft` → `accepted` ❌ (تخطي published/negotiating)
 3. `completed` → `published` ❌ (من حالة نهائية)
 4. `cancelled` → `published` ❌ (من حالة نهائية)
 
 ### ✅ **استثناء المدير**
+
 - Admin يمكنه تنفيذ أي انتقال بغض النظر عن القيود ✅
 
 ---
 
 ## 📊 **الحالة الحالية**
 
-| المتطلب | الحالة | الملاحظات |
-|---------|--------|-----------|
-| استعادة الملف | ⏳ معلق | يحتاج إلى تدخل يدوي |
-| إضافة STATUS_TRANSITIONS | ⏳ معلق | بعد استعادة الملف |
-| تحديث transitionRequestStatus | ⏳ معلق | بعد استعادة الملف |
-| الاختبار | ⏳ معلق | بعد التطبيق |
+| المتطلب                       | الحالة  | الملاحظات           |
+| ----------------------------- | ------- | ------------------- |
+| استعادة الملف                 | ⏳ معلق | يحتاج إلى تدخل يدوي |
+| إضافة STATUS_TRANSITIONS      | ⏳ معلق | بعد استعادة الملف   |
+| تحديث transitionRequestStatus | ⏳ معلق | بعد استعادة الملف   |
+| الاختبار                      | ⏳ معلق | بعد التطبيق         |
 
 ---
 
@@ -244,6 +255,7 @@ if (user.role !== 'admin') {
 ## ⚠️ **ملاحظة مهمة**
 
 الملف الحالي (`services/requestService.js`) **تالف** ويحتوي على:
+
 - أحرف مشوهة (encoding issues)
 - بنية غير صحيحة (missing class declaration)
 - imports مفقودة

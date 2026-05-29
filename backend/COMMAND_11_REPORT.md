@@ -10,19 +10,21 @@
 ### 1. ✅ إصلاح `postRoutes.js`
 
 #### التغييرات المُطبّقة:
+
 ```javascript
 // قبل التعديل (كان يسبب الخطأ):
-const postController = require('../controllers/postController'); // ❌ محذوف
+const postController = require("../controllers/postController"); // ❌ محذوف
 
 // بعد التعديل:
-const requestController = require('../controllers/requestController'); // ✅ موجود
+const requestController = require("../controllers/requestController"); // ✅ موجود
 ```
 
 #### تحديث المسارات:
+
 ```javascript
 // تم تحويل جميع استدعاءات postController إلى requestController:
 - postController.getAllPosts → requestController.getAllRequests
-- postController.createPost → requestController.createRequest  
+- postController.createPost → requestController.createRequest
 - postController.getPostById → requestController.getRequestById
 - postController.updatePost → requestController.editRequest
 - postController.deletePost → requestController.cancelRequest
@@ -39,13 +41,14 @@ const requestController = require('../controllers/requestController'); // ✅ م
 ### 3. ✅ إصلاح مشكلة قاعدة البيانات
 
 **المشكلة المكتشفة:**
+
 ```javascript
 // في sequelize_setup.js (خطأ):
-process.env.DB_NAME  // ✗ غير موجود في .env
-process.env.DB_PASS  // ✗ غير موجود في .env
+process.env.DB_NAME; // ✗ غير موجود في .env
+process.env.DB_PASS; // ✗ غير موجود في .env
 
 // في .env:
-DB_DATABASE=ecommerce_db  // ✓
+DB_DATABASE = ecommerce_db; // ✓
 ```
 
 **الحل المطبق:**
@@ -55,11 +58,13 @@ DB_DATABASE=ecommerce_db  // ✓
 ## 🔍 اختبار التشغيل:
 
 ### محاولة التشغيل الأولى:
+
 ```bash
 npm run dev
 ```
 
-**النتيجة:** 
+**النتيجة:**
+
 - ✅ لا يوجد خطأ في `Cannot find module './controllers/postController'`
 - ❌ خطأ في اتصال قاعدة البيانات (مشكلة منفصلة - كلمة المرور)
 
@@ -68,19 +73,25 @@ npm run dev
 ## ⚠️ المشكلة المتبقية (خارج نطاق الأمر 11):
 
 ### خطأ قاعدة البيانات:
+
 ```
 SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
 ```
 
 ### السبب:
+
 كلمة المرور في `.env` تحتوي على رموز خاصة (`&` و `$`) تحتاج escape في PostgreSQL.
 
 ### الحلول الممكنة:
+
 1. **وضع كلمة المرور بين '' في .env**:
+
    ```
+
    ```
 
 2. **تغيير كلمة المرور في PostgreSQL**:
+
    ```sql
    ALTER USER postgres PASSWORD 'simple_password_123';
    ```
@@ -92,28 +103,48 @@ SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
 ## ✅ ملف postRoutes.js النهائي:
 
 ```javascript
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const requestController = require('../controllers/requestController');
-const offerRoutes = require('./offerRoutes');
-const { protect, restrictTo } = require('../middleware/authMiddleware');
+const requestController = require("../controllers/requestController");
+const offerRoutes = require("./offerRoutes");
+const { protect, restrictTo } = require("../middleware/authMiddleware");
 const {
-    validateCreatePost,
-    validateUpdatePost
-} = require('../middleware/validationMiddleware');
+  validateCreatePost,
+  validateUpdatePost,
+} = require("../middleware/validationMiddleware");
 
 // Post Routes (mapped to Request Controller)
-router.route('/')
-    .get(protect, restrictTo('seller', 'admin', 'super_admin'), requestController.getAllRequests)
-    .post(protect, restrictTo('buyer', 'admin', 'super_admin'), validateCreatePost, requestController.createRequest);
+router
+  .route("/")
+  .get(
+    protect,
+    restrictTo("seller", "admin", "super_admin"),
+    requestController.getAllRequests,
+  )
+  .post(
+    protect,
+    restrictTo("buyer", "admin", "super_admin"),
+    validateCreatePost,
+    requestController.createRequest,
+  );
 
-router.route('/:id')
-    .get(requestController.getRequestById)
-    .put(protect, restrictTo('buyer', 'admin', 'super_admin'), validateUpdatePost, requestController.editRequest)
-    .delete(protect, restrictTo('buyer', 'admin', 'super_admin'), requestController.cancelRequest);
+router
+  .route("/:id")
+  .get(requestController.getRequestById)
+  .put(
+    protect,
+    restrictTo("buyer", "admin", "super_admin"),
+    validateUpdatePost,
+    requestController.editRequest,
+  )
+  .delete(
+    protect,
+    restrictTo("buyer", "admin", "super_admin"),
+    requestController.cancelRequest,
+  );
 
 // Nested Offer Routes
-router.use('/:postId/offers', offerRoutes);
+router.use("/:postId/offers", offerRoutes);
 
 module.exports = router;
 ```
@@ -122,12 +153,12 @@ module.exports = router;
 
 ## 📊 حالة التطبيق:
 
-| المكون | الحالة | الملاحظات |
-|--------|--------|-----------|
-| postRoutes.js | ✅ تم إصلاحه | يستخدم requestController |
-| التبعيات | ✅ نظيفة | لا توجد مراجع لـ postController |
-| sequelize_setup.js | ✅ تم إصلاحه | استخدام DB_DATABASE |
-| اتصال قاعدة البيانات | ⚠️ خطأ | كلمة مرور تحتاج escape |
+| المكون               | الحالة       | الملاحظات                       |
+| -------------------- | ------------ | ------------------------------- |
+| postRoutes.js        | ✅ تم إصلاحه | يستخدم requestController        |
+| التبعيات             | ✅ نظيفة     | لا توجد مراجع لـ postController |
+| sequelize_setup.js   | ✅ تم إصلاحه | استخدام DB_DATABASE             |
+| اتصال قاعدة البيانات | ⚠️ خطأ       | كلمة مرور تحتاج escape          |
 
 ---
 
@@ -155,5 +186,4 @@ module.exports = router;
 
 ---
 
-**المُنفّذ:** AI Assistant  
 **الحالة:** 🟢 جاهز للمراجعة

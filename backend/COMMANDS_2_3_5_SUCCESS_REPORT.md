@@ -10,10 +10,10 @@
 ## 2. إنشاء `middleware/attachmentProtection.js`
 
 - **Command 3 (Attachment Protection):** تم إنشاء ملف middleware جديد يطبق قواعد الوصول الصارمة للمرفقات:
-    - **المسؤول والمشتري صاحب الطلب:** وصول كامل دائماً.
-    - **حالة Published/Negotiating:** مسموح لأي بائع (Seller).
-    - **حالة Accepted/Completed:** مسموح فقط للبائع الفائز (Winning Seller).
-    - **حالات أخرى:** ممنوع.
+  - **المسؤول والمشتري صاحب الطلب:** وصول كامل دائماً.
+  - **حالة Published/Negotiating:** مسموح لأي بائع (Seller).
+  - **حالة Accepted/Completed:** مسموح فقط للبائع الفائز (Winning Seller).
+  - **حالات أخرى:** ممنوع.
 
 ## 3. تحديث `routes/attachmentRoutes.js`
 

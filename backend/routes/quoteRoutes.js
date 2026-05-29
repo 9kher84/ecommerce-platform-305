@@ -1,10 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const quoteController = require('../controllers/quoteController');
-const { protect } = require('../middleware/authMiddleware');
-const authorize = require('../middleware/authorize');
-const loadResource = require('../middleware/resourceLoader');
-const { PriceQuote, PurchaseRequest } = require('../sequelize_setup');
+const quoteController = require("../controllers/quoteController");
+const { protect } = require("../middleware/authMiddleware");
+const authorize = require("../middleware/authorize");
+const loadResource = require("../middleware/resourceLoader");
+const { PriceQuote, PurchaseRequest } = require("../sequelize_setup");
 
 // ============================================================
 // PRICE QUOTE ROUTES
@@ -22,10 +22,14 @@ const { PriceQuote, PurchaseRequest } = require('../sequelize_setup');
  *       201:
  *         description: Quote submitted
  */
-router.post('/',
-    protect,
-    authorize('CREATE_QUOTE'),
-    quoteController.submitQuote
+const { sovereignLimiter } = require("../middleware/rateLimitMiddleware");
+
+router.post(
+  "/",
+  protect,
+  sovereignLimiter,
+  authorize("CREATE_QUOTE"),
+  quoteController.submitQuote,
 );
 
 /**
@@ -40,10 +44,11 @@ router.post('/',
  *       200:
  *         description: My quotes
  */
-router.get('/my-quotes',
-    protect,
-    authorize('VIEW_QUOTES'),
-    quoteController.getMyQuotes
+router.get(
+  "/my-quotes",
+  protect,
+  authorize("VIEW_QUOTES"),
+  quoteController.getMyQuotes,
 );
 
 /**
@@ -64,11 +69,12 @@ router.get('/my-quotes',
  *       200:
  *         description: Quotes for request
  */
-router.get('/request/:requestId',
-    protect,
-    loadResource(PurchaseRequest, 'requestId'),
-    authorize('viewQuotes', 'Request'),
-    quoteController.getQuotesForRequest
+router.get(
+  "/request/:requestId",
+  protect,
+  loadResource(PurchaseRequest, "requestId"),
+  authorize("viewQuotes", "Request"),
+  quoteController.getQuotesForRequest,
 );
 
 /**
@@ -89,11 +95,12 @@ router.get('/request/:requestId',
  *       200:
  *         description: Counter offer sent
  */
-router.post('/:id/negotiate',
-    protect,
-    loadResource(PriceQuote, 'id', ['request']),
-    authorize(null, 'Quote', 'negotiate'),
-    quoteController.negotiate
+router.post(
+  "/:id/negotiate",
+  protect,
+  loadResource(PriceQuote, "id", ["request"]),
+  authorize(null, "Quote", "negotiate"),
+  quoteController.negotiate,
 );
 
 /**
@@ -114,11 +121,12 @@ router.post('/:id/negotiate',
  *       200:
  *         description: Response sent
  */
-router.post('/:id/respond',
-    protect,
-    loadResource(PriceQuote),
-    authorize(null, 'Quote', 'respond'),
-    quoteController.respondToNegotiation
+router.post(
+  "/:id/respond",
+  protect,
+  loadResource(PriceQuote),
+  authorize(null, "Quote", "respond"),
+  quoteController.respondToNegotiation,
 );
 
 /**
@@ -139,11 +147,12 @@ router.post('/:id/respond',
  *       200:
  *         description: Quote accepted
  */
-router.post('/:id/accept',
-    protect,
-    loadResource(PriceQuote, 'id', ['request']),
-    authorize(null, 'Quote', 'accept'),
-    quoteController.acceptQuote
+router.post(
+  "/:id/accept",
+  protect,
+  loadResource(PriceQuote, "id", ["request"]),
+  authorize(null, "Quote", "accept"),
+  quoteController.acceptQuote,
 );
 
 /**
@@ -164,11 +173,12 @@ router.post('/:id/accept',
  *       200:
  *         description: Quote rejected
  */
-router.post('/:id/reject',
-    protect,
-    loadResource(PriceQuote, 'id', ['request']),
-    authorize(null, 'Quote', 'reject'),
-    quoteController.rejectQuote
+router.post(
+  "/:id/reject",
+  protect,
+  loadResource(PriceQuote, "id", ["request"]),
+  authorize(null, "Quote", "reject"),
+  quoteController.rejectQuote,
 );
 
 /**
@@ -189,11 +199,12 @@ router.post('/:id/reject',
  *       200:
  *         description: Quote withdrawn
  */
-router.post('/:id/withdraw',
-    protect,
-    loadResource(PriceQuote),
-    authorize(null, 'Quote', 'withdraw'),
-    quoteController.withdrawQuote
+router.post(
+  "/:id/withdraw",
+  protect,
+  loadResource(PriceQuote),
+  authorize(null, "Quote", "withdraw"),
+  quoteController.withdrawQuote,
 );
 
 /**
@@ -214,11 +225,20 @@ router.post('/:id/withdraw',
  *       200:
  *         description: Quote modified
  */
-router.put('/:id/modify',
-    protect,
-    loadResource(PriceQuote),
-    authorize(null, 'Quote', 'modify'),
-    quoteController.modifyAfterRejection
+router.put(
+  "/:id/modify",
+  protect,
+  loadResource(PriceQuote),
+  authorize(null, "Quote", "modify"),
+  quoteController.modifyAfterRejection,
+);
+
+router.post(
+  "/:id/decision",
+  protect,
+  loadResource(PriceQuote, "id", ["request"]),
+  authorize(null, "Quote", "accept"), // Reuse accept permission as it's the same buyer owner check
+  quoteController.makeDecision,
 );
 
 module.exports = router;

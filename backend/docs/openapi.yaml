@@ -59,14 +59,14 @@ paths:
                   enum: [buyer, seller]
                   example: "buyer"
       responses:
-        '201':
+        "201":
           description: User registered successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /auth/login:
     post:
@@ -87,14 +87,14 @@ paths:
                   type: string
                   format: password
       responses:
-        '200':
+        "200":
           description: Login successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ========================================================================
   # PURCHASE REQUESTS
@@ -110,7 +110,8 @@ paths:
           name: status
           schema:
             type: string
-            enum: [draft, published, negotiating, accepted, completed, cancelled]
+            enum:
+              [draft, published, negotiating, accepted, completed, cancelled]
         - in: query
           name: categoryId
           schema:
@@ -121,7 +122,7 @@ paths:
             type: integer
             default: 50
       responses:
-        '200':
+        "200":
           description: List of purchase requests
           content:
             application/json:
@@ -133,7 +134,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PurchaseRequest'
+                      $ref: "#/components/schemas/PurchaseRequest"
 
     post:
       tags: [Requests]
@@ -145,9 +146,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRequestInput'
+              $ref: "#/components/schemas/CreateRequestInput"
       responses:
-        '201':
+        "201":
           description: Request created successfully
           content:
             application/json:
@@ -157,7 +158,7 @@ paths:
                   success:
                     type: boolean
                   data:
-                    $ref: '#/components/schemas/PurchaseRequest'
+                    $ref: "#/components/schemas/PurchaseRequest"
 
   /requests/{id}:
     get:
@@ -173,7 +174,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Request details
           content:
             application/json:
@@ -183,7 +184,7 @@ paths:
                   success:
                     type: boolean
                   data:
-                    $ref: '#/components/schemas/PurchaseRequest'
+                    $ref: "#/components/schemas/PurchaseRequest"
 
     put:
       tags: [Requests]
@@ -202,9 +203,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRequestInput'
+              $ref: "#/components/schemas/UpdateRequestInput"
       responses:
-        '200':
+        "200":
           description: Request updated successfully
 
   /requests/{id}/publish:
@@ -221,7 +222,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Request published successfully
 
   # ========================================================================
@@ -238,9 +239,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateQuoteInput'
+              $ref: "#/components/schemas/CreateQuoteInput"
       responses:
-        '201':
+        "201":
           description: Quote submitted successfully
 
   /quotes/{id}:
@@ -257,7 +258,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Quote details
 
   /quotes/{id}/accept:
@@ -274,7 +275,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Quote accepted successfully
 
   # ========================================================================
@@ -287,7 +288,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of deals
 
   /deals/{id}:
@@ -304,7 +305,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Deal details
 
   # ========================================================================
@@ -317,7 +318,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of users
 
   /admin/users/{id}/tier:
@@ -344,7 +345,7 @@ paths:
                   type: string
                   enum: [free, plan_a, plan_b]
       responses:
-        '200':
+        "200":
           description: Tier updated successfully
 
   # ========================================================================
@@ -374,7 +375,7 @@ paths:
                 currency:
                   type: string
       responses:
-        '200':
+        "200":
           description: Webhook processed
 
 components:

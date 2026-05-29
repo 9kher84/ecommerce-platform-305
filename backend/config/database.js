@@ -1,6 +1,6 @@
-const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
-const logger = require('./logger');
+const { Sequelize } = require("sequelize");
+const dotenv = require("dotenv");
+const logger = require("./logger");
 
 dotenv.config();
 
@@ -12,41 +12,53 @@ dotenv.config();
 
 // Parse Read Replicas
 const parseReadHosts = (hostsString) => {
-  if (!hostsString || hostsString.trim() === '') {
+  if (!hostsString || hostsString.trim() === "") {
     return [];
   }
-  return hostsString.split(',').map(host => host.trim()).filter(host => host !== '');
+  return hostsString
+    .split(",")
+    .map((host) => host.trim())
+    .filter((host) => host !== "");
 };
 
 const readHosts = parseReadHosts(process.env.DB_READ_HOSTS);
 const hasReadReplicas = readHosts.length > 0;
 
-logger.info('🔧 Database Configuration (Zero-Noise Protocol):');
+logger.info("🔧 Database Configuration (Zero-Noise Protocol):");
 logger.info(`   - Master Host: ${process.env.DB_HOST}`);
-logger.info(`   - Read Replicas: ${hasReadReplicas ? readHosts.join(', ') : 'None'}`);
+logger.info(
+  `   - Read Replicas: ${hasReadReplicas ? readHosts.join(", ") : "None"}`,
+);
 
 // Base Config
 const sequelizeConfig = {
-  dialect: 'postgres',
+  dialect: "postgres",
   logging: false, // Strict Zero-Noise
   pool: {
-    max: 20,        // Increased to handle load tests
+    max: 20, // Increased to handle load tests
     min: 5,
     acquire: 60000,
-    idle: 10000
+    idle: 10000,
   },
   retry: {
-    match: [/SequelizeConnectionError/, /SequelizeConnectionRefusedError/, /SequelizeHostNotFoundError/],
-    max: 3
-  }
+    match: [
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+    ],
+    max: 3,
+  },
 };
 
 // COMMAND 2: VERIFICATION OF MTLS
 const mTLSConfig = {};
-if (process.env.NODE_ENV === 'production' || process.env.DB_SSL_ENABLED === 'true') {
-  logger.info('🔒 Enforcing mTLS for Database Connection...');
-  const fs = require('fs');
-  const path = require('path');
+if (
+  process.env.NODE_ENV === "production" ||
+  process.env.DB_SSL_ENABLED === "true"
+) {
+  logger.info("🔒 Enforcing mTLS for Database Connection...");
+  const fs = require("fs");
+  const path = require("path");
 
   // In a real scenario, these paths must exist.
   // Providing a graceful fallback just for code stability if certs are missing in dev.
@@ -55,18 +67,35 @@ if (process.env.NODE_ENV === 'production' || process.env.DB_SSL_ENABLED === 'tru
       ssl: {
         require: true,
         rejectUnauthorized: true, // STRICT verification
-        ca: fs.readFileSync(process.env.DB_CA_CERT || path.join(__dirname, '../certs/mtls/ca.crt')).toString(),
-        key: fs.readFileSync(process.env.DB_CLIENT_KEY || path.join(__dirname, '../certs/mtls/database-primary.key')).toString(),
-        cert: fs.readFileSync(process.env.DB_CLIENT_CERT || path.join(__dirname, '../certs/mtls/database-primary.crt')).toString(),
-      }
+        ca: fs
+          .readFileSync(
+            process.env.DB_CA_CERT ||
+              path.join(__dirname, "../certs/mtls/ca.crt"),
+          )
+          .toString(),
+        key: fs
+          .readFileSync(
+            process.env.DB_CLIENT_KEY ||
+              path.join(__dirname, "../certs/mtls/database-primary.key"),
+          )
+          .toString(),
+        cert: fs
+          .readFileSync(
+            process.env.DB_CLIENT_CERT ||
+              path.join(__dirname, "../certs/mtls/database-primary.crt"),
+          )
+          .toString(),
+      },
     };
-    logger.info('✅ mTLS Certificates loaded.');
+    logger.info("✅ mTLS Certificates loaded.");
   } catch (e) {
-    logger.warn(`⚠️ mTLS Configuration failed (Certificates missing?): ${e.message}`);
+    logger.warn(
+      `⚠️ mTLS Configuration failed (Certificates missing?): ${e.message}`,
+    );
     // Fallback for dev environment or initial setup if strictly needed,
     // BUT per verify requirement, we should probably fail or at least log heavily.
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('❌ FATAL: mTLS Certificates missing in Production!');
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("❌ FATAL: mTLS Certificates missing in Production!");
     }
   }
 }
@@ -82,22 +111,22 @@ if (hasReadReplicas) {
       ...sequelizeConfig,
       ...mTLSConfig,
       replication: {
-        read: readHosts.map(host => ({
+        read: readHosts.map((host) => ({
           host: host,
           username: process.env.DB_USER,
           password: process.env.DB_PASSWORD,
           database: process.env.DB_DATABASE,
-          port: process.env.DB_PORT || 5432
+          port: process.env.DB_PORT || 5432,
         })),
         write: {
           host: process.env.DB_HOST,
           username: process.env.DB_USER,
           password: process.env.DB_PASSWORD,
           database: process.env.DB_DATABASE,
-          port: process.env.DB_PORT || 5432
-        }
-      }
-    }
+          port: process.env.DB_PORT || 5432,
+        },
+      },
+    },
   );
 } else {
   sequelize = new Sequelize(
@@ -108,8 +137,8 @@ if (hasReadReplicas) {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT || 5432,
       ...sequelizeConfig,
-      ...mTLSConfig
-    }
+      ...mTLSConfig,
+    },
   );
 }
 

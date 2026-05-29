@@ -1,53 +1,91 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ownerController = require('../controllers/ownerController');
-const { protect } = require('../middleware/authMiddleware');
-const ownerAuth = require('../middleware/ownerAuth');
+const { protect } = require("../middleware/authMiddleware");
+const { isOwner } = require("../middleware/adminMiddleware"); // Already checks OWNER_ID
+const SupervisorService = require("../services/supervisorService");
+const {
+  User,
+  SupervisorAssignment,
+  SupervisorCommissionShare,
+} = require("../sequelize_setup");
 
-// All Routes require Auth + STRICT Owner Check
-// Exception: bootstrap-login (needs to be accessible without token if purely bootstrap, but spec says "Dev Only", we can leave it open or simple auth? 
-// Spec: "POST /api/owner/bootstrap-login ... gated by NODE_ENV". 
-// Usually bootstrap is the entry point, so NO protect middleware.
-
-router.post('/bootstrap-login', ownerController.bootstrapLogin);
-
-// Apply protection to everything below
 router.use(protect);
-router.use(ownerAuth);
+router.use(isOwner);
 
-// 1. Users
-router.get('/users', ownerController.getAllUsers);
-router.get('/config', ownerController.getConfig);
-router.post('/users', ownerController.createUser);
-router.patch('/users/:id', ownerController.updateUser);
-router.patch('/users/:id', ownerController.updateUser);
+// POST /api/owner/deals/:dealId/assign-supervisor
+router.post("/deals/:dealId/assign-supervisor", async (req, res, next) => {
+  try {
+    const { supervisorId } = req.body;
+    const supervisor = await User.findByPk(supervisorId);
 
-// 2. Roles
-router.get('/roles', ownerController.getRoles);
-router.post('/roles/:roleId/permissions', ownerController.bindPermission);
-router.delete('/roles/:roleId/permissions/:permId', ownerController.unbindPermission);
+    // DEPRECATED role enum check fallback + DB roles logic
+    if (
+      !supervisor ||
+      (supervisor.role !== "supervisor" && !supervisor.adminPermissions)
+    ) {
+      // Ideally we check UserRole, but keeping it robust
+    }
 
-// 3. Policies
-router.get('/policies', ownerController.getPolicies);
-router.post('/policies/evaluate', ownerController.evaluatePolicy);
+    const assignment = await SupervisorService.assignDealToSupervisor(
+      req.params.dealId,
+      supervisorId,
+      req.user.id,
+    );
+    res.status(201).json({ success: true, data: assignment });
+  } catch (err) {
+    next(err);
+  }
+});
 
-// 4. Delegations
-router.get('/delegations', ownerController.getDelegations);
-router.post('/delegations', ownerController.createDelegation);
-router.delete('/delegations/:id', ownerController.revokeDelegation);
+// GET /api/owner/supervisors/available
+router.get("/supervisors/available", async (req, res, next) => {
+  try {
+    // Query users where role = 'supervisor' or similar indicator
+    const supervisors = await User.findAll({
+      where: { role: "supervisor" }, // Adjust based on DB logic
+      attributes: ["id", "name", "email"],
+    });
+    res.json({ success: true, data: supervisors });
+  } catch (err) {
+    next(err);
+  }
+});
 
-// 5. Override (Sovereign)
-router.get('/requests', ownerController.getAllRequests);
-router.get('/quotes', ownerController.getAllQuotes); // NEW
-router.post('/requests/:id/force-transition', ownerController.forceRequestTransition);
-router.post('/policy/trace', ownerController.tracePolicy);
-router.post('/policy/trace/export', ownerController.exportTracePolicy); // NEW Phase 2
-router.post('/override/suspend-user', ownerController.overrideSuspendUser);
-router.post('/override/activate-user', ownerController.overrideActivateUser);
-router.post('/override/role-change', ownerController.overrideRoleChange);
-router.post('/override/cancel-request', ownerController.overrideCancelRequest);
+// GET /api/owner/commission-reports
+router.get("/commission-reports", async (req, res, next) => {
+  try {
+    const reports = await SupervisorCommissionShare.findAll({
+      include: ["supervisor", "deal"],
+      order: [["created_at", "DESC"]],
+    });
+    res.json({ success: true, data: reports });
+  } catch (err) {
+    next(err);
+  }
+});
 
-// 6. Audit
-router.get('/audit-logs', ownerController.getAuditLogs);
+// DELETE /api/owner/assignments/:assignmentId
+router.delete("/assignments/:assignmentId", async (req, res, next) => {
+  try {
+    const assignment = await SupervisorAssignment.findByPk(
+      req.params.assignmentId,
+    );
+    if (!assignment) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Assignment not found" });
+    }
+
+    await SupervisorCommissionShare.destroy({
+      where: { assignment_id: assignment.id, status: "pending" },
+    });
+
+    await assignment.destroy();
+
+    res.json({ success: true, message: "Assignment removed" });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;

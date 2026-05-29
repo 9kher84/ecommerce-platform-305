@@ -1,18 +1,20 @@
-const asyncHandler = require('express-async-handler');
-const { SystemSetting } = require('../sequelize_setup');
+const asyncHandler = require("express-async-handler");
+const { SystemSetting } = require("../sequelize_setup");
 
 const checkAIEnabled = async (res) => {
-    const setting = await SystemSetting.findOne({ where: { key: 'ai_features_enabled' } });
-    const isEnabled = setting && setting.value === 'true';
+  const setting = await SystemSetting.findOne({
+    where: { key: "ai_features_enabled" },
+  });
+  const isEnabled = setting && setting.value === "true";
 
-    if (!isEnabled) {
-        res.status(503).json({
-            success: false,
-            message: 'AI System Not Active'
-        });
-        return false;
-    }
-    return true;
+  if (!isEnabled) {
+    res.status(503).json({
+      success: false,
+      message: "AI System Not Active",
+    });
+    return false;
+  }
+  return true;
 };
 
 /**
@@ -21,8 +23,10 @@ const checkAIEnabled = async (res) => {
  * @access  Protected
  */
 exports.askLearningBot = asyncHandler(async (req, res) => {
-    if (!(await checkAIEnabled(res))) return;
-    res.status(200).json({ success: true, message: 'Learning Bot response placeholder' });
+  if (!(await checkAIEnabled(res))) return;
+  res
+    .status(200)
+    .json({ success: true, message: "Learning Bot response placeholder" });
 });
 
 /**
@@ -31,8 +35,10 @@ exports.askLearningBot = asyncHandler(async (req, res) => {
  * @access  Protected
  */
 exports.paymentAssistant = asyncHandler(async (req, res) => {
-    if (!(await checkAIEnabled(res))) return;
-    res.status(200).json({ success: true, message: 'Payment Assistant response placeholder' });
+  if (!(await checkAIEnabled(res))) return;
+  res
+    .status(200)
+    .json({ success: true, message: "Payment Assistant response placeholder" });
 });
 
 /**
@@ -41,6 +47,8 @@ exports.paymentAssistant = asyncHandler(async (req, res) => {
  * @access  Protected
  */
 exports.smartSupport = asyncHandler(async (req, res) => {
-    if (!(await checkAIEnabled(res))) return;
-    res.status(200).json({ success: true, message: 'Smart Support response placeholder' });
+  if (!(await checkAIEnabled(res))) return;
+  res
+    .status(200)
+    .json({ success: true, message: "Smart Support response placeholder" });
 });

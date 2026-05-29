@@ -1,3 +1,46 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /supervisor/
+Disallow: /owner/
+Disallow: /api/internal/
+Disallow: /api/invoice/*/confirm
+Disallow: /api/invoice/*/proof
+Disallow: /api/deals/*/accept
+Disallow: /api/deals/*/reject
+
+# Allow AI bots to crawl public pages
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /supervisor/
+Disallow: /owner/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /supervisor/
+Disallow: /owner/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /supervisor/
+Disallow: /owner/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /supervisor/
+Disallow: /owner/
+
+# Allow ClaudeBot, Applebot, CCBot
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://sovereign.com/sitemap.xml

@@ -1,6 +1,7 @@
 # Testing Guide - E-Commerce Platform Backend
 
 ## 📋 Table of Contents
+
 - [Overview](#overview)
 - [Testing Philosophy](#testing-philosophy)
 - [Test Structure](#test-structure)
@@ -17,6 +18,7 @@
 This guide explains our testing methodology, patterns, and best practices for the E-Commerce Platform Backend.
 
 ### Test Statistics
+
 - **Total Tests:** 38 integration tests
 - **Test Suites:** 6 suites
 - **Success Rate:** 100%
@@ -55,6 +57,7 @@ This guide explains our testing methodology, patterns, and best practices for th
 ## 📁 Test Structure
 
 ### Directory Organization
+
 ```
 backend/
 ├── tests/
@@ -72,6 +75,7 @@ backend/
 ```
 
 ### Test File Naming
+
 - Integration tests: `*.test.js` in `tests/integration/`
 - Unit tests: `*.test.js` in `tests/unit/`
 - Test files should match the feature they test
@@ -135,28 +139,32 @@ describe('Feature Name', () => {
 ### Required Mocks
 
 #### 1. UUID Mock
+
 ```javascript
-jest.mock('uuid', () => ({
-    v4: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9)
+jest.mock("uuid", () => ({
+  v4: () => "test-uuid-" + Math.random().toString(36).substr(2, 9),
 }));
 ```
+
 **Why:** UUID is an ESM module that Jest can't parse by default.
 
 #### 2. Redis Mock
+
 ```javascript
-jest.mock('ioredis', () => {
-    return jest.fn().mockImplementation(() => ({
-        on: jest.fn(),
-        connect: jest.fn().mockResolvedValue(),
-        get: jest.fn().mockResolvedValue(null),
-        set: jest.fn().mockResolvedValue('OK'),
-        publish: jest.fn(),
-        subscribe: jest.fn(),
-        quit: jest.fn().mockResolvedValue(),
-        disconnect: jest.fn()
-    }));
+jest.mock("ioredis", () => {
+  return jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue(),
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue("OK"),
+    publish: jest.fn(),
+    subscribe: jest.fn(),
+    quit: jest.fn().mockResolvedValue(),
+    disconnect: jest.fn(),
+  }));
 });
 ```
+
 **Why:** Tests don't need actual Redis connection; mock prevents connection errors.
 
 ---
@@ -166,19 +174,21 @@ jest.mock('ioredis', () => {
 ### 1. Flexible Error Assertions
 
 **❌ Too Strict (Breaks Easily):**
+
 ```javascript
 expect(res.statusCode).toBe(403);
 ```
 
 **✅ Flexible (Resilient):**
+
 ```javascript
 /**
  * Use toBeGreaterThanOrEqual(400) for error responses.
- * 
+ *
  * Reason: Centralized error handler may return different codes:
  * - 403: Custom ForbiddenError (expected)
  * - 500: Unexpected error during processing
- * 
+ *
  * This ensures tests verify error occurred without being brittle.
  */
 expect(res.statusCode).toBeGreaterThanOrEqual(400);
@@ -189,27 +199,32 @@ expect(res.body.error).toBeDefined();
 ### 2. Test Data Management
 
 **Use Unique Identifiers:**
+
 ```javascript
 const userEmail = `test_user_${Date.now()}@jest.com`;
 ```
+
 **Why:** Prevents conflicts when running tests multiple times.
 
 **Clean Up Test Data:**
+
 ```javascript
 afterAll(async () => {
-    // Delete test users, requests, etc.
-    await User.destroy({ where: { email: userEmail } });
+  // Delete test users, requests, etc.
+  await User.destroy({ where: { email: userEmail } });
 });
 ```
 
 ### 3. Descriptive Test Names
 
 **❌ Bad:**
+
 ```javascript
 it('works', async () => { ... });
 ```
 
 **✅ Good:**
+
 ```javascript
 it('should REJECT quote from SAME device (Self-Trading)', async () => { ... });
 ```
@@ -217,23 +232,23 @@ it('should REJECT quote from SAME device (Self-Trading)', async () => { ... });
 ### 4. Arrange-Act-Assert Pattern
 
 ```javascript
-it('should create a new request', async () => {
-    // Arrange: Set up test data
-    const requestData = {
-        title: 'Test Request',
-        description: 'Test Description',
-        categoryId: 1
-    };
+it("should create a new request", async () => {
+  // Arrange: Set up test data
+  const requestData = {
+    title: "Test Request",
+    description: "Test Description",
+    categoryId: 1,
+  };
 
-    // Act: Perform the action
-    const res = await request(app)
-        .post('/api/requests')
-        .set('Cookie', cookies)
-        .send(requestData);
+  // Act: Perform the action
+  const res = await request(app)
+    .post("/api/requests")
+    .set("Cookie", cookies)
+    .send(requestData);
 
-    // Assert: Verify the results
-    expect(res.statusCode).toBe(201);
-    expect(res.body.request.title).toBe('Test Request');
+  // Assert: Verify the results
+  expect(res.statusCode).toBe(201);
+  expect(res.body.request.title).toBe("Test Request");
 });
 ```
 
@@ -242,29 +257,35 @@ it('should create a new request', async () => {
 ## 🏃 Running Tests
 
 ### All Tests
+
 ```bash
 npm test
 ```
 
 ### Specific Test Suite
+
 ```bash
 npm test tests/integration/auth.test.js
 ```
 
 ### Watch Mode (Development)
+
 ```bash
 npm run test:watch
 ```
 
 ### Coverage Report
+
 ```bash
 npm run test:coverage
 ```
 
 ### With Specific Workers
+
 ```bash
 npm test -- --maxWorkers=1
 ```
+
 **Why:** Prevents database conflicts when tests run in parallel.
 
 ---
@@ -274,63 +295,58 @@ npm test -- --maxWorkers=1
 ### 1. Authentication Tests
 
 ```javascript
-describe('Authentication', () => {
-    let cookies;
+describe("Authentication", () => {
+  let cookies;
 
-    it('should login successfully', async () => {
-        const res = await request(app)
-            .post('/api/auth/login')
-            .send({
-                email: 'user@test.com',
-                password: 'password123'
-            });
-
-        expect(res.statusCode).toBe(200);
-        cookies = res.headers['set-cookie'];
+  it("should login successfully", async () => {
+    const res = await request(app).post("/api/auth/login").send({
+      email: "user@test.com",
+      password: "password123",
     });
 
-    it('should access protected route', async () => {
-        const res = await request(app)
-            .get('/api/protected')
-            .set('Cookie', cookies);
+    expect(res.statusCode).toBe(200);
+    cookies = res.headers["set-cookie"];
+  });
 
-        expect(res.statusCode).toBe(200);
-    });
+  it("should access protected route", async () => {
+    const res = await request(app).get("/api/protected").set("Cookie", cookies);
+
+    expect(res.statusCode).toBe(200);
+  });
 });
 ```
 
 ### 2. Error Handling Tests
 
 ```javascript
-describe('Error Handling', () => {
-    it('should return 404 for non-existent route', async () => {
-        const res = await request(app)
-            .get('/api/nonexistent');
+describe("Error Handling", () => {
+  it("should return 404 for non-existent route", async () => {
+    const res = await request(app).get("/api/nonexistent");
 
-        expect(res.statusCode).toBe(404);
-        expect(res.body.success).toBe(false);
-        expect(res.body.error).toBeDefined();
-        expect(res.body.error.code).toBe('NOT_FOUND');
-    });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toBeDefined();
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
 });
 ```
 
 ### 3. Security Tests
 
 ```javascript
-describe('SSRF Protection', () => {
-    it('should BLOCK internal IP addresses', async () => {
-        const res = await request(app)
-            .post('/api/products/upload')
-            .set('Cookie', sellerCookies)
-            .send({
-                imageUrl: 'http://127.0.0.1:5000/api/health'
-            });
+describe("SSRF Protection", () => {
+  it("should BLOCK internal IP addresses", async () => {
+    const res = await request(app)
+      .post("/api/products/upload")
+      .set("Cookie", sellerCookies)
+      .send({
+        imageUrl: "http://127.0.0.1:5000/api/health",
+      });
 
-        // Flexible assertion for error response
-        expect(res.statusCode).toBeGreaterThanOrEqual(400);
-        expect(res.body.success).toBeFalsy();
-    });
+    // Flexible assertion for error response
+    expect(res.statusCode).toBeGreaterThanOrEqual(400);
+    expect(res.body.success).toBeFalsy();
+  });
 });
 ```
 
@@ -366,56 +382,66 @@ describe('Purchase Request Flow', () => {
 ### Common Issues
 
 #### 1. "Port already in use"
+
 **Problem:** Server is already running on port 5000
 
 **Solution:**
+
 ```javascript
 beforeAll(async () => {
-    if (app.startServer) {
-        await app.startServer(false); // false = don't listen on port
-    }
+  if (app.startServer) {
+    await app.startServer(false); // false = don't listen on port
+  }
 });
 ```
 
 #### 2. "Database connection error"
+
 **Problem:** Multiple tests trying to sync database simultaneously
 
 **Solution:** Run tests sequentially
+
 ```bash
 npm test -- --maxWorkers=1
 ```
 
 #### 3. "UUID is not defined"
+
 **Problem:** Missing UUID mock
 
 **Solution:** Add mock at top of test file
+
 ```javascript
-jest.mock('uuid', () => ({
-    v4: () => 'test-uuid-123'
+jest.mock("uuid", () => ({
+  v4: () => "test-uuid-123",
 }));
 ```
 
 #### 4. "Redis connection failed"
+
 **Problem:** Missing Redis mock
 
 **Solution:** Add Redis mock
+
 ```javascript
-jest.mock('ioredis', () => {
-    return jest.fn().mockImplementation(() => ({
-        on: jest.fn(),
-        connect: jest.fn().mockResolvedValue(),
-        // ... other methods
-    }));
+jest.mock("ioredis", () => {
+  return jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue(),
+    // ... other methods
+  }));
 });
 ```
 
 #### 5. "Test timeout"
+
 **Problem:** Test takes too long (default 5s)
 
 **Solution:** Increase timeout in `jest.config.js`
+
 ```javascript
 {
-    testTimeout: 10000 // 10 seconds
+  testTimeout: 10000; // 10 seconds
 }
 ```
 
@@ -424,17 +450,20 @@ jest.mock('ioredis', () => {
 ## 📊 Test Coverage Goals
 
 ### Current Coverage
+
 - Integration Tests: 38 tests
 - Critical Paths: 100%
 - Error Handling: 100%
 - Security Features: 100%
 
 ### Coverage Goals
+
 - **Integration Tests:** Maintain 100% of critical paths
 - **Unit Tests:** Add unit tests for utilities and services
 - **Overall Coverage:** Target 80%+
 
 ### Measuring Coverage
+
 ```bash
 npm run test:coverage
 ```
@@ -446,13 +475,16 @@ This generates a coverage report in `coverage/` directory.
 ## 🎓 Learning Resources
 
 ### Jest Documentation
+
 - [Jest Official Docs](https://jestjs.io/docs/getting-started)
 - [Jest Matchers](https://jestjs.io/docs/expect)
 
 ### Supertest Documentation
+
 - [Supertest GitHub](https://github.com/visionmedia/supertest)
 
 ### Best Practices
+
 - [JavaScript Testing Best Practices](https://github.com/goldbergyoni/javascript-testing-best-practices)
 
 ---

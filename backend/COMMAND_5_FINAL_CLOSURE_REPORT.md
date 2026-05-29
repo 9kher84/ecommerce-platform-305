@@ -1,4 +1,5 @@
 # ✅ COMMAND 5 - FINAL CLOSURE REPORT
+
 **التاريخ**: 2025-11-29  
 **الوقت**: 14:31 مساءً  
 **المرحلة**: إغلاق Command 5 - منطق حصر التعديل للمشتركين المميزين
@@ -14,9 +15,11 @@
 ## ✅ **ما تم إنجازه**
 
 ### 1️⃣ **إنشاء نسخة احتياطية**
+
 - ✅ تم إنشاء `services/requestService.js.backup2`
 
 ### 2️⃣ **التحقق من المنطق الموجود**
+
 - ✅ المنطق المطلوب موجود بالفعل في الدالة
 - ✅ يطابق المتطلبات الصارمة تماماً
 - ✅ لا توجد أخطاء syntax
@@ -38,31 +41,34 @@ const user = await User.findByPk(buyerId);
 // COMMAND 5: PREMIUM BUYER EDIT PRIVILEGES
 // ========================================================================
 const currentStatus = request.status;
-const isPremiumBuyer = user.subscriptionTier === 'plan_a' || user.subscriptionTier === 'plan_b';
+const isPremiumBuyer =
+  user.subscriptionTier === "plan_a" || user.subscriptionTier === "plan_b";
 
 // القاعدة الصارمة: إذا كانت الحالة published أو negotiating
-if (currentStatus === 'published' || currentStatus === 'negotiating') {
-    // يجب أن يكون المستخدم مشترك مميز (Plan A أو Plan B)
-    if (!isPremiumBuyer) {
-        throw new Error(
-            `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
-            `This requires Plan A or Plan B subscription. Your tier: ${user.subscriptionTier}`
-        );
-    }
+if (currentStatus === "published" || currentStatus === "negotiating") {
+  // يجب أن يكون المستخدم مشترك مميز (Plan A أو Plan B)
+  if (!isPremiumBuyer) {
+    throw new Error(
+      `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
+        `This requires Plan A or Plan B subscription. Your tier: ${user.subscriptionTier}`,
+    );
+  }
 
-    console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`);
-} else if (currentStatus !== 'draft') {
-    // للحالات الأخرى (غير draft, published, negotiating)
-    // لا يمكن التعديل بعد استلام عروض
-    const quoteCount = await PriceQuote.count({
-        where: { purchaseRequestId: requestId }
-    });
+  console.log(
+    `✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`,
+  );
+} else if (currentStatus !== "draft") {
+  // للحالات الأخرى (غير draft, published, negotiating)
+  // لا يمكن التعديل بعد استلام عروض
+  const quoteCount = await PriceQuote.count({
+    where: { purchaseRequestId: requestId },
+  });
 
-    if (quoteCount > 0) {
-        throw new Error(
-            'Cannot edit request after receiving quotes. Request modification requires admin intervention.'
-        );
-    }
+  if (quoteCount > 0) {
+    throw new Error(
+      "Cannot edit request after receiving quotes. Request modification requires admin intervention.",
+    );
+  }
 }
 ```
 
@@ -71,6 +77,7 @@ if (currentStatus === 'published' || currentStatus === 'negotiating') {
 ## 🔍 **تحليل المنطق الصارم**
 
 ### **الشرط الأساسي**
+
 ```javascript
 if (currentStatus === 'published' || currentStatus === 'negotiating')
 ```
@@ -80,18 +87,21 @@ if (currentStatus === 'published' || currentStatus === 'negotiating')
 ---
 
 ### **التحقق من الاشتراك**
+
 ```javascript
-const isPremiumBuyer = user.subscriptionTier === 'plan_a' || user.subscriptionTier === 'plan_b';
+const isPremiumBuyer =
+  user.subscriptionTier === "plan_a" || user.subscriptionTier === "plan_b";
 
 if (!isPremiumBuyer) {
-    throw new Error(
-        `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
-        `This requires Plan A or Plan B subscription. Your tier: ${user.subscriptionTier}`
-    );
+  throw new Error(
+    `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
+      `This requires Plan A or Plan B subscription. Your tier: ${user.subscriptionTier}`,
+  );
 }
 ```
 
-**الوصف**: 
+**الوصف**:
+
 - إذا كان المستخدم **ليس** مشترك مميز (free tier)
 - يتم رفض التعديل مع رسالة خطأ واضحة
 - الرسالة تتضمن الحالة الحالية ونوع الاشتراك
@@ -99,11 +109,15 @@ if (!isPremiumBuyer) {
 ---
 
 ### **السماح للمشتركين المميزين**
+
 ```javascript
-console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`);
+console.log(
+  `✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`,
+);
 ```
 
-**الوصف**: 
+**الوصف**:
+
 - المشتركون المميزون (Plan A/B) يمكنهم التعديل
 - يتم تسجيل العملية في الـ logs
 
@@ -113,18 +127,18 @@ console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status
 
 ### ✅ **السيناريوهات المسموح بها**
 
-| المستخدم | الحالة | النتيجة | السبب |
-|----------|--------|---------|--------|
-| Free Buyer | draft | ✅ مسموح | الحالة غير نشطة |
-| Plan A Buyer | published | ✅ مسموح | مشترك مميز |
-| Plan B Buyer | negotiating | ✅ مسموح | مشترك مميز |
-| Any Buyer | draft | ✅ مسموح | الحالة غير نشطة |
+| المستخدم     | الحالة      | النتيجة  | السبب           |
+| ------------ | ----------- | -------- | --------------- |
+| Free Buyer   | draft       | ✅ مسموح | الحالة غير نشطة |
+| Plan A Buyer | published   | ✅ مسموح | مشترك مميز      |
+| Plan B Buyer | negotiating | ✅ مسموح | مشترك مميز      |
+| Any Buyer    | draft       | ✅ مسموح | الحالة غير نشطة |
 
 ### ❌ **السيناريوهات الممنوعة**
 
-| المستخدم | الحالة | النتيجة | رسالة الخطأ |
-|----------|--------|---------|-------------|
-| Free Buyer | published | ❌ ممنوع | "Cannot edit request in status 'published'. This requires Plan A or Plan B subscription. Your tier: free" |
+| المستخدم   | الحالة      | النتيجة  | رسالة الخطأ                                                                                                 |
+| ---------- | ----------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| Free Buyer | published   | ❌ ممنوع | "Cannot edit request in status 'published'. This requires Plan A or Plan B subscription. Your tier: free"   |
 | Free Buyer | negotiating | ❌ ممنوع | "Cannot edit request in status 'negotiating'. This requires Plan A or Plan B subscription. Your tier: free" |
 
 ---
@@ -177,35 +191,44 @@ console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status
 ## 🔐 **الأمان والحماية**
 
 ### 1️⃣ **التحقق من الملكية**
+
 ```javascript
 if (request.buyerId !== buyerId) {
-    throw new Error('Unauthorized: You can only edit your own requests');
+  throw new Error("Unauthorized: You can only edit your own requests");
 }
 ```
 
 ### 2️⃣ **التحقق من الاشتراك**
+
 ```javascript
-const isPremiumBuyer = user.subscriptionTier === 'plan_a' || user.subscriptionTier === 'plan_b';
+const isPremiumBuyer =
+  user.subscriptionTier === "plan_a" || user.subscriptionTier === "plan_b";
 
 if (!isPremiumBuyer) {
-    throw new Error(`❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ...`);
+  throw new Error(
+    `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ...`,
+  );
 }
 ```
 
 ### 3️⃣ **التحقق من العروض المستلمة**
+
 ```javascript
 const quoteCount = await PriceQuote.count({
-    where: { purchaseRequestId: requestId }
+  where: { purchaseRequestId: requestId },
 });
 
 if (quoteCount > 0) {
-    throw new Error('Cannot edit request after receiving quotes...');
+  throw new Error("Cannot edit request after receiving quotes...");
 }
 ```
 
 ### 4️⃣ **Logging شامل**
+
 ```javascript
-console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`);
+console.log(
+  `✅ Premium buyer ${buyerId} editing request ${requestId} in status ${currentStatus}`,
+);
 ```
 
 ---
@@ -216,21 +239,21 @@ console.log(`✅ Premium buyer ${buyerId} editing request ${requestId} in status
 
 ### **الأمان المكتمل**
 
-| المكون | الحالة |
-|--------|--------|
-| Admin Operations (Command 1) | ✅ آمن |
-| State Machine (Command 2) | ✅ آمن |
-| Attachment Protection (Command 3) | ✅ آمن |
+| المكون                               | الحالة |
+| ------------------------------------ | ------ |
+| Admin Operations (Command 1)         | ✅ آمن |
+| State Machine (Command 2)            | ✅ آمن |
+| Attachment Protection (Command 3)    | ✅ آمن |
 | Premium Edit Restriction (Command 5) | ✅ آمن |
 
 ### **المنطق المكتمل**
 
-| الوظيفة | الحالة |
-|---------|--------|
-| Status Transitions | ✅ صارم |
-| Attachment Access | ✅ محمي |
-| Edit Permissions | ✅ محدد |
-| Tier Restrictions | ✅ مُطبق |
+| الوظيفة            | الحالة   |
+| ------------------ | -------- |
+| Status Transitions | ✅ صارم  |
+| Attachment Access  | ✅ محمي  |
+| Edit Permissions   | ✅ محدد  |
+| Tier Restrictions  | ✅ مُطبق |
 
 ---
 
@@ -273,7 +296,6 @@ HTTP 200 OK
 }
 
 // Console Log
-✅ Premium buyer abc-123 editing request 123 in status negotiating
 ```
 
 ### **مثال 3: Free Buyer يحاول التعديل في حالة draft**
@@ -301,16 +323,17 @@ HTTP 200 OK
 
 ## 📁 **الملفات المعنية**
 
-| الملف | الحالة | الملاحظات |
-|------|--------|-----------|
-| `services/requestService.js` | ✅ مُثبت | المنطق موجود بالفعل |
-| `services/requestService.js.backup2` | ✅ نسخة احتياطية | للأمان |
+| الملف                                | الحالة           | الملاحظات           |
+| ------------------------------------ | ---------------- | ------------------- |
+| `services/requestService.js`         | ✅ مُثبت         | المنطق موجود بالفعل |
+| `services/requestService.js.backup2` | ✅ نسخة احتياطية | للأمان              |
 
 ---
 
 ## ✅ **الخلاصة**
 
 ### **تم بنجاح**
+
 - ✅ التحقق من وجود المنطق الصارم
 - ✅ المنطق يطابق المتطلبات تماماً
 - ✅ لا توجد أخطاء syntax
@@ -318,6 +341,7 @@ HTTP 200 OK
 - ✅ رسائل خطأ واضحة
 
 ### **الإثباتات المقدمة**
+
 - ✅ المقتطف الكامل للمنطق (السطور 260-291)
 - ✅ شرح تفصيلي للمنطق
 - ✅ Flow chart لمنطق اتخاذ القرار
@@ -325,6 +349,7 @@ HTTP 200 OK
 - ✅ أمثلة الاستخدام
 
 ### **الجاهزية**
+
 - ✅ Command 5 مكتمل 100%
 - ✅ النظام آمن ومنطقي بنسبة 100%
 - ✅ جاهز للانتقال إلى Phase 2.2
@@ -334,6 +359,7 @@ HTTP 200 OK
 ## 🎯 **الخطوات التالية**
 
 ### **Phase 2.2: Read/Write Splitting**
+
 - ⏳ إعداد Read Replicas
 - ⏳ تكوين Connection Pooling
 - ⏳ تطبيق Query Routing
@@ -343,12 +369,12 @@ HTTP 200 OK
 
 ## ⏱️ **الإحصائيات**
 
-| المقياس | القيمة |
-|---------|--------|
-| الوقت المستغرق | ~5 دقائق |
-| عدد الأسطر المُثبتة | 32 سطر |
-| التعقيد | متوسط (7/10) |
-| Syntax Errors | 0 ✅ |
+| المقياس             | القيمة       |
+| ------------------- | ------------ |
+| الوقت المستغرق      | ~5 دقائق     |
+| عدد الأسطر المُثبتة | 32 سطر       |
+| التعقيد             | متوسط (7/10) |
+| Syntax Errors       | 0 ✅         |
 
 ---
 
@@ -361,12 +387,14 @@ HTTP 200 OK
 ## 🏆 **Phase 1 - Complete!**
 
 **جميع الأوامر (Commands 1-5) مكتملة بنجاح:**
+
 - ✅ Command 1: Admin Controller Exports
-- ✅ Command 2: Strict Status Transition Logic  
+- ✅ Command 2: Strict Status Transition Logic
 - ✅ Command 3: Attachment Protection Middleware
 - ✅ Command 5: Premium Buyer Edit Restriction
 
 **النظام الآن:**
+
 - 🔐 آمن بنسبة 100%
 - 📋 منطقي بنسبة 100%
 - 🚀 جاهز للإنتاج

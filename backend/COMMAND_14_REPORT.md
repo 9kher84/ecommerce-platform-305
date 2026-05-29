@@ -35,6 +35,7 @@
 ### 2. ✅ تحليل `server.js` ومسارات الإدارة
 
 **التحليل:**
+
 - مسار `/api/admin` موجود في `server.js` ويشير إلى `adminRoutes.js`.
 - `adminRoutes.js` يحتوي فقط على إعدادات النظام (`/settings`).
 - **إدارة المستخدمين** موجودة في `userRoutes.js` تحت المسار `/api/users/admin/all`.
@@ -49,20 +50,20 @@
 ```javascript
 // ... (مقتطف)
 const apiService = {
-    // ...
-    // الطلبات (Requests)
-    getAllRequests,
-    getRequestById,
-    editRequest,
-    cancelRequest,
-    // ...
-    // التوافق مع الكود القديم (Aliases for Posts)
-    getAllPosts: getAllRequests,
-    getPostById: getRequestById,
-    createPost: createRequest,
-    updatePost: editRequest,
-    deletePost: cancelRequest,
-    // ...
+  // ...
+  // الطلبات (Requests)
+  getAllRequests,
+  getRequestById,
+  editRequest,
+  cancelRequest,
+  // ...
+  // التوافق مع الكود القديم (Aliases for Posts)
+  getAllPosts: getAllRequests,
+  getPostById: getRequestById,
+  createPost: createRequest,
+  updatePost: editRequest,
+  deletePost: cancelRequest,
+  // ...
 };
 export default apiService;
 ```
@@ -70,11 +71,11 @@ export default apiService;
 ---
 
 ## 🎯 النتيجة:
+
 - ✅ تم حل مشكلة `getPostById is not a function`.
 - ✅ الواجهة الأمامية ستعمل الآن مع الخلفية الجديدة (RequestController).
 - ✅ تمهيد الطريق لإصلاح مسارات الإدارة في الخطوة القادمة.
 
 ---
 
-**المُنفّذ:** AI Assistant  
 **الحالة:** 🟢 جاهز للأمر 15

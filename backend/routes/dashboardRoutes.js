@@ -1,42 +1,46 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, restrictTo } = require("../middleware/authMiddleware");
 const {
-    getBuyerStats,
-    getBuyerInvoices,
-    getSellerStats,
-    getSellerInvoices
-} = require('../controllers/dashboardController');
+  getBuyerStats,
+  getBuyerInvoices,
+  getSellerStats,
+  getSellerInvoices,
+} = require("../controllers/dashboardController");
 
 // Buyer Dashboard Routes
-router.get('/buyer/stats', protect, authorize('buyer'), getBuyerStats);
-router.get('/buyer/invoices', protect, authorize('buyer'), getBuyerInvoices);
+router.get("/buyer/stats", protect, restrictTo("buyer"), getBuyerStats);
+router.get("/buyer/invoices", protect, restrictTo("buyer"), getBuyerInvoices);
 
 // Seller Dashboard Routes
-router.get('/seller/stats', protect, authorize('seller'), getSellerStats);
-router.get('/seller/invoices', protect, authorize('seller'), getSellerInvoices);
+router.get("/seller/stats", protect, restrictTo("seller"), getSellerStats);
+router.get(
+  "/seller/invoices",
+  protect,
+  restrictTo("seller"),
+  getSellerInvoices,
+);
 
 // ============================================================
-// SOVEREIGN COMMAND DASHBOARD (Order 10)
+// SOVEREIGN COMMAND DASHBOARD (Owner/Admin only)
 // ============================================================
-const { getCommandData } = require('../controllers/commandDashboardController');
+const {
+  getCommandData,
+  getMatchRadar,
+} = require("../controllers/commandDashboardController");
+
+router.get("/match-radar", protect, getMatchRadar);
 
 /**
- * @swagger
- * /api/dashboard/command:
- *   get:
- *     summary: Sovereign Command Dashboard
- *     tags: [Dashboard]
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: System status, logs, and pricing stats
+ * @route   GET /api/dashboard/command
+ * @desc    Sovereign Command Dashboard - system stats, audit, pricing
+ * @access  Admin / Owner only
  */
-router.get('/command',
-    protect,
-    // authorize('admin'), // Strict access in prod
-    getCommandData
+router.get(
+  "/command",
+  protect,
+  restrictTo("admin", "super_admin", "owner"), // أزلنا التعليق وحمينا المسار
+  getCommandData,
 );
 
 module.exports = router;

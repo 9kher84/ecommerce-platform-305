@@ -200,7 +200,6 @@ describe('🔴 Red Team Security Tests', () => {
 
     /**
      * Test 3: Prompt Injection Attack
-     * Verify that AI/LLM prompts are sanitized
      */
     describe('Test 3: Prompt Injection Attack', () => {
 

@@ -1,7 +1,6 @@
 import { NetworkSecurity } from '../core/security/NetworkSecurity';
 
 /**
- * AI Assistant Service
  * Handles interactions with the backend AI features (Learning Bot, Support, Payment Assistant).
  */
 

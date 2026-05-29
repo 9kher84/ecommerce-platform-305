@@ -8,11 +8,13 @@
 ## ما تم تنفيذه
 
 ### 1. أخذ نسخة احتياطية ✅
+
 ```powershell
 copy backend\controllers\requestController.js backend\controllers\requestController.js.backup
 ```
 
 **النتيجة:** تم إنشاء نسخة احتياطية بنجاح في:
+
 - `backend/controllers/requestController.js.backup`
 
 ---
@@ -22,12 +24,14 @@ copy backend\controllers\requestController.js backend\controllers\requestControl
 تم تغيير **جميع** مفاتيح الاستجابة من `requests` إلى `data` في الدوال التالية:
 
 #### أ. `getAllRequests` (السطر 10-25)
+
 **قبل:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: requests.length,
-    data: requests  // ✅ كان صحيحاً بالفعل
+  success: true,
+  count: requests.length,
+  data: requests, // ✅ كان صحيحاً بالفعل
 });
 ```
 
@@ -36,54 +40,62 @@ res.status(200).json({
 ---
 
 #### ب. `getMyRequests` (السطر 48-60)
+
 **قبل:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: requests.length,
-    requests  // ❌ خطأ
+  success: true,
+  count: requests.length,
+  requests, // ❌ خطأ
 });
 ```
 
 **بعد:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: requests.length,
-    data: requests  // ✅ تم التصحيح
+  success: true,
+  count: requests.length,
+  data: requests, // ✅ تم التصحيح
 });
 ```
 
 ---
 
 #### ج. `getPublishedRequests` (السطر 67-79)
+
 **قبل:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: requests.length,
-    requests  // ❌ خطأ
+  success: true,
+  count: requests.length,
+  requests, // ❌ خطأ
 });
 ```
 
 **بعد:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: requests.length,
-    data: requests  // ✅ تم التصحيح
+  success: true,
+  count: requests.length,
+  data: requests, // ✅ تم التصحيح
 });
 ```
 
 ---
 
 #### د. `getRequestQuotes` (السطر 197-213)
+
 **قبل:**
+
 ```javascript
 res.status(200).json({
-    success: true,
-    count: quotes.length,
-    data: quotes  // ✅ كان صحيحاً بالفعل
+  success: true,
+  count: quotes.length,
+  data: quotes, // ✅ كان صحيحاً بالفعل
 });
 ```
 
@@ -93,23 +105,25 @@ res.status(200).json({
 
 ## ملخص التغييرات
 
-| الدالة | المفتاح القديم | المفتاح الجديد | الحالة |
-|--------|----------------|----------------|---------|
-| `getAllRequests` | `data` | `data` | ✅ لم يتغير |
-| `getMyRequests` | `requests` | `data` | ✅ تم التصحيح |
-| `getPublishedRequests` | `requests` | `data` | ✅ تم التصحيح |
-| `getRequestQuotes` | `data` | `data` | ✅ لم يتغير |
+| الدالة                 | المفتاح القديم | المفتاح الجديد | الحالة        |
+| ---------------------- | -------------- | -------------- | ------------- |
+| `getAllRequests`       | `data`         | `data`         | ✅ لم يتغير   |
+| `getMyRequests`        | `requests`     | `data`         | ✅ تم التصحيح |
+| `getPublishedRequests` | `requests`     | `data`         | ✅ تم التصحيح |
+| `getRequestQuotes`     | `data`         | `data`         | ✅ لم يتغير   |
 
 ---
 
 ## السبب الجذري
 
 **المشكلة:**
+
 - Frontend يتوقع أن تكون البيانات في مفتاح `data` في جميع الاستجابات
 - بعض الدوال في الكونترولر كانت تُرجع البيانات في مفتاح `requests`
 - هذا التعارض أدى إلى خطأ 500 لأن Frontend لم يجد البيانات في المكان المتوقع
 
 **الحل:**
+
 - توحيد جميع الاستجابات لاستخدام مفتاح `data`
 - هذا يتماشى مع معيار REST API الشائع
 
@@ -118,12 +132,12 @@ res.status(200).json({
 ## ما لم يتم تعديله (كما طُلب)
 
 ❌ **لم يتم تعديل:**
+
 - `RequestService.js` (Service Layer)
 - `sequelize_setup.js` (النماذج والعلاقات)
 - قاعدة البيانات
 - أي ملفات أخرى
 
-✅ **تم التعديل فقط:**
 - `requestController.js` (3 أسطر فقط)
 
 ---

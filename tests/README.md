@@ -18,7 +18,6 @@ npm run dev
 
 انتظر حتى ترى:
 ```
-🚀 Server running on port 5000
 ```
 
 ### 2. تشغيل الاختبارات

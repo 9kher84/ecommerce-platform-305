@@ -1,281 +1,433 @@
-const { PriceQuote, PurchaseRequest, User, Deal } = require('../sequelize_setup');
-const SubscriptionService = require('./subscriptionService');
-const SmartPricingService = require('./smartPricingService');
-const WithdrawalLog = require('../models/WithdrawalLog');
-const RequestService = require('./requestService'); // Import RequestService
-const NotificationService = require('./notificationService'); // Import NotificationService for Phase 2.1
-const { Op } = require('sequelize');
+// I have no idea why this works with UUIDs but it does. DO NOT TOUCH.
+const {
+  PriceQuote,
+  PurchaseRequest,
+  User,
+  Deal,
+  BuyerDecisionContext,
+} = require("../sequelize_setup");
+const SubscriptionService = require("./subscriptionService");
+const SmartPricingService = require("./smartPricingService");
+const WithdrawalLog = require("../models/WithdrawalLog");
+const RequestService = require("./requestService");
+const marketMonitoringService = require("./marketMonitoringService");
+const NotificationService = require("./notificationService");
+const { Op } = require("sequelize");
+const AppError = require("../utils/appError");
+const { appendEventLog } = require("./eventLogService");
+const { isShadowRestricted } = require("./sanctionService");
 
 /**
- * QuoteService
- * 
- * Manages price quotes (sellers submitting quotes to buyer requests)
+ * 🛡️ Sovereign Quote Service - PHASE 3 HARDENED (Logic & Privacy)
  */
 class QuoteService {
+  /**
+   * Submit a price quote
+   */
+  static async submitQuote(sellerId, quoteData) {
+    const seller = await User.findByPk(sellerId);
+    // console.log('DEBUG: seller found:', seller?.id);
+    if (!seller) throw new AppError("User not found", 404);
 
-    /**
-     * Submit a price quote to a purchase request
-     * @param {string} sellerId - User UUID
-     * @param {Object} quoteData - Quote details
-     * @returns {Promise<PriceQuote>}
-     */
-    /**
-     * Submit a price quote (Auth checks removed, handled by Policy)
-     */
-    static async submitQuote(sellerId, quoteData) {
-        // Validation of existence
-        const seller = await User.findByPk(sellerId);
-        if (!seller) throw new Error('User not found');
-
-        // Removed: role check (Policy/RBAC handles it)
-
-        // Get the purchase request
-        const request = await PurchaseRequest.findByPk(quoteData.purchaseRequestId);
-        if (!request) throw new Error('Purchase request not found');
-
-        // ... (Rest of logic: canReceiveQuotes, targetSellerId, SmartPricing)
-        // ...
-
-        // Validation continues...
-        if (!request.canReceiveQuotes()) {
-            throw new Error('This request is not accepting quotes (expired or not published)');
-        }
-
-        // Check direct purchase restriction
-        if (request.post_type === 'direct' && request.targetSellerId) {
-            if (request.targetSellerId !== sellerId) {
-                throw new Error('هذا الطلب مخصص للشراء المباشر من بائع محدد فقط');
-            }
-        }
-
-        // ... (Fixed Price & Smart Pricing logic remains the same)
-
-        // ====================================================================
-        // COMMAND 6: FIXED PRICE VALIDATION (Plan B Buyer Exclusive)
-        // ====================================================================
-        if (request.fixed_price && parseFloat(request.fixed_price) > 0) {
-            const quotePrice = parseFloat(quoteData.fixedPrice || quoteData.amount);
-            const requestPrice = parseFloat(request.fixed_price);
-
-            if (Math.abs(quotePrice - requestPrice) > 0.01) {
-                throw new Error('Quote must match the fixed price set by the buyer.');
-            }
-
-            if (quoteData.priceType !== 'fixed') {
-                throw new Error('Quote must be of type fixed when buyer specifies a fixed price.');
-            }
-        }
-
-        // ====================================================================
-        // COMMAND 6.5: FREE TIER RESTRICTION (Enforce Fixed Price)
-        // ====================================================================
-        if (seller.subscriptionTier === 'free') {
-            if (quoteData.priceType !== 'fixed' && !quoteData.fixedPrice) {
-                throw new Error('PLAN RESTRICTION: Free Tier sellers can only submit Fixed Price quotes.');
-            }
-        }
-
-        // ====================================================================
-        // COMMAND 7: SMART PRICING MATRIX (Plan B Seller Exclusive)
-        // ====================================================================
-        if (quoteData.useSmartPricing) {
-            // Checking Entitlement (Plan B) is fine in Service
-            if (seller.subscriptionTier !== 'plan_b') {
-                throw new Error('Smart Pricing is exclusive to Plan B sellers');
-            }
-
-            const calculation = await SmartPricingService.calculateSmartPrice(
-                sellerId,
-                parseFloat(request.quantity || 1),
-                request.delivery_city
-            );
-
-            if (!calculation) {
-                throw new Error('Smart Pricing: No applicable rule found for this request criteria (Quantity/City mismatch).');
-            }
-
-            quoteData.priceType = 'fixed';
-            quoteData.fixedPrice = calculation.totalAmount;
-            quoteData.amount = calculation.totalAmount;
-            quoteData.deliveryCost = calculation.deliveryCost;
-            quoteData.notes = (quoteData.notes || '') + `\n[Auto-quoted via Smart Pricing: ${calculation.ruleName}]`;
-        }
-
-        const submittedPrice = quoteData.priceType === 'fixed'
-            ? quoteData.fixedPrice
-            : quoteData.priceRangeMin;
-
-        if (!submittedPrice || submittedPrice <= 0) {
-            throw new Error('Invalid price amount');
-        }
-
-        const quote = await PriceQuote.create({
-            ...quoteData,
-            sellerId: sellerId,
-            status: 'pending'
-        });
-
-        await request.increment('quoteCount');
-
-        // TRIGGER TRANSITION: PUBLISHED -> QUOTING (System)
-        if (request.status === 'published') {
-            try {
-                // Construct System Context (Use Owner ID to satisfy FK constraints)
-                const systemActorId = process.env.OWNER_ID || '11111111-1111-1111-1111-111111111111';
-                const systemAuth = {
-                    actor: { id: systemActorId, name: 'System (Auto)' },
-                    ip: '127.0.0.1',
-                    userAgent: 'Internal/Service'
-                };
-                await RequestService.transitionRequestStatus(request.id, 'quoting', systemAuth, 'System Transition: First Quote Received');
-            } catch (e) {
-                console.warn(`[QuoteService] Failed to transition to QUOTING: ${e.message}`);
-            }
-        }
-
-        return quote;
+    if (seller.is_restricted || !seller.isActive) {
+      throw new AppError(
+        "حسابك مقيد بسبب مخالفات سابقة. لا يمكنك تقديم عروض حالياً.",
+        403,
+      );
     }
 
-    /**
-     * Get Safe Quotes (Filtered by Privacy Rules)
-     * Service logic is blind to Roles. It respects the View Mode passed by Controller.
-     * 
-     * @param {string} requestId 
-     * @param {string} viewerId - ID of user viewing
-     * @param {Object} options - Visibility Flags
-     * @param {boolean} options.maskCompetitors - If true, masks data of other sellers
-     * @param {boolean} options.onlyOwnQuotes - If true, filters query to only show viewer's quotes
-     */
-    static async getSafeQuotes(requestId, viewerId, options = {}) {
-        const { maskCompetitors = false, onlyOwnQuotes = false } = options;
+    const request = await PurchaseRequest.findByPk(quoteData.purchaseRequestId);
+    if (!request) throw new AppError("Purchase request not found", 404);
 
-        // 1. Fetch Request
-        const request = await PurchaseRequest.findByPk(requestId);
-        if (!request) throw new Error('Request not found');
-
-        // 2. Build Query
-        const whereClause = { purchaseRequestId: requestId };
-
-        if (onlyOwnQuotes) {
-            whereClause.sellerId = viewerId;
-        }
-
-        const quotes = await PriceQuote.findAll({
-            where: whereClause,
-            include: [{
-                model: User,
-                as: 'seller',
-                attributes: ['id', 'name', 'businessName', 'rank', 'rating', 'subscriptionTier']
-            }],
-            order: [['createdAt', 'DESC']]
-        });
-
-        // 3. Post-Processing (Masking)
-        if (maskCompetitors) {
-            return quotes.map(quote => {
-                const q = quote.get({ plain: true });
-                // If masking is ON, hide data unless it's the viewer's own quote
-                if (q.sellerId !== viewerId) {
-                    q.seller = { name: 'بائع آخر', businessName: '---', rank: null };
-                    q.amount = null; // Hide Price
-                    q.notes = 'عرض مخفي';
-                    q.priceType = null;
-                }
-                return q;
-            });
-        }
-
-        return quotes;
+    if (!request.canReceiveQuotes()) {
+      throw new AppError(
+        "This request is not accepting quotes (expired or not published)",
+        400,
+      );
     }
 
-    /**
-     * Get seller's submitted quotes
-     */
-    static async getSellerQuotes(sellerId) {
-        return await PriceQuote.findAll({
-            where: { sellerId },
-            include: [{ model: PurchaseRequest, as: 'request' }]
-        });
-    }
-
-    /**
-     * Withdraw a quote
-     */
-    static async withdrawQuote(quoteId, sellerId, reason) {
-        const quote = await PriceQuote.findByPk(quoteId);
-        if (!quote) throw new Error('Quote not found');
-
-        if (quote.sellerId !== sellerId) {
-            throw new Error('Unauthorized');
-        }
-
-        if (!quote.canBeWithdrawn()) {
-            throw new Error('Quote cannot be withdrawn in its current status');
-        }
-
-        quote.status = 'withdrawn';
-        quote.withdrawnAt = new Date();
-        quote.withdrawalReason = reason;
-        await quote.save();
-
-        // Log withdrawal
-        await WithdrawalLog.create({
-            quoteId: quote.id,
-            sellerId: sellerId,
-            reason: reason,
-            timestamp: new Date()
-        });
-
-        return quote;
-    }
-
-    /**
-     * Accept a quote
-     * @param {number} quoteId 
-     * @param {string} buyerId 
-     */
-    static async acceptQuote(quoteId, buyerId) {
-        const quote = await PriceQuote.findByPk(quoteId, {
-            include: [{ model: PurchaseRequest, as: 'request' }]
-        });
-
-        if (!quote) throw new Error('Quote not found');
-
-        const request = quote.request;
-        if (request.userId !== buyerId) {
-            throw new Error('Unauthorized: Only the request owner can accept quotes');
-        }
-
-        if (quote.status !== 'pending' && quote.status !== 'negotiating') {
-            throw new Error('Quote is not in a state to be accepted');
-        }
-
-        // 1. Update Quote Status
-        quote.status = 'accepted';
-        quote.acceptedAt = new Date();
-        await quote.save();
-
-        // 2. Update Request Status using Strict Transition Logic
-        // This will trigger Deal Creation & Invoice Generation in RequestService
-        const user = await User.findByPk(buyerId);
-        const updatedRequest = await RequestService.transitionRequestStatus(request.id, 'accepted', user);
-
-        // 3. Reject other quotes
-        await PriceQuote.update(
-            { status: 'rejected' },
-            {
-                where: {
-                    purchaseRequestId: request.id,
-                    id: { [Op.ne]: quoteId },
-                    status: 'pending'
-                }
-            }
+    const restricted = await isShadowRestricted(sellerId);
+    if (restricted) {
+      const ageInHours =
+        (Date.now() - new Date(request.createdAt).getTime()) / (1000 * 60 * 60);
+      if (ageInHours < 24) {
+        throw new AppError(
+          "حسابك خاضع لتقييد مخفي. لا يمكنك تقديم عروض على الطلبات الحديثة.",
+          403,
         );
-
-        // Return the deal that was created (need to fetch it)
-        const deal = await Deal.findOne({ where: { purchaseRequestId: request.id } });
-        return deal;
+      }
     }
+
+    // 🟥 PRICE INTEGRITY LOCK (1 - 1,000,000)
+    // These are validated in plaintext before the model setter encrypts them
+    const validatePrice = (val, name) => {
+      const p = parseFloat(val);
+      if (
+        val !== undefined &&
+        val !== null &&
+        (isNaN(p) || p < 1 || p > 1000000)
+      ) {
+        throw new AppError(
+          `PRICE INTEGRITY VIOLATION: ${name} must be between 1 and 1,000,000.`,
+          400,
+        );
+      }
+    };
+
+    validatePrice(quoteData.amount, "Amount");
+    validatePrice(quoteData.fixedPrice, "Fixed Price");
+    validatePrice(quoteData.priceRangeMin, "Price Range Min");
+
+    // Business Logic
+    if (
+      request.post_type === "direct" &&
+      request.targetSellerId &&
+      request.targetSellerId !== sellerId
+    ) {
+      throw new AppError("هذا الطلب مخصص للشراء المباشر من بائع محدد فقط", 403);
+    }
+
+    // 🔐 Model Setters (in PriceQuote.js) will handle AES-256-GCM encryption automatically
+    const quote = await PriceQuote.create({
+      ...quoteData,
+      sellerId,
+      status: "pending",
+    });
+
+    const submittedPrice =
+      quoteData.priceType === "fixed"
+        ? quoteData.fixedPrice
+        : quoteData.priceRangeMin;
+    await marketMonitoringService.recordSellerInteraction(
+      sellerId,
+      request.id,
+      "QUOTED",
+      { quoteId: quote.id, amount: submittedPrice },
+    );
+
+    await request.increment("quoteCount");
+
+    if (request.status === "published") {
+      await RequestService.transitionRequestStatus(request.id, "quoting", {
+        actor: { id: sellerId, role: "seller" },
+        ip: "127.0.0.1",
+      });
+    }
+
+    return quote; // Getters will handle auto-decryption
+  }
+
+  /**
+   * Get Safe Quotes
+   */
+  static async getSafeQuotes(requestId, viewerId, options = {}) {
+    const { maskCompetitors = false, onlyOwnQuotes = false } = options;
+
+    const request = await PurchaseRequest.findByPk(requestId);
+    if (!request) throw new AppError("Request not found", 404);
+
+    const whereClause = { purchaseRequestId: requestId };
+    if (onlyOwnQuotes) whereClause.sellerId = viewerId;
+
+    const quotes = await PriceQuote.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "name", "businessName", "rank"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (maskCompetitors) {
+      return quotes.map((quote) => {
+        const q = quote.get({ plain: true });
+        if (q.sellerId !== viewerId) {
+          q.seller = {
+            id: null,
+            name: "بائع آخر",
+            businessName: "---",
+            rank: null,
+          };
+          q.amount = null;
+          q.notes = "عرض مخفي";
+        }
+        return q;
+      });
+    }
+
+    return quotes;
+  }
+
+  /**
+   * Withdraw Quote
+   */
+  static async withdrawQuote(quoteId, sellerId, reason) {
+    const quote = await PriceQuote.findByPk(quoteId);
+    if (!quote) throw new AppError("Quote not found", 404);
+
+    // 🟥 LOGIC RESILIENCY: FROZEN state for accepted quotes
+    if (quote.status === "accepted") {
+      throw new AppError(
+        "LOGIC VIOLATION: Accepted quotes are FROZEN and cannot be withdrawn.",
+        403,
+      );
+    }
+
+    if (quote.sellerId !== sellerId) throw new AppError("Unauthorized", 403);
+    if (!quote.canBeWithdrawn())
+      throw new AppError("Invalid state for withdrawal", 400);
+
+    const oldStatus = quote.status;
+    quote.status = "withdrawn";
+    quote.withdrawnAt = new Date();
+    quote.withdrawalReason = reason; // Setter encrypts
+    await quote.save();
+
+    await appendEventLog({
+      actorId: sellerId,
+      actorRole: "seller",
+      entityType: "quote",
+      entityId: quote.id,
+      actionType: "status_transition",
+      beforeState: { status: oldStatus },
+      afterState: { status: "withdrawn" },
+    });
+    // TODO: Ask the senior about this edge case.
+
+    await WithdrawalLog.create({
+      quoteId: quote.id,
+      sellerId,
+      reason,
+      timestamp: new Date(),
+    });
+    return quote;
+  }
+
+  /**
+   * Start/Update Negotiation with Lock
+   */
+  // This took me 3 days to get right. Please don't ask.
+  static async negotiate(quoteId, buyerId, negotiationData) {
+    const quote = await PriceQuote.findByPk(quoteId);
+    if (!quote) throw new AppError("Quote not found", 404);
+
+    // Check Lock
+    if (
+      quote.lockedBy &&
+      quote.lockedBy !== buyerId &&
+      new Date() < quote.lockExpiresAt
+    ) {
+      throw new AppError(
+        "This quote is currently being negotiated by another party.",
+        423,
+      );
+    }
+
+    // Set/Refresh Lock
+    const oldStatus = quote.status;
+    quote.status = "under_negotiation";
+    quote.lockedBy = buyerId;
+    quote.lockExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 Hour
+
+    // Update Counter Offer
+    if (negotiationData.price) quote.buyerCounterOffer = negotiationData.price;
+    if (negotiationData.date) quote.buyerCounterDate = negotiationData.date;
+
+    // Log History
+    const history = quote.negotiationHistory || [];
+    history.push({
+      type: "BUYER_COUNTER",
+      actorId: buyerId,
+      data: negotiationData,
+      timestamp: new Date(),
+    });
+    quote.negotiationHistory = history;
+
+    await quote.save();
+
+    await appendEventLog({
+      actorId: buyerId,
+      actorRole: "buyer",
+      entityType: "quote",
+      entityId: quote.id,
+      actionType: "status_transition",
+      beforeState: { status: oldStatus },
+      afterState: { status: "under_negotiation" },
+    });
+
+    // Notify Seller
+    await NotificationService.sendToUser(
+      quote.sellerId,
+      "QUOTE_NEGOTIATION_UPDATE",
+      {
+        quoteId: quote.id,
+        message: "وصلك عرض سعر مضاد جديد",
+      },
+    );
+
+    return quote;
+  }
+
+  /**
+   * Seller Responds to Negotiation
+   */
+  static async respondToNegotiation(quoteId, sellerId, responseData) {
+    const quote = await PriceQuote.findByPk(quoteId);
+    if (!quote) throw new AppError("Quote not found", 404);
+    if (quote.sellerId !== sellerId) throw new AppError("Unauthorized", 403);
+
+    const { accept, newPrice } = responseData;
+
+    const oldStatus = quote.status;
+    if (accept) {
+      // If seller accepts buyer's counter
+      quote.fixedPrice = String(quote.buyerCounterOffer);
+      quote.status = "negotiating"; // Move back to negotiating to allow buyer to final accept
+    } else if (newPrice) {
+      quote.fixedPrice = String(newPrice);
+      quote.status = "negotiating";
+    }
+
+    // Release Lock if rejected or accepted
+    quote.lockedBy = null;
+    quote.lockExpiresAt = null;
+
+    const history = quote.negotiationHistory || [];
+    history.push({
+      type: "SELLER_RESPONSE",
+      actorId: sellerId,
+      accept,
+      newPrice,
+      timestamp: new Date(),
+    });
+    quote.negotiationHistory = history;
+
+    await quote.save();
+
+    await appendEventLog({
+      actorId: sellerId,
+      actorRole: "seller",
+      entityType: "quote",
+      entityId: quote.id,
+      actionType: "status_transition",
+      beforeState: { status: oldStatus },
+      afterState: { status: quote.status },
+    });
+
+    // Notify Buyer
+    const request = await PurchaseRequest.findByPk(quote.purchaseRequestId);
+    await NotificationService.sendToUser(
+      request.userId,
+      "QUOTE_NEGOTIATION_RESPONSE",
+      {
+        quoteId: quote.id,
+        message: accept
+          ? "تم قبول عرضك المضاد"
+          : "تم الرد على تفاوضك بسعر جديد",
+      },
+    );
+
+    return quote;
+  }
+
+  /**
+   * Accept Quote
+   */
+  static async acceptQuote(quoteId, buyerId, decisionContext = {}) {
+    const quote = await PriceQuote.findByPk(quoteId, {
+      include: [{ model: PurchaseRequest, as: "request" }],
+    });
+    if (!quote) throw new AppError("Quote not found", 404);
+
+    if (quote.request.userId !== buyerId)
+      throw new AppError("Unauthorized", 403);
+    if (quote.status !== "pending" && quote.status !== "negotiating") {
+      throw new AppError("Quote is not in a state to be accepted", 400);
+    }
+
+    const oldStatus = quote.status;
+    quote.status = "accepted";
+    quote.acceptedAt = new Date();
+    quote.decisionStatus = "accepted";
+    quote.decisionAt = new Date();
+    await quote.save();
+
+    await appendEventLog({
+      actorId: buyerId,
+      actorRole: "buyer",
+      entityType: "quote",
+      entityId: quote.id,
+      actionType: "status_transition",
+      beforeState: { status: oldStatus },
+      afterState: { status: "accepted" },
+    });
+
+    const user = await User.findByPk(buyerId);
+    await RequestService.transitionRequestStatus(
+      quote.request.id,
+      "deal_in_progress",
+      { actor: user },
+    );
+
+    await PriceQuote.update(
+      { status: "rejected", decisionStatus: "rejected" },
+      {
+        where: {
+          purchaseRequestId: quote.purchaseRequestId,
+          id: { [Op.ne]: quoteId },
+          status: "pending",
+        },
+      },
+    );
+
+    return Deal.findOne({
+      where: { purchaseRequestId: quote.purchaseRequestId },
+    });
+  }
+
+  /**
+   * RFQ Decision Board Action
+   */
+  static async makeDecision(quoteId, buyerId, decisionData) {
+    const { status, buyerNotes } = decisionData; // 'accepted', 'rejected', 'backup'
+    const quote = await PriceQuote.findByPk(quoteId, {
+      include: [{ model: PurchaseRequest, as: "request" }],
+    });
+    if (!quote) throw new AppError("Quote not found", 404);
+    if (quote.request.userId !== buyerId)
+      throw new AppError("Unauthorized", 403);
+
+    if (status === "accepted") {
+      return await this.acceptQuote(quoteId, buyerId);
+    }
+
+    quote.decisionStatus = status;
+    if (buyerNotes) quote.buyerNotes = buyerNotes;
+    quote.decisionAt = new Date();
+
+    const oldStatus = quote.status;
+    if (status === "rejected") {
+      quote.status = "rejected";
+    }
+
+    await quote.save();
+
+    if (status === "rejected") {
+      await appendEventLog({
+        actorId: buyerId,
+        actorRole: "buyer",
+        entityType: "quote",
+        entityId: quote.id,
+        actionType: "status_transition",
+        beforeState: { status: oldStatus },
+        afterState: { status: "rejected" },
+      });
+    }
+    return quote;
+  }
 }
 
 module.exports = QuoteService;

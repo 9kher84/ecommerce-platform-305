@@ -1,4 +1,5 @@
 # 🚀 FRONTEND GRAPHQL MIGRATION GUIDELINE
+
 **التاريخ**: 2025-11-29  
 **الهدف**: توجيه مهندس الواجهة الأمامية للانتقال من REST إلى GraphQL
 
@@ -8,13 +9,13 @@
 
 ### **لماذا GraphQL؟**
 
-| الميزة | REST | GraphQL |
-|--------|------|---------|
-| **حجم البيانات** | يُرجع جميع الحقول | يُرجع الحقول المطلوبة فقط |
-| **عدد الطلبات** | طلبات متعددة | طلب واحد |
-| **سرعة الموبايل** | بطيء (بيانات زائدة) | سريع (بيانات محسّنة) |
-| **التوثيق** | يدوي | تلقائي (Schema) |
-| **Type Safety** | لا | نعم |
+| الميزة            | REST                | GraphQL                   |
+| ----------------- | ------------------- | ------------------------- |
+| **حجم البيانات**  | يُرجع جميع الحقول   | يُرجع الحقول المطلوبة فقط |
+| **عدد الطلبات**   | طلبات متعددة        | طلب واحد                  |
+| **سرعة الموبايل** | بطيء (بيانات زائدة) | سريع (بيانات محسّنة)      |
+| **التوثيق**       | يدوي                | تلقائي (Schema)           |
+| **Type Safety**   | لا                  | نعم                       |
 
 ### **التحسينات المتوقعة**
 
@@ -33,7 +34,7 @@
 
 ```javascript
 // 3 طلبات منفصلة
-const request = await fetch('/api/requests/123');
+const request = await fetch("/api/requests/123");
 const buyer = await fetch(`/api/users/${request.buyerId}`);
 const quotes = await fetch(`/api/requests/123/quotes`);
 
@@ -69,7 +70,7 @@ const { data } = await client.query({
       }
     }
   `,
-  variables: { id: '123' }
+  variables: { id: "123" },
 });
 
 // حجم البيانات: ~3KB (80% أقل)
@@ -85,7 +86,7 @@ const { data } = await client.query({
 
 ```javascript
 // يُرجع جميع الحقول (حتى غير المطلوبة)
-const requests = await fetch('/api/requests');
+const requests = await fetch("/api/requests");
 
 // البيانات المُرجعة:
 {
@@ -93,7 +94,7 @@ const requests = await fetch('/api/requests');
     {
       id: "1",
       title: "...",
-      description: "...",  // ❌ غير مطلوب في القائمة
+      description: "...", // ❌ غير مطلوب في القائمة
       quantity: 100,
       unit: "kg",
       status: "published",
@@ -104,11 +105,11 @@ const requests = await fetch('/api/requests');
       expiresAt: "...",
       createdAt: "...",
       updatedAt: "...",
-      lastModifiedAt: "...",  // ❌ غير مطلوب
-      modificationRequested: false,  // ❌ غير مطلوب
+      lastModifiedAt: "...", // ❌ غير مطلوب
+      modificationRequested: false, // ❌ غير مطلوب
       // ... 20+ حقل آخر
-    }
-  ]
+    },
+  ];
 }
 
 // حجم البيانات: ~50KB لـ 20 طلب
@@ -131,7 +132,7 @@ const { data } = await client.query({
         }
       }
     }
-  `
+  `,
 });
 
 // البيانات المُرجعة:
@@ -144,10 +145,10 @@ const { data } = await client.query({
         status: "published",
         quoteCount: 10,
         buyer: {
-          name: "John"
-        }
-      }
-    ]
+          name: "John",
+        },
+      },
+    ];
   }
 }
 
@@ -168,21 +169,21 @@ npm install @apollo/client graphql
 
 ```javascript
 // src/apollo/client.js
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:5000/graphql',
+  uri: "http://localhost:5000/graphql",
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   return {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : "",
-    }
-  }
+    },
+  };
 });
 
 const client = new ApolloClient({
@@ -197,14 +198,14 @@ export default client;
 
 ```javascript
 // src/index.js
-import { ApolloProvider } from '@apollo/client';
-import client from './apollo/client';
+import { ApolloProvider } from "@apollo/client";
+import client from "./apollo/client";
 
 ReactDOM.render(
   <ApolloProvider client={client}>
     <App />
   </ApolloProvider>,
-  document.getElementById('root')
+  document.getElementById("root"),
 );
 ```
 
@@ -215,7 +216,7 @@ ReactDOM.render(
 ### **Query: جلب البيانات**
 
 ```javascript
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql } from "@apollo/client";
 
 const GET_REQUESTS = gql`
   query GetMyRequests {
@@ -236,7 +237,7 @@ function RequestsList() {
 
   return (
     <div>
-      {data.myRequests.map(request => (
+      {data.myRequests.map((request) => (
         <RequestCard key={request.id} request={request} />
       ))}
     </div>
@@ -249,7 +250,7 @@ function RequestsList() {
 ### **Mutation: تعديل البيانات**
 
 ```javascript
-import { useMutation, gql } from '@apollo/client';
+import { useMutation, gql } from "@apollo/client";
 
 const CREATE_REQUEST = gql`
   mutation CreateRequest($input: CreateRequestInput!) {
@@ -273,14 +274,14 @@ function CreateRequestForm() {
             description: formData.description,
             quantity: formData.quantity,
             unit: formData.unit,
-            categoryId: formData.categoryId
-          }
-        }
+            categoryId: formData.categoryId,
+          },
+        },
       });
-      
-      console.log('Request created:', data.createRequest);
+
+      console.log("Request created:", data.createRequest);
     } catch (err) {
-      console.error('Error:', err);
+      console.error("Error:", err);
     }
   };
 
@@ -293,7 +294,7 @@ function CreateRequestForm() {
 ### **Subscription: البيانات الفورية**
 
 ```javascript
-import { useSubscription, gql } from '@apollo/client';
+import { useSubscription, gql } from "@apollo/client";
 
 const NOTIFICATION_SUBSCRIPTION = gql`
   subscription OnNotificationReceived($userId: ID!) {
@@ -309,7 +310,7 @@ const NOTIFICATION_SUBSCRIPTION = gql`
 
 function NotificationBell({ userId }) {
   const { data } = useSubscription(NOTIFICATION_SUBSCRIPTION, {
-    variables: { userId }
+    variables: { userId },
   });
 
   useEffect(() => {
@@ -328,13 +329,14 @@ function NotificationBell({ userId }) {
 
 ### **المرحلة 1: الصفحات الثقيلة (أولوية عالية)**
 
-| الصفحة | REST Endpoints | GraphQL Query | التحسين المتوقع |
-|--------|---------------|---------------|-----------------|
-| Request Details | 3 endpoints | 1 query | 70% أسرع |
-| Dashboard | 5 endpoints | 1 query | 80% أسرع |
-| Quotes List | 2 endpoints | 1 query | 60% أسرع |
+| الصفحة          | REST Endpoints | GraphQL Query | التحسين المتوقع |
+| --------------- | -------------- | ------------- | --------------- |
+| Request Details | 3 endpoints    | 1 query       | 70% أسرع        |
+| Dashboard       | 5 endpoints    | 1 query       | 80% أسرع        |
+| Quotes List     | 2 endpoints    | 1 query       | 60% أسرع        |
 
 **الكود**:
+
 ```javascript
 // Before (REST)
 const request = await api.get(`/requests/${id}`);
@@ -344,7 +346,7 @@ const quotes = await api.get(`/requests/${id}/quotes`);
 // After (GraphQL)
 const { data } = await client.query({
   query: GET_REQUEST_DETAILS,
-  variables: { id }
+  variables: { id },
 });
 // كل البيانات في طلب واحد!
 ```
@@ -355,7 +357,7 @@ const { data } = await client.query({
 
 ```javascript
 // Before (REST) - يُرجع 50+ حقل
-const requests = await api.get('/requests');
+const requests = await api.get("/requests");
 
 // After (GraphQL) - يُرجع 5 حقول فقط
 const { data } = await client.query({
@@ -369,7 +371,7 @@ const { data } = await client.query({
         createdAt
       }
     }
-  `
+  `,
 });
 ```
 
@@ -380,7 +382,7 @@ const { data } = await client.query({
 ```javascript
 // Before (REST) - Polling كل 30 ثانية
 setInterval(() => {
-  api.get('/notifications');
+  api.get("/notifications");
 }, 30000);
 
 // After (GraphQL) - Real-time subscriptions
@@ -479,12 +481,12 @@ const client = new ApolloClient({
           requests: {
             merge(existing, incoming) {
               return incoming;
-            }
-          }
-        }
-      }
-    }
-  })
+            },
+          },
+        },
+      },
+    },
+  }),
 });
 ```
 
@@ -493,26 +495,32 @@ const client = new ApolloClient({
 ## 🔧 **أدوات مفيدة**
 
 ### **1. GraphQL Playground**
+
 ```
 http://localhost:5000/graphql
 ```
+
 - اختبار الـ Queries
 - استكشاف الـ Schema
 - توثيق تلقائي
 
 ### **2. Apollo DevTools**
+
 ```bash
 # Chrome Extension
 https://chrome.google.com/webstore/detail/apollo-client-devtools
 ```
+
 - مراقبة الـ Queries
 - فحص الـ Cache
 - تتبع الأداء
 
 ### **3. GraphQL Code Generator**
+
 ```bash
 npm install -D @graphql-codegen/cli
 ```
+
 - توليد TypeScript types تلقائياً
 - توليد React Hooks
 
@@ -522,13 +530,13 @@ npm install -D @graphql-codegen/cli
 
 ### **الفوائد الرئيسية**
 
-| الميزة | التحسين |
-|--------|---------|
-| حجم البيانات | 60-80% أقل |
-| عدد الطلبات | 50-70% أقل |
-| سرعة التطبيق | 40-60% أسرع |
-| استهلاك البطارية | 30% أقل |
-| تجربة المستخدم | ممتازة |
+| الميزة           | التحسين     |
+| ---------------- | ----------- |
+| حجم البيانات     | 60-80% أقل  |
+| عدد الطلبات      | 50-70% أقل  |
+| سرعة التطبيق     | 40-60% أسرع |
+| استهلاك البطارية | 30% أقل     |
+| تجربة المستخدم   | ممتازة      |
 
 ### **الخطوات التالية**
 

@@ -1,9 +1,9 @@
-import React from 'react';
-import TraceTab from './TraceTab';
+import React from "react";
+import TraceTab from "./TraceTab";
 
 // Alias Wrapper for Sovereign Compliance (Order 34)
 const PoliciesTab = () => {
-    return <TraceTab />;
+  return <TraceTab />;
 };
 
 export default PoliciesTab;

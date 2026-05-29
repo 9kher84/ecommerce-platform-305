@@ -1,10 +1,17 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { protect, isSeller } = require('../middleware/authMiddleware');
+const { protect, isSeller } = require("../middleware/authMiddleware");
 const {
-    getProducts, addProduct, updateProduct, deleteProduct, uploadImage,
-    getSmartInventory, updateSmartInventory, bulkUpload, confirmBulkUpload
-} = require('../controllers/productController');
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  uploadImage,
+  getSmartInventory,
+  updateSmartInventory,
+  bulkUpload,
+  confirmBulkUpload,
+} = require("../controllers/productController");
 
 // All Routes Protected and Seller Only
 router.use(protect);
@@ -30,9 +37,7 @@ router.use(isSeller);
  *       201:
  *         description: Product added
  */
-router.route('/')
-    .get(getProducts)
-    .post(addProduct);
+router.route("/").get(getProducts).post(addProduct);
 
 /**
  * @swagger
@@ -46,7 +51,7 @@ router.route('/')
  *       200:
  *         description: Upload successful
  */
-router.post('/bulk', bulkUpload);
+router.post("/bulk", bulkUpload);
 
 /**
  * @swagger
@@ -60,7 +65,7 @@ router.post('/bulk', bulkUpload);
  *       200:
  *         description: Bulk upload confirmed
  */
-router.post('/bulk/confirm', confirmBulkUpload);
+router.post("/bulk/confirm", confirmBulkUpload);
 
 /**
  * @swagger
@@ -74,7 +79,7 @@ router.post('/bulk/confirm', confirmBulkUpload);
  *       200:
  *         description: Image uploaded
  */
-router.post('/upload', uploadImage);
+router.post("/upload", uploadImage);
 
 /**
  * @swagger
@@ -108,9 +113,10 @@ router.post('/upload', uploadImage);
  *       200:
  *         description: Inventory updated
  */
-router.route('/:id/smart-inventory')
-    .get(getSmartInventory)
-    .put(updateSmartInventory);
+router
+  .route("/:id/smart-inventory")
+  .get(getSmartInventory)
+  .put(updateSmartInventory);
 
 /**
  * @swagger
@@ -144,8 +150,6 @@ router.route('/:id/smart-inventory')
  *       200:
  *         description: Product deleted
  */
-router.route('/:id')
-    .put(updateProduct)
-    .delete(deleteProduct);
+router.route("/:id").put(updateProduct).delete(deleteProduct);
 
 module.exports = router;

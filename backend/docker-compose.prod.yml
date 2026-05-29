@@ -3,7 +3,7 @@
 # ========================================================================
 # Secure production configuration with hardened security settings
 
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database (Master) - Production
@@ -25,7 +25,7 @@ services:
     networks:
       - ecommerce-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,7 +51,7 @@ services:
     networks:
       - ecommerce-network
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -130,10 +130,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
     # Security: Read-only root filesystem (except for logs)
     read_only: true

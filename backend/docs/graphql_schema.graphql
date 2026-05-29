@@ -18,7 +18,7 @@ type User {
   isActive: Boolean!
   createdAt: DateTime!
   lastLogin: DateTime
-  
+
   # Relations
   requests: [PurchaseRequest!]
   quotes: [PriceQuote!]
@@ -50,14 +50,14 @@ type PurchaseRequest {
   status: RequestStatus!
   categoryId: Int
   buyerId: ID!
-  
+
   # Metadata
   viewCount: Int!
   quoteCount: Int!
   expiresAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
-  
+
   # Relations
   buyer: User!
   category: Category
@@ -82,7 +82,7 @@ type Category {
   description_ar: String
   description_en: String
   isActive: Boolean!
-  
+
   # Relations
   requests: [PurchaseRequest!]
 }
@@ -96,17 +96,17 @@ type PriceQuote {
   priceRangeMax: Float
   currency: String!
   status: QuoteStatus!
-  
+
   # Delivery
   canDeliver: Boolean!
   canInstall: Boolean!
   deliveryCost: Float
   deliveryDate: DateTime
-  
+
   # Metadata
   createdAt: DateTime!
   updatedAt: DateTime!
-  
+
   # Relations
   seller: User!
   request: PurchaseRequest!
@@ -133,11 +133,11 @@ type Deal {
   agreedDeliveryDate: DateTime
   status: DealStatus!
   notes: String
-  
+
   # Metadata
   createdAt: DateTime!
   updatedAt: DateTime!
-  
+
   # Relations
   purchaseRequest: PurchaseRequest!
   priceQuote: PriceQuote!
@@ -162,7 +162,7 @@ type Rating {
   comment: String
   isActive: Boolean!
   createdAt: DateTime!
-  
+
   # Relations
   rater: User!
   ratedUser: User!
@@ -177,7 +177,7 @@ type Notification {
   isRead: Boolean!
   entityId: ID
   createdAt: DateTime!
-  
+
   # Relations
   user: User!
 }
@@ -196,7 +196,7 @@ type Query {
     limit: Int
     offset: Int
   ): [User!]!
-  
+
   # Purchase Request Queries
   request(id: ID!): PurchaseRequest
   requests(
@@ -208,30 +208,26 @@ type Query {
   ): [PurchaseRequest!]!
   myRequests(status: RequestStatus): [PurchaseRequest!]!
   publishedRequests(categoryId: Int, limit: Int): [PurchaseRequest!]!
-  
+
   # Price Quote Queries
   quote(id: ID!): PriceQuote
-  quotes(
-    requestId: ID
-    sellerId: ID
-    status: QuoteStatus
-  ): [PriceQuote!]!
+  quotes(requestId: ID, sellerId: ID, status: QuoteStatus): [PriceQuote!]!
   myQuotes(status: QuoteStatus): [PriceQuote!]!
   requestQuotes(requestId: ID!): [PriceQuote!]!
-  
+
   # Deal Queries
   deal(id: ID!): Deal
   deals(status: DealStatus): [Deal!]!
   myDeals(status: DealStatus): [Deal!]!
-  
+
   # Category Queries
   category(id: ID!): Category
   categories(isActive: Boolean): [Category!]!
-  
+
   # Notification Queries
   notifications(isRead: Boolean, limit: Int): [Notification!]!
   unreadNotificationCount: Int!
-  
+
   # Admin Queries
   platformStats: PlatformStats
 }
@@ -253,32 +249,32 @@ type Mutation {
   # Authentication
   register(input: RegisterInput!): AuthPayload!
   login(email: String!, password: String!): AuthPayload!
-  
+
   # Purchase Request Mutations
   createRequest(input: CreateRequestInput!): PurchaseRequest!
   updateRequest(id: ID!, input: UpdateRequestInput!): PurchaseRequest!
   publishRequest(id: ID!): PurchaseRequest!
   cancelRequest(id: ID!): PurchaseRequest!
   transitionRequestStatus(id: ID!, newStatus: RequestStatus!): PurchaseRequest!
-  
+
   # Price Quote Mutations
   createQuote(input: CreateQuoteInput!): PriceQuote!
   updateQuote(id: ID!, input: UpdateQuoteInput!): PriceQuote!
   acceptQuote(id: ID!): PriceQuote!
   rejectQuote(id: ID!, reason: String): PriceQuote!
   withdrawQuote(id: ID!, reason: String): PriceQuote!
-  
+
   # Deal Mutations
   updateDealStatus(id: ID!, status: DealStatus!): Deal!
   completeDeal(id: ID!): Deal!
-  
+
   # Rating Mutations
   createRating(input: CreateRatingInput!): Rating!
-  
+
   # Notification Mutations
   markNotificationAsRead(id: ID!): Notification!
   markAllNotificationsAsRead: Boolean!
-  
+
   # Admin Mutations
   updateUserTier(userId: ID!, tier: SubscriptionTier!): User!
   updateUserStatus(userId: ID!, isActive: Boolean!): User!
@@ -366,11 +362,11 @@ scalar DateTime
 type Subscription {
   # Notification subscriptions
   notificationReceived(userId: ID!): Notification!
-  
+
   # Request subscriptions
   requestUpdated(requestId: ID!): PurchaseRequest!
   newQuoteReceived(requestId: ID!): PriceQuote!
-  
+
   # Deal subscriptions
   dealStatusChanged(dealId: ID!): Deal!
 }

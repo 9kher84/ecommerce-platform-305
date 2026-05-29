@@ -1,54 +1,74 @@
-import axios from 'axios';
+// frontend/src/services/ownerService.js
+import axios from "axios";
 
-// 👑 Sovereign Service
-// Independent from standard apiService.js
-// Enforces 'include credentials' for Cookie Auth
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 const ownerClient = axios.create({
-    baseURL: '/api/owner',
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json'
-    }
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-ownerClient.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response && error.response.status === 401) {
-            // Unauthenticated - Redirect to Bootstrap
-            window.location.href = '/owner/login';
-        }
-        return Promise.reject(error);
+/**
+ * تسجيل دخول المالك (Bootstrap) - يستخدم في حالة الطوارئ أو الإعداد الأول
+ */
+export const ownerBootstrapLogin = async (ownerSecret) => {
+  try {
+    const response = await ownerClient.post("/api/owner/bootstrap-login", {
+      ownerSecret,
+    });
+    if (response.data.token) {
+      localStorage.setItem("user", JSON.stringify(response.data.user));
     }
-);
-
-export const ownerService = {
-    // Identity
-    // Users
-    getAllUsers: () => ownerClient.get('/users'),
-    getConfig: () => ownerClient.get('/config'),
-    createUser: (data) => ownerClient.post('/users', data),
-    overrideSuspendUser: (userId, reason) => ownerClient.post('/override/suspend-user', { userId, reason }),
-    overrideActivateUser: (userId, reason) => ownerClient.post('/override/activate-user', { userId, reason }),
-    overrideRoleChange: (userId, newRole, reason) => ownerClient.post('/override/role-change', { userId, newRole, reason }),
-
-    // Requests (Sovereign)
-    getAllRequests: (params) => ownerClient.get('/requests', { params }),
-    forceRequestTransition: (id, to, reason) => ownerClient.post(`/requests/${id}/force-transition`, { to, reason }),
-
-    // Quotes
-    getAllQuotes: () => ownerClient.get('/quotes'),
-
-    // Policy Trace
-    tracePolicy: (payload) => ownerClient.post('/policy/trace', payload),
-
-    // Audit
-    getAuditLogs: (params) => ownerClient.get('/audit-logs', { params }),
-    exportAuditLog: (id) => ownerClient.get(`/audit-logs/${id}/export`, { responseType: 'blob' }),
-
-    // Delegations
-    getDelegations: () => ownerClient.get('/delegations'),
-
-    // Overrides
-
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "خطأ في تسجيل دخول المالك";
+  }
 };
+
+/**
+ * جلب بيانات لوحة التحكم القيادية (Command Dashboard)
+ */
+export const getCommandData = async () => {
+  try {
+    const response = await ownerClient.get("/api/dashboard/command");
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "لا يمكن جلب بيانات القيادة";
+  }
+};
+
+/**
+ * جلب رادار المطابقة (Match Radar) للطلبات والصفقات
+ */
+export const getMatchRadar = async () => {
+  try {
+    const response = await ownerClient.get("/api/dashboard/match-radar");
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "خطأ في جلب بيانات الرادار";
+  }
+};
+
+/**
+ * التحقق من حالة النظام الطارئة (Emergency Kill-Switch Status)
+ */
+export const getSystemLockStatus = async () => {
+  try {
+    const response = await ownerClient.get("/api/health");
+    return response.data;
+  } catch (error) {
+    return { status: "OFFLINE", error: error.message };
+  }
+};
+
+const ownerService = {
+  ownerBootstrapLogin,
+  getCommandData,
+  getMatchRadar,
+  getSystemLockStatus,
+};
+
+export default ownerService;

@@ -1,5 +1,5 @@
-const AppError = require('../utils/appError');
-const asyncHandler = require('express-async-handler');
+const AppError = require("../utils/appError");
+const asyncHandler = require("express-async-handler");
 
 /**
  * Strict Owner Authorization
@@ -7,19 +7,21 @@ const asyncHandler = require('express-async-handler');
  * Ignores Roles/Permissions.
  */
 const ownerAuth = asyncHandler(async (req, res, next) => {
-    const ownerId = process.env.OWNER_ID;
+  const ownerId = process.env.OWNER_ID;
 
-    // Ensure user is authenticated first (protected route)
-    if (!req.user || !req.user.id) {
-        return next(new AppError('Not authenticated', 401));
-    }
+  // Ensure user is authenticated first (protected route)
+  if (!req.user || !req.user.id) {
+    return next(new AppError("Not authenticated", 401));
+  }
 
-    if (req.user.id !== ownerId) {
-        console.warn(`[Security Alert] Non-Owner ${req.user.id} attempted to access Owner Panel.`);
-        return next(new AppError('Sovereign Access Only', 403));
-    }
+  if (req.user.id !== ownerId) {
+    console.warn(
+      `[Security Alert] Non-Owner ${req.user.id} attempted to access Owner Panel.`,
+    );
+    return next(new AppError("Sovereign Access Only", 403));
+  }
 
-    next();
+  next();
 });
 
 module.exports = ownerAuth;

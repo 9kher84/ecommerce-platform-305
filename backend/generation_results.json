@@ -1,0 +1,63 @@
+{
+  "users": [
+    {
+      "email": "buyer1_test@example.com",
+      "name": "Buyer One",
+      "role": "buyer",
+      "id": "7d000b60-ff3e-4581-ab41-11b6b6e2d57a",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "buyer2_test@example.com",
+      "name": "Buyer Two",
+      "role": "buyer",
+      "id": "9895fa51-bbb0-4b5c-9f57-7e977cb5bf50",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "seller1_test@example.com",
+      "name": "Seller One",
+      "role": "seller",
+      "id": "8d08a499-a11c-4560-9f45-531910fd59f1",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "seller2_test@example.com",
+      "name": "Seller Two",
+      "role": "seller",
+      "id": "6bcc43d3-0820-4f37-8b94-354ab7d96217",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "admin1_test@example.com",
+      "name": "Admin One",
+      "role": "admin",
+      "id": "ee283b08-76b9-479f-b6e7-27467d7fdcfd",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "admin2_test@example.com",
+      "name": "Admin Two",
+      "role": "admin",
+      "id": "a5b3719d-16b9-4288-b51e-7fccd31fd349",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "fraud1_test@example.com",
+      "name": "Fraud User 1",
+      "role": "buyer",
+      "id": "2c0a29f4-5e39-48d8-9f0d-f3795c4de306",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    },
+    {
+      "email": "fraud2_test@example.com",
+      "name": "Fraud User 2",
+      "role": "seller",
+      "id": "7433613b-3663-47ff-a1dd-603e2ff42dfb",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[REDACTED_BY_SOVEREIGN_PROTOCOL].[REDACTED_BY_SOVEREIGN_PROTOCOL]"
+    }
+  ],
+  "requests": [],
+  "quotes": [],
+  "deals": []
+}

@@ -10,22 +10,23 @@
  * @returns {string} - The device fingerprint
  */
 exports.getDeviceFingerprint = (req) => {
-    // 1. Try to get explicit mock fingerprint from headers (for testing)
-    if (req.headers['x-device-fingerprint']) {
-        return req.headers['x-device-fingerprint'];
-    }
+  // 1. Try to get explicit mock fingerprint from headers (for testing)
+  if (req.headers["x-device-fingerprint"]) {
+    return req.headers["x-device-fingerprint"];
+  }
 
-    // 2. Try body (if relevant for the specific endpoint flow)
-    if (req.body && req.body.deviceFingerprint) {
-        return req.body.deviceFingerprint;
-    }
+  // 2. Try body (if relevant for the specific endpoint flow)
+  if (req.body && req.body.deviceFingerprint) {
+    return req.body.deviceFingerprint;
+  }
 
-    // 3. Fallback: Simple fingerprint based on IP + User Agent (Basic Production Logic)
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
-    const userAgent = req.headers['user-agent'] || 'unknown-ua';
+  // 3. Fallback: Simple fingerprint based on IP + User Agent (Basic Production Logic)
+  const ip =
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+  const userAgent = req.headers["user-agent"] || "unknown-ua";
 
-    // In a real app, hash this string
-    return `${ip}|${userAgent}`;
+  // In a real app, hash this string
+  return `${ip}|${userAgent}`;
 };
 
 /**
@@ -36,8 +37,8 @@ exports.getDeviceFingerprint = (req) => {
  * @returns {boolean} - True if fraud detected (match), False otherwise
  */
 exports.detectSelfTrading = (buyerFingerprint, sellerFingerprint) => {
-    if (!buyerFingerprint || !sellerFingerprint) return false;
-    return buyerFingerprint === sellerFingerprint;
+  if (!buyerFingerprint || !sellerFingerprint) return false;
+  return buyerFingerprint === sellerFingerprint;
 };
 
 /**
@@ -46,11 +47,11 @@ exports.detectSelfTrading = (buyerFingerprint, sellerFingerprint) => {
  * @param {object} details - Key-value pairs of details
  */
 exports.logFraudAttempt = (type, details) => {
-    const timestamp = new Date().toISOString();
-    console.warn(`🚨 [SECURITY ALERT] FRAUD DETECTED`);
-    console.warn(`   Type: ${type}`);
-    console.warn(`   Time: ${timestamp}`);
-    console.warn(`   Details:`, JSON.stringify(details, null, 2));
+  const timestamp = new Date().toISOString();
+  console.warn(`🚨 [SECURITY ALERT] FRAUD DETECTED`);
+  console.warn(`   Type: ${type}`);
+  console.warn(`   Time: ${timestamp}`);
+  console.warn(`   Details:`, JSON.stringify(details, null, 2));
 
-    // In production: Save to DB or send to alerting system (PagerDuty, Slack, etc.)
+  // In production: Save to DB or send to alerting system (PagerDuty, Slack, etc.)
 };

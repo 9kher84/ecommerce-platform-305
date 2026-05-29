@@ -6,11 +6,13 @@
 **الحالة**: ⚠️ **تالف - يحتاج استعادة يدوية**
 
 ### المشكلة
+
 - حدث خطأ أثناء محاولة تحديث دالة `getAllRequests`
 - الملف أصبح يحتوي على أخطاء تركيبية متعددة
 - الكود غير قابل للتشغيل حالياً
 
 ### الأخطاء الموجودة
+
 ```
 SyntaxError: Unexpected strict mode reserved word at line 195
 Multiple syntax errors in structure
@@ -51,11 +53,13 @@ Copy-Item "path\to\backup\requestService.js" "backend\services\requestService.js
 ### 1. تحديث توقيع دالة `getAllRequests`
 
 **ابحث عن:**
+
 ```javascript
 static async getAllRequests(filters = {}, user = null) {
 ```
 
 **استبدل بـ:**
+
 ```javascript
 static async getAllRequests(userRole = null, userTier = null, filters = {}, user = null) {
 ```
@@ -68,18 +72,18 @@ static async getAllRequests(userRole = null, userTier = null, filters = {}, user
 // منطق الدور (Role Logic)
 const where = {};
 
-if (userRole === 'admin' || userRole === 'super_admin') {
-  where.status = { [Op.ne]: 'draft' };
-} else if (userRole === 'seller' || userRole === 'buyer') {
-  where.status = { [Op.in]: ['published', 'negotiating'] };
+if (userRole === "admin" || userRole === "super_admin") {
+  where.status = { [Op.ne]: "draft" };
+} else if (userRole === "seller" || userRole === "buyer") {
+  where.status = { [Op.in]: ["published", "negotiating"] };
   where.expiresAt = { [Op.gt]: new Date() };
 } else {
-  where.status = { [Op.in]: ['published', 'negotiating'] };
+  where.status = { [Op.in]: ["published", "negotiating"] };
   where.expiresAt = { [Op.gt]: new Date() };
 }
 
 // استثناء طلبات المستخدم نفسه
-if (user && userRole !== 'admin' && userRole !== 'super_admin') {
+if (user && userRole !== "admin" && userRole !== "super_admin") {
   where.userId = { [Op.ne]: user.id };
 }
 ```
@@ -90,14 +94,14 @@ if (user && userRole !== 'admin' && userRole !== 'super_admin') {
 
 ```javascript
 // قيود الخطة المجانية (Free Tier Logic)
-if (userRole === 'buyer' && userTier === 'free') {
+if (userRole === "buyer" && userTier === "free") {
   const categoryLimits = {};
   const filteredRequests = [];
 
   for (const request of requests) {
     const catId = request.categoryId;
     if (!categoryLimits[catId]) categoryLimits[catId] = 0;
-    
+
     if (categoryLimits[catId] < 3) {
       filteredRequests.push(request);
       categoryLimits[catId]++;
@@ -115,6 +119,7 @@ if (userRole === 'buyer' && userTier === 'free') {
 بعد إصلاح `requestService.js`، يجب تحديث الملفات التالية:
 
 ### 1. Controllers
+
 ```javascript
 // في backend/controllers/requestController.js
 
@@ -126,11 +131,12 @@ const requests = await RequestService.getAllRequests(
   req.user?.role || null,
   req.user?.subscriptionTier || null,
   filters,
-  req.user
+  req.user,
 );
 ```
 
 ### 2. GraphQL Resolvers (إذا وجد)
+
 ```javascript
 // في backend/src/api/graphql/resolvers.js
 
@@ -139,9 +145,9 @@ getAllRequests: async (_, { filters }, { user }) => {
     user?.role || null,
     user?.subscriptionTier || null,
     filters || {},
-    user
+    user,
   );
-}
+};
 ```
 
 ---
@@ -162,6 +168,7 @@ getAllRequests: async (_, { filters }, { user }) => {
 ## 📞 المساعدة
 
 إذا كنت بحاجة إلى المساعدة في:
+
 - استعادة الملف الأصلي
 - تطبيق التعديلات يدوياً
 - اختبار التغييرات
@@ -179,6 +186,7 @@ getAllRequests: async (_, { filters }, { user }) => {
 ## 💡 ملاحظة مهمة
 
 في المستقبل، يُنصح بـ:
+
 1. إنشاء نسخة احتياطية قبل أي تعديل كبير
 2. استخدام git للتحكم في الإصدارات
 3. اختبار التعديلات على فرع منفصل أولاً

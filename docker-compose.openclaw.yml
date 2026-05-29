@@ -1,0 +1,18 @@
+version: "3"
+services:
+  openclaw:
+    image: openclaw/openclaw:latest
+    ports:
+      - "18789:18789"
+    environment:
+      - OPENCLAW_WEBHOOK_URL=${OPENCLAW_WEBHOOK_URL:-http://backend:3000/api/agents/webhook}
+      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
+    volumes:
+      - ./openclaw_data:/app/data
+    restart: always
+    networks:
+      - sovereign_network
+
+networks:
+  sovereign_network:
+    external: true

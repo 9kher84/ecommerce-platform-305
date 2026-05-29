@@ -24,6 +24,7 @@ Thank you for your interest in contributing to our e-commerce platform! This doc
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js >= 16.0.0
 - PostgreSQL >= 12.0
 - Redis >= 6.0 (optional)
@@ -32,29 +33,34 @@ Thank you for your interest in contributing to our e-commerce platform! This doc
 ### Setup Development Environment
 
 1. **Fork and Clone**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/ecommerce-platform.git
    cd ecommerce-platform/backend
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm ci  # Use ci for reproducible installs
    ```
 
 3. **Configure Environment**
+
    ```bash
    cp .env.example .env
    # Edit .env with your local configuration
    ```
 
 4. **Setup Database**
+
    ```bash
    createdb ecommerce_db_dev
    node seed.js
    ```
 
 5. **Run Tests**
+
    ```bash
    npm test
    ```
@@ -67,6 +73,7 @@ Thank you for your interest in contributing to our e-commerce platform! This doc
 ## 🔄 Development Workflow
 
 ### Branch Naming Convention
+
 - `feature/description` - New features
 - `bugfix/description` - Bug fixes
 - `hotfix/description` - Critical production fixes
@@ -74,7 +81,9 @@ Thank you for your interest in contributing to our e-commerce platform! This doc
 - `docs/description` - Documentation updates
 
 ### Commit Messages
+
 Follow conventional commits:
+
 ```
 type(scope): description
 
@@ -84,6 +93,7 @@ type(scope): description
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -93,6 +103,7 @@ type(scope): description
 - `chore`: Maintenance tasks
 
 **Examples:**
+
 ```
 feat(auth): add refresh token rotation
 fix(quotes): prevent self-trading fraud
@@ -105,44 +116,48 @@ test(integration): add SSRF protection tests
 ### JavaScript Style Guide
 
 1. **Use ES6+ Features**
+
    ```javascript
    // Good
-   const { User } = require('../models');
+   const { User } = require("../models");
    const users = await User.findAll();
-   
+
    // Avoid
-   var User = require('../models').User;
+   var User = require("../models").User;
    ```
 
 2. **Async/Await over Callbacks**
+
    ```javascript
    // Good
    const user = await User.findByPk(id);
-   
+
    // Avoid
    User.findByPk(id).then(user => { ... });
    ```
 
 3. **Destructuring**
+
    ```javascript
    // Good
    const { email, password } = req.body;
-   
+
    // Avoid
    const email = req.body.email;
    const password = req.body.password;
    ```
 
 4. **Arrow Functions**
+
    ```javascript
    // Good
    const getUser = async (id) => {
-       return await User.findByPk(id);
+     return await User.findByPk(id);
    };
-   
+
    // Avoid
    function getUser(id) {
-       return User.findByPk(id);
+     return User.findByPk(id);
    }
    ```
 
@@ -150,23 +165,23 @@ test(integration): add SSRF protection tests
 
 ```javascript
 // 1. External dependencies
-const express = require('express');
-const { Op } = require('sequelize');
+const express = require("express");
+const { Op } = require("sequelize");
 
 // 2. Internal dependencies
-const { User } = require('../models');
-const { AuthenticationError } = require('../utils/errors');
-const { getMessage } = require('../utils/responseMessages');
+const { User } = require("../models");
+const { AuthenticationError } = require("../utils/errors");
+const { getMessage } = require("../utils/responseMessages");
 
 // 3. Configuration
-const config = require('../config');
+const config = require("../config");
 
 // 4. Constants
 const MAX_LOGIN_ATTEMPTS = 5;
 
 // 5. Functions
 const login = async (req, res, next) => {
-    // Implementation
+  // Implementation
 };
 
 // 6. Exports
@@ -186,6 +201,7 @@ module.exports = { login };
 ### Critical Rules
 
 1. **NEVER Commit Secrets**
+
    ```bash
    # Add to .gitignore
    .env
@@ -194,51 +210,56 @@ module.exports = { login };
    ```
 
 2. **Use Custom Error Classes**
+
    ```javascript
    // Good
-   const { AuthenticationError } = require('../utils/errors');
-   throw new AuthenticationError('Invalid credentials');
-   
+   const { AuthenticationError } = require("../utils/errors");
+   throw new AuthenticationError("Invalid credentials");
+
    // Avoid
-   res.status(401).json({ error: 'Invalid credentials' });
+   res.status(401).json({ error: "Invalid credentials" });
    ```
 
 3. **Validate All Inputs**
+
    ```javascript
    // Good
    const { error, value } = schema.validate(req.body);
    if (error) {
-       throw new ValidationError(error.message);
+     throw new ValidationError(error.message);
    }
-   
+
    // Avoid
    const user = await User.create(req.body); // Dangerous!
    ```
 
 4. **Sanitize User Input**
+
    ```javascript
    // Already handled by middleware, but be aware
    const sanitized = xss(userInput);
    ```
 
 5. **Use Parameterized Queries**
+
    ```javascript
    // Good (Sequelize handles this)
    const user = await User.findOne({ where: { email } });
-   
+
    // Avoid raw queries without parameters
    await sequelize.query(`SELECT * FROM users WHERE email = '${email}'`);
    ```
 
 6. **HttpOnly Cookies for Tokens**
+
    ```javascript
    // Good
-   res.cookie('token', jwt, {
-       httpOnly: true,
-       secure: process.env.NODE_ENV === 'production',
-       sameSite: 'Strict'
+   res.cookie("token", jwt, {
+     httpOnly: true,
+     secure: process.env.NODE_ENV === "production",
+     sameSite: "Strict",
    });
-   
+
    // Avoid
    res.json({ token: jwt }); // Never send tokens in JSON!
    ```
@@ -246,14 +267,14 @@ module.exports = { login };
 7. **Rate Limiting**
    ```javascript
    // Already configured, but be aware of endpoints that need it
-   router.post('/login', loginLimiter, login);
+   router.post("/login", loginLimiter, login);
    ```
 
 ### SSRF Protection
 
 ```javascript
 // Good - Use fetchProtected utility
-const { fetchImageProtected } = require('../utils/fetchProtected');
+const { fetchImageProtected } = require("../utils/fetchProtected");
 const image = await fetchImageProtected(imageUrl);
 
 // Avoid - Direct fetch without validation
@@ -264,12 +285,12 @@ const response = await axios.get(imageUrl); // Dangerous!
 
 ```javascript
 // Always capture device fingerprint for sensitive operations
-const deviceFingerprint = req.headers['x-device-fingerprint'];
+const deviceFingerprint = req.headers["x-device-fingerprint"];
 
 // Check for self-trading
-const { detectSelfTrading } = require('../utils/fraudDetection');
+const { detectSelfTrading } = require("../utils/fraudDetection");
 if (detectSelfTrading(buyerFingerprint, sellerFingerprint)) {
-    throw new FraudDetectionError('Self-trading detected');
+  throw new FraudDetectionError("Self-trading detected");
 }
 ```
 
@@ -278,6 +299,7 @@ if (detectSelfTrading(buyerFingerprint, sellerFingerprint)) {
 ### Test Coverage
 
 All new features MUST include tests:
+
 - **Integration Tests**: For API endpoints
 - **Unit Tests**: For business logic
 
@@ -296,10 +318,10 @@ describe('Feature Name', () => {
     it('should do something specific', async () => {
         // Arrange
         const input = { ... };
-        
+
         // Act
         const result = await someFunction(input);
-        
+
         // Assert
         expect(result).toBeDefined();
         expect(result.status).toBe('success');
@@ -336,48 +358,49 @@ npm run test:coverage
 
 ```javascript
 const {
-    ValidationError,
-    AuthenticationError,
-    AuthorizationError,
-    NotFoundError,
-    FraudDetectionError
-} = require('../utils/errors');
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  FraudDetectionError,
+} = require("../utils/errors");
 
 // Examples
-throw new ValidationError('Invalid email format');
-throw new AuthenticationError('Invalid credentials');
-throw new AuthorizationError('Admin access required');
-throw new NotFoundError('User');
-throw new FraudDetectionError('Self-trading detected');
+throw new ValidationError("Invalid email format");
+throw new AuthenticationError("Invalid credentials");
+throw new AuthorizationError("Admin access required");
+throw new NotFoundError("User");
+throw new FraudDetectionError("Self-trading detected");
 ```
 
 ### Error Response Structure
 
 All errors should follow this structure:
+
 ```json
 {
-    "success": false,
-    "error": {
-        "code": "ERROR_CODE",
-        "message": "Human-readable message",
-        "details": { }  // Optional
-    }
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable message",
+    "details": {} // Optional
+  }
 }
 ```
 
 ### Centralized Messages
 
 ```javascript
-const { getMessage } = require('../utils/responseMessages');
+const { getMessage } = require("../utils/responseMessages");
 
 // Get message in Arabic (default)
-const message = getMessage('AUTH_REQUIRED');
+const message = getMessage("AUTH_REQUIRED");
 
 // Get message in English
-const message = getMessage('AUTH_REQUIRED', 'en');
+const message = getMessage("AUTH_REQUIRED", "en");
 
 // Dynamic messages
-const message = getMessage('PLAN_CONTACT_LIMIT', 'ar', 'Free', 1);
+const message = getMessage("PLAN_CONTACT_LIMIT", "ar", "Free", 1);
 ```
 
 ## 📚 Documentation
@@ -387,7 +410,7 @@ const message = getMessage('PLAN_CONTACT_LIMIT', 'ar', 'Free', 1);
 ```javascript
 /**
  * Authenticate user and return JWT token
- * 
+ *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware
@@ -396,7 +419,7 @@ const message = getMessage('PLAN_CONTACT_LIMIT', 'ar', 'Free', 1);
  * @throws {ValidationError} If required fields are missing
  */
 const login = async (req, res, next) => {
-    // Implementation
+  // Implementation
 };
 ```
 
@@ -433,7 +456,7 @@ Add JSDoc comments to routes:
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', login);
+router.post("/login", login);
 ```
 
 ## 🔄 Pull Request Process
@@ -451,26 +474,31 @@ router.post('/login', login);
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] All tests pass
 - [ ] New tests added
 - [ ] Manual testing completed
 
 ## Security Checklist
+
 - [ ] No secrets committed
 - [ ] Input validation added
 - [ ] Error handling implemented
 - [ ] SSRF protection considered
 
 ## Documentation
+
 - [ ] README updated
 - [ ] API docs updated
 - [ ] Code comments added
@@ -493,6 +521,7 @@ Clear description of the bug
 
 **To Reproduce**
 Steps to reproduce:
+
 1. Go to '...'
 2. Click on '...'
 3. See error
@@ -504,6 +533,7 @@ What you expected to happen
 If applicable
 
 **Environment:**
+
 - OS: [e.g., Ubuntu 20.04]
 - Node version: [e.g., 16.14.0]
 - Browser: [e.g., Chrome 96]
@@ -540,6 +570,7 @@ Mockups, examples, etc.
 ## 🎯 Priority Areas
 
 Current focus areas for contributions:
+
 1. Test coverage improvement
 2. Performance optimization
 3. Documentation enhancement

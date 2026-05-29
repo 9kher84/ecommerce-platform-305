@@ -1,219 +1,504 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const config = require('./config');
+const { Sequelize, DataTypes } = require("sequelize");
+const config = require("./config");
 
-// إعداد الاتصال بقاعدة البيانات
+// ============================================================
+// 🔥 DATABASE CONNECTION
+// ============================================================
+
 const sequelize = new Sequelize(
-    config.db.database,
-    config.db.username,
-    config.db.password,
-    config.db
+  config.db.database,
+  config.db.username,
+  config.db.password,
+  config.db,
 );
 
 // ============================================================
-// 1. 🔥 IMPORT MODELS (استيراد النماذج)
+// 🔥 IMPORT MODELS
 // ============================================================
 
-const User = require('./models/User')(sequelize, DataTypes);
-const Category = require('./models/Category')(sequelize, DataTypes);
-const Product = require('./models/Product')(sequelize, DataTypes);
-const PurchaseRequest = require('./models/PurchaseRequest')(sequelize, DataTypes);
-const PriceQuote = require('./models/PriceQuote')(sequelize, DataTypes);
-const Deal = require('./models/Deal')(sequelize, DataTypes);
-const Rating = require('./models/Rating')(sequelize, DataTypes);
-const Notification = require('./models/Notification')(sequelize, DataTypes);
-const Report = require('./models/Report')(sequelize, DataTypes);
-const SmartPricingMatrix = require('./models/SmartPricingMatrix')(sequelize, DataTypes);
-const SmartInventory = require('./models/SmartInventory')(sequelize, DataTypes); // New Smart Inventory Model
-const RefreshToken = require('./models/RefreshToken')(sequelize, DataTypes);
-const AuditLog = require('./models/AuditLog')(sequelize, DataTypes);
-const SystemSetting = require('./models/SystemSetting')(sequelize, DataTypes);
-const PaymentTransaction = require('./models/PaymentTransaction')(sequelize, DataTypes);
-const PaymentMethod = require('./models/PaymentMethod')(sequelize, DataTypes);
-const PaymentAuditLog = require('./models/PaymentAuditLog')(sequelize, DataTypes);
-const WithdrawalLog = require('./models/WithdrawalLog')(sequelize, DataTypes);
+const User = require("./models/User")(sequelize, DataTypes);
+const Category = require("./models/Category")(sequelize, DataTypes);
+const UserCategory = require("./models/UserCategory")(sequelize, DataTypes);
+const Organization = require("./models/Organization")(sequelize);
+const OrganizationUser = require("./models/OrganizationUser")(sequelize);
 
-const AlternativeQuote = require('./models/AlternativeQuote')(sequelize, DataTypes);
-const Permission = require('./models/Permission')(sequelize, DataTypes);
-const Role = require('./models/Role')(sequelize, DataTypes);
-const RolePermission = require('./models/RolePermission')(sequelize, DataTypes);
-const UserRole = require('./models/UserRole')(sequelize, DataTypes);
-const Region = require('./models/Region')(sequelize, DataTypes);
-const City = require('./models/City')(sequelize, DataTypes);
-const Team = require('./models/Team')(sequelize, DataTypes);
-const UserContext = require('./models/UserContext')(sequelize, DataTypes);
-const Delegation = require('./models/Delegation')(sequelize, DataTypes);
+const Product = require("./models/Product")(sequelize, DataTypes);
+const PurchaseRequest = require("./models/PurchaseRequest")(
+  sequelize,
+  DataTypes,
+);
+const PriceQuote = require("./models/PriceQuote")(sequelize, DataTypes);
+const Deal = require("./models/Deal")(sequelize, DataTypes);
+const Rating = require("./models/Rating")(sequelize, DataTypes);
+const Notification = require("./models/Notification")(sequelize, DataTypes);
+const Report = require("./models/Report")(sequelize, DataTypes);
 
-// Authorization & Context Associations
-Role.belongsToMany(Permission, { through: RolePermission, foreignKey: 'roleId', as: 'permissions', onDelete: 'CASCADE' });
-Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'permissionId', as: 'roles', onDelete: 'CASCADE' });
+const SmartPricingMatrix = require("./models/SmartPricingMatrix")(
+  sequelize,
+  DataTypes,
+);
+const SmartInventory = require("./models/SmartInventory")(sequelize, DataTypes);
+const RefreshToken = require("./models/RefreshToken")(sequelize, DataTypes);
 
-User.belongsToMany(Role, { through: UserRole, foreignKey: 'userId', as: 'roles', onDelete: 'CASCADE' });
-Role.belongsToMany(User, { through: UserRole, foreignKey: 'roleId', as: 'users', onDelete: 'CASCADE' });
+const AuditLog = require("./models/AuditLog")(sequelize, DataTypes);
+const ActionLog = require("./models/ActionLog")(sequelize, DataTypes);
+const SystemSetting = require("./models/SystemSetting")(sequelize, DataTypes);
+const InventoryMetrics = require("./models/InventoryMetrics")(
+  sequelize,
+  DataTypes,
+);
+const AutoReplenishmentOrder = require("./models/AutoReplenishmentOrder")(
+  sequelize,
+  DataTypes,
+);
 
-// Delegation Associations
-User.hasMany(Delegation, { foreignKey: 'fromUserId', as: 'delegationsGiven' });
-User.hasMany(Delegation, { foreignKey: 'toUserId', as: 'delegationsReceived' });
-Delegation.belongsTo(User, { foreignKey: 'fromUserId', as: 'principalUser' });
-Delegation.belongsTo(User, { foreignKey: 'toUserId', as: 'delegateUser' });
+const PaymentTransaction = require("./models/PaymentTransaction")(
+  sequelize,
+  DataTypes,
+);
+const PaymentMethod = require("./models/PaymentMethod")(sequelize, DataTypes);
+const PaymentAuditLog = require("./models/PaymentAuditLog")(
+  sequelize,
+  DataTypes,
+);
+const WithdrawalLog = require("./models/WithdrawalLog")(sequelize, DataTypes);
 
-// Context Hierarchy
-Region.hasMany(City, { foreignKey: 'regionId', as: 'cities' });
-City.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+const AlternativeQuote = require("./models/AlternativeQuote")(
+  sequelize,
+  DataTypes,
+);
 
-City.hasMany(Team, { foreignKey: 'cityId', as: 'teams' });
-Team.belongsTo(City, { foreignKey: 'cityId', as: 'city' });
+const Permission = require("./models/Permission")(sequelize, DataTypes);
+const Role = require("./models/Role")(sequelize, DataTypes);
+const RolePermission = require("./models/RolePermission")(sequelize, DataTypes);
+const UserRole = require("./models/UserRole")(sequelize, DataTypes);
 
-// User Context
-User.hasOne(UserContext, { foreignKey: 'userId', as: 'context' });
-UserContext.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+const Region = require("./models/Region")(sequelize, DataTypes);
+const City = require("./models/City")(sequelize, DataTypes);
+const Team = require("./models/Team")(sequelize, DataTypes);
+const UserContext = require("./models/UserContext")(sequelize, DataTypes);
 
-UserContext.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
-UserContext.belongsTo(City, { foreignKey: 'cityId', as: 'city' });
-UserContext.belongsTo(Team, { foreignKey: 'teamId', as: 'team' });
+const Delegation = require("./models/Delegation")(sequelize, DataTypes);
+const SellerDecision = require("./models/SellerDecision")(sequelize, DataTypes);
+const BuyerDecisionContext = require("./models/BuyerDecisionContext")(
+  sequelize,
+  DataTypes,
+);
+const MarketSilenceEvent = require("./models/MarketSilenceEvent")(
+  sequelize,
+  DataTypes,
+);
+const SellerInteractionEvent = require("./models/SellerInteractionEvent")(
+  sequelize,
+  DataTypes,
+);
+const BuyerLimit = require("./models/BuyerLimit")(sequelize, DataTypes);
+const CommissionTransaction = require("./models/CommissionTransaction")(
+  sequelize,
+  DataTypes,
+);
+const EventLog = require("./models/EventLog")(sequelize, Sequelize.DataTypes);
+const TrustScore = require("./models/TrustScore")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const Sanction = require("./models/Sanction")(sequelize, Sequelize.DataTypes);
+const AdminActionLog = require("./models/AdminActionLog")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const Invoice = require("./models/Invoice")(sequelize, Sequelize.DataTypes);
+const SupervisorAssignment = require("./models/SupervisorAssignment")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const SupervisorCommissionShare = require("./models/SupervisorCommissionShare")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const SupervisorNotification = require("./models/SupervisorNotification")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const RegionAssignment = require("./models/RegionAssignment")(
+  sequelize,
+  Sequelize.DataTypes,
+);
+const FailedNotification = require("./models/FailedNotification")(
+  sequelize,
+  Sequelize.DataTypes,
+);
 
 // ============================================================
-// 2. 🔥 DEFINE ASSOCIATIONS (العلاقات)
+// 🔥 AUTHORIZATION & CONTEXT
 // ============================================================
 
-// User Associations
-User.hasMany(PurchaseRequest, { foreignKey: 'userId', as: 'requests' });
-User.hasMany(PriceQuote, { foreignKey: 'sellerId', as: 'quotes' });
-User.hasMany(Deal, { foreignKey: 'sellerId', as: 'sellerDeals' });
-User.hasMany(Deal, { foreignKey: 'buyerId', as: 'buyerDeals' });
-User.hasMany(Rating, { foreignKey: 'raterId', as: 'givenRatings' });
-User.hasMany(Rating, { foreignKey: 'ratedUserId', as: 'receivedRatings' });
-User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
-User.hasMany(Report, { foreignKey: 'reporterId', as: 'submittedReports' });
-User.hasMany(Report, { foreignKey: 'reportedUserId', as: 'receivedReports' });
-User.hasMany(Product, { foreignKey: 'sellerId', as: 'products' });
-// Admin Association (User created by Admin)
-User.belongsTo(User, { as: 'adminCreator', foreignKey: 'adminCreatedBy' });
-
-// SmartPricingMatrix Associations (Command 7)
-User.hasMany(SmartPricingMatrix, {
-    foreignKey: 'sellerId',
-    as: 'pricingMatrices',
-    onDelete: 'CASCADE'
+Role.belongsToMany(Permission, {
+  through: RolePermission,
+  foreignKey: "roleId",
+  as: "permissions",
 });
-SmartPricingMatrix.belongsTo(User, {
-    foreignKey: 'sellerId',
-    as: 'seller'
+Permission.belongsToMany(Role, {
+  through: RolePermission,
+  foreignKey: "permissionId",
+  as: "roles",
 });
 
-// RefreshToken Associations
-User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
-RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.belongsToMany(Role, {
+  through: UserRole,
+  foreignKey: "userId",
+  as: "roles",
+});
+Role.belongsToMany(User, {
+  through: UserRole,
+  foreignKey: "roleId",
+  as: "users",
+});
 
-// Category Associations
-Category.hasMany(PurchaseRequest, { foreignKey: 'categoryId', as: 'requests' });
-Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
+User.belongsToMany(Organization, {
+  through: OrganizationUser,
+  foreignKey: "user_id",
+  as: "organizations",
+});
+Organization.belongsToMany(User, {
+  through: OrganizationUser,
+  foreignKey: "organization_id",
+  as: "users",
+});
+PurchaseRequest.belongsTo(Organization, {
+  foreignKey: "organization_id",
+  as: "organization",
+});
+Organization.hasMany(PurchaseRequest, {
+  foreignKey: "organization_id",
+  as: "purchaseRequests",
+});
+PriceQuote.belongsTo(Organization, {
+  foreignKey: "organization_id",
+  as: "organization",
+});
+Organization.hasMany(PriceQuote, {
+  foreignKey: "organization_id",
+  as: "priceQuotes",
+});
+Deal.belongsTo(Organization, {
+  foreignKey: "organization_id",
+  as: "organization",
+});
+Organization.hasMany(Deal, { foreignKey: "organization_id", as: "deals" });
+AuditLog.belongsTo(Organization, {
+  foreignKey: "organization_id",
+  as: "organization",
+});
+Organization.hasMany(AuditLog, {
+  foreignKey: "organization_id",
+  as: "auditLogs",
+});
 
-// Product Associations
-Product.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
-Product.hasOne(SmartInventory, { foreignKey: 'productId', as: 'smartInventory', onDelete: 'CASCADE' });
-
-// Smart Inventory Associations
-SmartInventory.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
-SmartInventory.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-User.hasMany(SmartInventory, { foreignKey: 'sellerId', as: 'smartInventoryItems' });
-
-// PurchaseRequest Associations
-PurchaseRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-PurchaseRequest.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
-PurchaseRequest.hasMany(PriceQuote, { foreignKey: 'purchaseRequestId', as: 'quotes' });
-PurchaseRequest.hasOne(Deal, { foreignKey: 'purchaseRequestId', as: 'deal' });
-PurchaseRequest.belongsTo(User, { foreignKey: 'targetSellerId', as: 'targetSeller' });
-
-// PriceQuote Associations
-PriceQuote.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-PriceQuote.belongsTo(PurchaseRequest, { foreignKey: 'purchaseRequestId', as: 'request' });
-PriceQuote.hasOne(Deal, { foreignKey: 'priceQuoteId', as: 'deal' });
-
-// Deal Associations
-Deal.belongsTo(PurchaseRequest, { foreignKey: 'purchaseRequestId', as: 'purchaseRequest' });
-Deal.belongsTo(PriceQuote, { foreignKey: 'priceQuoteId', as: 'priceQuote' });
-Deal.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-Deal.belongsTo(User, { foreignKey: 'buyerId', as: 'buyer' });
-
-// Rating Associations
-Rating.belongsTo(User, { foreignKey: 'raterId', as: 'rater' });
-Rating.belongsTo(User, { foreignKey: 'ratedUserId', as: 'ratedUser' });
-Rating.belongsTo(Deal, { foreignKey: 'dealId', as: 'deal' });
-
-// Notification Associations
-Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-// Report Associations
-Report.belongsTo(User, { foreignKey: 'reporterId', as: 'reporter' });
-Report.belongsTo(User, { foreignKey: 'reportedUserId', as: 'reportedUser' });
-
-// AuditLog Associations
-AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' }); // Legacy/Main
-AuditLog.belongsTo(User, { foreignKey: 'principalId', as: 'principal' });
-AuditLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
-AuditLog.belongsTo(Delegation, { foreignKey: 'delegationId', as: 'delegation' });
-
-// Payment Associations
-PaymentTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-PaymentTransaction.belongsTo(Deal, { foreignKey: 'dealId', as: 'deal' });
-PaymentMethod.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-PaymentAuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-WithdrawalLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Delegation, { foreignKey: "fromUserId", as: "delegationsGiven" });
+User.hasMany(Delegation, { foreignKey: "toUserId", as: "delegationsReceived" });
+Delegation.belongsTo(User, { foreignKey: "fromUserId", as: "principalUser" });
+Delegation.belongsTo(User, { foreignKey: "toUserId", as: "delegateUser" });
 
 // ============================================================
-// 3. 🔥 EXPORT MODELS & INIT FUNCTION
+// 🔥 CATEGORY – SOVEREIGN TAXONOMY (THIS WAS THE MISSING CORE)
+// ============================================================
+
+// Category Hierarchy (Sector → SubCategories)
+Category.hasMany(Category, {
+  as: "subCategories",
+  foreignKey: "parentId",
+});
+Category.belongsTo(Category, {
+  as: "parent",
+  foreignKey: "parentId",
+});
+
+// User ↔ Sector (ONLY SECTOR ALLOWED – enforced in UserCategory model)
+User.belongsToMany(Category, {
+  through: UserCategory,
+  foreignKey: "userId",
+  as: "sectors",
+});
+
+Category.belongsToMany(User, {
+  through: UserCategory,
+  foreignKey: "categoryId",
+  as: "users",
+});
+
+// ============================================================
+// 🔥 CORE BUSINESS ASSOCIATIONS
+// ============================================================
+
+// User
+User.hasMany(PurchaseRequest, { foreignKey: "userId", as: "requests" });
+User.hasMany(Product, { foreignKey: "sellerId", as: "products" });
+User.hasMany(Notification, { foreignKey: "userId", as: "notifications" });
+
+// User ↔ Invoice
+User.hasMany(Invoice, { foreignKey: "buyer_id", as: "buyerInvoices" });
+User.hasMany(Invoice, { foreignKey: "seller_id", as: "sellerInvoices" });
+Invoice.belongsTo(User, { foreignKey: "buyer_id", as: "buyer" });
+Invoice.belongsTo(User, { foreignKey: "seller_id", as: "seller" });
+
+// Deal ↔ Invoice
+Deal.belongsTo(Invoice, { foreignKey: "invoice_id", as: "dealInvoice" });
+Invoice.hasOne(Deal, { foreignKey: "invoice_id", as: "deal" });
+
+// Invoice ↔ CommissionTransaction
+Invoice.hasMany(CommissionTransaction, {
+  foreignKey: "invoice_id",
+  as: "commissions",
+});
+CommissionTransaction.belongsTo(Invoice, {
+  foreignKey: "invoice_id",
+  as: "invoice",
+});
+
+// System Logging
+User.hasMany(EventLog, { foreignKey: "actor_id", as: "events" });
+
+// Category
+Category.hasMany(Product, { foreignKey: "categoryId", as: "products" });
+Category.hasMany(PurchaseRequest, { foreignKey: "categoryId", as: "requests" });
+
+// Product
+Product.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+Product.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
+Product.hasOne(SmartInventory, {
+  foreignKey: "productId",
+  as: "smartInventory",
+});
+
+// Smart Inventory
+SmartInventory.belongsTo(Product, { foreignKey: "productId", as: "product" });
+SmartInventory.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+SmartInventory.hasOne(InventoryMetrics, {
+  foreignKey: "inventoryId",
+  as: "metrics",
+});
+InventoryMetrics.belongsTo(SmartInventory, {
+  foreignKey: "inventoryId",
+  as: "inventory",
+});
+SmartInventory.hasMany(AutoReplenishmentOrder, {
+  foreignKey: "inventoryId",
+  as: "replenishmentOrders",
+});
+AutoReplenishmentOrder.belongsTo(SmartInventory, {
+  foreignKey: "inventoryId",
+  as: "inventory",
+});
+
+// Purchase Request
+PurchaseRequest.belongsTo(User, { foreignKey: "userId", as: "user" });
+PurchaseRequest.belongsTo(Category, {
+  foreignKey: "categoryId",
+  as: "category",
+});
+PurchaseRequest.hasMany(PriceQuote, {
+  foreignKey: "purchaseRequestId",
+  as: "quotes",
+});
+PurchaseRequest.hasOne(Deal, { foreignKey: "purchaseRequestId", as: "deal" });
+
+// Price Quote
+PriceQuote.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+PriceQuote.belongsTo(PurchaseRequest, {
+  foreignKey: "purchaseRequestId",
+  as: "request",
+});
+PriceQuote.hasOne(Deal, { foreignKey: "priceQuoteId", as: "deal" });
+
+// Deal
+Deal.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+Deal.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+Deal.belongsTo(PurchaseRequest, {
+  foreignKey: "purchaseRequestId",
+  as: "purchaseRequest",
+});
+
+// Selection Decision Associations
+SellerDecision.belongsTo(User, { foreignKey: "userId", as: "user" });
+SellerDecision.belongsTo(PurchaseRequest, {
+  foreignKey: "requestId",
+  as: "request",
+});
+User.hasMany(SellerDecision, { foreignKey: "userId", as: "decisions" });
+
+// Buyer Decision Context Associations
+BuyerDecisionContext.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+BuyerDecisionContext.belongsTo(PriceQuote, {
+  foreignKey: "quoteId",
+  as: "quote",
+});
+BuyerDecisionContext.belongsTo(PurchaseRequest, {
+  foreignKey: "requestId",
+  as: "request",
+});
+User.hasMany(BuyerDecisionContext, {
+  foreignKey: "buyerId",
+  as: "buyerDecisions",
+});
+
+// Market Monitoring Associations
+MarketSilenceEvent.belongsTo(Category, {
+  foreignKey: "sectorId",
+  as: "sector",
+});
+MarketSilenceEvent.belongsTo(PurchaseRequest, {
+  foreignKey: "requestId",
+  as: "request",
+});
+
+SellerInteractionEvent.belongsTo(User, {
+  foreignKey: "sellerId",
+  as: "seller",
+});
+SellerInteractionEvent.belongsTo(PurchaseRequest, {
+  foreignKey: "requestId",
+  as: "request",
+});
+User.hasMany(SellerInteractionEvent, {
+  foreignKey: "sellerId",
+  as: "interactions",
+});
+
+// Buyer limits & Commission
+BuyerLimit.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+User.hasOne(BuyerLimit, { foreignKey: "buyerId", as: "limit" });
+
+CommissionTransaction.belongsTo(Deal, { foreignKey: "dealId", as: "deal" });
+CommissionTransaction.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+CommissionTransaction.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+Deal.hasOne(CommissionTransaction, { foreignKey: "dealId", as: "commission" });
+
+SupervisorAssignment.belongsTo(Deal, { foreignKey: "deal_id", as: "deal" });
+SupervisorAssignment.belongsTo(User, {
+  foreignKey: "supervisor_id",
+  as: "supervisor",
+});
+SupervisorAssignment.belongsTo(User, {
+  foreignKey: "assigned_by",
+  as: "assigner",
+});
+Deal.hasMany(SupervisorAssignment, {
+  foreignKey: "deal_id",
+  as: "supervisorAssignments",
+});
+User.hasMany(SupervisorAssignment, {
+  foreignKey: "supervisor_id",
+  as: "assignmentsAsSupervisor",
+});
+
+SupervisorCommissionShare.belongsTo(SupervisorAssignment, {
+  foreignKey: "assignment_id",
+  as: "assignment",
+});
+SupervisorCommissionShare.belongsTo(User, {
+  foreignKey: "supervisor_id",
+  as: "supervisor",
+});
+SupervisorCommissionShare.belongsTo(Deal, {
+  foreignKey: "deal_id",
+  as: "deal",
+});
+SupervisorAssignment.hasMany(SupervisorCommissionShare, {
+  foreignKey: "assignment_id",
+  as: "commissionShares",
+});
+
+SupervisorNotification.belongsTo(User, {
+  foreignKey: "supervisor_id",
+  as: "supervisor",
+});
+SupervisorNotification.belongsTo(Deal, { foreignKey: "deal_id", as: "deal" });
+User.hasMany(SupervisorNotification, {
+  foreignKey: "supervisor_id",
+  as: "supervisorNotifications",
+});
+
+RegionAssignment.belongsTo(User, {
+  foreignKey: "supervisor_id",
+  as: "supervisor",
+});
+RegionAssignment.belongsTo(User, { foreignKey: "assigned_by", as: "assigner" });
+
+// ============================================================
+// 🔥 INIT
 // ============================================================
 
 const initSequelize = async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('✅ Database connection established successfully.');
-        // Sync models with database
-        // NOTE: 'alter: true' disabled to prevent Invalid SQL generation for UNIQUE constraints (Permission model).
-        // Schema is managed manually or via scripts/manual_fix_permissions.js.
-        // =================================================================
-        // SOVEREIGN WARNING: Database schema must only be modified via
-        // official migrations. Manual sync is permanently disabled.
-        // =================================================================
-        await sequelize.sync({ alter: false, force: false });
-        console.log('✅ Database synchronized successfully.');
-    } catch (error) {
-        console.error('❌ Unable to connect to the database:', error);
-        throw error;
-    }
+  await sequelize.authenticate();
+  await sequelize.sync({ alter: false, force: false });
 };
 
+// ============================================================
+// 🔥 EXPORTS (THIS IS WHAT FIXES EVERYTHING)
+// ============================================================
+
 module.exports = {
-    sequelize,
-    Sequelize, // Export the class for Op access
-    initSequelize,
-    User,
-    Category,
-    PurchaseRequest,
-    PriceQuote,
-    Deal,
-    Rating,
-    Notification,
-    Report,
-    SmartPricingMatrix,
-    SmartInventory,
-    Product,
-    RefreshToken,
-    AuditLog,
-    SystemSetting,
-    PaymentTransaction,
-    PaymentMethod,
-    PaymentAuditLog,
-    WithdrawalLog,
-    AlternativeQuote,
-    Permission,
-    Role,
-    RolePermission,
-    UserRole,
-    Region,
-    City,
-    Team,
-    UserContext,
-    Delegation
+  sequelize,
+  Sequelize,
+  initSequelize,
+
+  User,
+  Category,
+  UserCategory,
+
+  Product,
+  PurchaseRequest,
+  PriceQuote,
+  Deal,
+  Rating,
+  Notification,
+  Report,
+
+  SmartPricingMatrix,
+  SmartInventory,
+  RefreshToken,
+
+  AuditLog,
+  ActionLog,
+  SystemSetting,
+  InventoryMetrics,
+  AutoReplenishmentOrder,
+
+  PaymentTransaction,
+  PaymentMethod,
+  PaymentAuditLog,
+  WithdrawalLog,
+
+  AlternativeQuote,
+
+  Permission,
+  Role,
+  RolePermission,
+  UserRole,
+
+  Region,
+  City,
+  Team,
+  UserContext,
+
+  Delegation,
+  SellerDecision,
+  BuyerDecisionContext,
+  MarketSilenceEvent,
+  SellerInteractionEvent,
+  BuyerLimit,
+  CommissionTransaction,
+  EventLog,
+  TrustScore,
+  Sanction,
+  AdminActionLog,
+  Invoice,
+  SupervisorAssignment,
+  SupervisorCommissionShare,
+  SupervisorNotification,
+  RegionAssignment,
+  Organization,
+  OrganizationUser,
+  FailedNotification,
 };

@@ -11,6 +11,7 @@
 تم إكمال اختبار الأداء الأساسي (Baseline) بنجاح بعد تفعيل Redis الحقيقي وتحسين إعدادات قاعدة البيانات. النتائج تظهر **تحسن كبير** مقارنة بالاختبارات السابقة مع Mock Redis.
 
 ### 🎯 Key Achievements
+
 - ✅ **Redis Integration**: تم التحويل من Mock Redis إلى Real Redis بنجاح
 - ✅ **Database Pool Tuning**: تم تفعيل إعدادات Pool قابلة للتخصيص عبر ENV
 - ✅ **100% Success Rate**: جميع الاختبارات حققت 0% error rate
@@ -20,14 +21,14 @@
 
 ## 📈 Performance Results Comparison
 
-| Metric | Mock Redis (Previous) | Real Redis (Current) | Improvement |
-|--------|----------------------|---------------------|-------------|
-| **Health p95** | 170ms | **140ms** | ✅ **-17.6%** |
-| **Health Throughput** | 1,246 req/s | **1,964 req/s** | ✅ **+57.6%** |
-| **Advanced p95** | 206ms | **153ms** | ✅ **-25.7%** |
-| **Advanced Throughput** | 975 req/s | **1,447 req/s** | ✅ **+48.4%** |
-| **Swagger p95** | 223ms | **163ms** | ✅ **-26.9%** |
-| **Swagger Throughput** | 883 req/s | **1,203 req/s** | ✅ **+36.2%** |
+| Metric                  | Mock Redis (Previous) | Real Redis (Current) | Improvement   |
+| ----------------------- | --------------------- | -------------------- | ------------- |
+| **Health p95**          | 170ms                 | **140ms**            | ✅ **-17.6%** |
+| **Health Throughput**   | 1,246 req/s           | **1,964 req/s**      | ✅ **+57.6%** |
+| **Advanced p95**        | 206ms                 | **153ms**            | ✅ **-25.7%** |
+| **Advanced Throughput** | 975 req/s             | **1,447 req/s**      | ✅ **+48.4%** |
+| **Swagger p95**         | 223ms                 | **163ms**            | ✅ **-26.9%** |
+| **Swagger Throughput**  | 883 req/s             | **1,203 req/s**      | ✅ **+36.2%** |
 
 ---
 
@@ -54,6 +55,7 @@
 ```
 
 **Analysis:**
+
 - ✅ **Excellent Throughput**: ~2K req/sec يعتبر ممتاز للبيئة الحالية
 - ✅ **Perfect Reliability**: 0% errors تحت حمل عالي
 - ⚠️ **High p95**: يتجاوز الهدف بـ 90ms
@@ -82,6 +84,7 @@
 ```
 
 **Analysis:**
+
 - ✅ **Good Performance**: أفضل من المتوقع للـ DB queries
 - ✅ **Stable Under Load**: لا توجد timeouts أو connection errors
 - ⚠️ **Exceeds Target**: يحتاج تحسين بنسبة 35%
@@ -105,11 +108,11 @@
 ├─ Success Rate: 100%
 └─ Grade: A (Excellent)
 
-✅ Status: MEETS SLO
 📌 Deviation: -37ms (-18.5%)
 ```
 
 **Analysis:**
+
 - ✅ **MEETS TARGET**: أول endpoint يحقق الهدف!
 - ✅ **Excellent Throughput**: 1.2K req/sec للـ static content
 - ✅ **Low Variance**: Std Dev = 25.7ms (مستقر)
@@ -119,11 +122,11 @@
 
 ## 🎯 Performance Grading Summary
 
-| Endpoint | Grade | Status | Priority |
-|----------|-------|--------|----------|
-| `/api/health` | **F** | ❌ Needs Improvement | 🔴 Critical |
-| `/api/health/advanced` | **C** | ⚠️ Acceptable | 🟡 High |
-| `/api-docs/` | **A** | ✅ Excellent | 🟢 Medium |
+| Endpoint               | Grade | Status               | Priority    |
+| ---------------------- | ----- | -------------------- | ----------- |
+| `/api/health`          | **F** | ❌ Needs Improvement | 🔴 Critical |
+| `/api/health/advanced` | **C** | ⚠️ Acceptable        | 🟡 High     |
+| `/api-docs/`           | **A** | ✅ Excellent         | 🟢 Medium   |
 
 **Overall System Grade: C (70/100)**
 
@@ -134,6 +137,7 @@
 ### Why p95 Latency is High?
 
 #### 1. **Middleware Stack Overhead** (Primary)
+
 ```javascript
 // Current Stack (in order):
 1. Timing Profiler (2 middlewares)
@@ -150,6 +154,7 @@
 **Total Overhead:** ~40-80ms for full stack
 
 #### 2. **Database Connection Pool** (Secondary)
+
 ```javascript
 Current Settings:
 - Max: 20 connections
@@ -162,6 +167,7 @@ Current Settings:
 **Evidence:** Non-2xx responses = 17,807 (rate limit hits)
 
 #### 3. **Redis Caching Strategy** (Tertiary)
+
 ```javascript
 Current Implementation:
 - Health endpoint: 5s TTL cache
@@ -177,17 +183,19 @@ Current Implementation:
 ### 🟢 P2.2 - Immediate Optimizations (Next Phase)
 
 #### 1. **Reduce Logging Overhead** (Expected: -20ms)
+
 ```javascript
 // Change from:
-app.use(morgan('combined'));
+app.use(morgan("combined"));
 
 // To:
-if (process.env.NODE_ENV !== 'test') {
-    app.use(morgan('tiny')); // Minimal logging
+if (process.env.NODE_ENV !== "test") {
+  app.use(morgan("tiny")); // Minimal logging
 }
 ```
 
 #### 2. **Optimize Middleware Order** (Expected: -10ms)
+
 ```javascript
 // Move lightweight middlewares first:
 1. Cookie Parser (fast)
@@ -199,12 +207,14 @@ if (process.env.NODE_ENV !== 'test') {
 ```
 
 #### 3. **Increase DB Pool Size** (Expected: -15ms)
+
 ```env
 DB_POOL_MAX=50  # من 20
 DB_POOL_MIN=10  # من 5
 ```
 
 #### 4. **Expand Redis Caching** (Expected: -30ms)
+
 ```javascript
 // Cache more endpoints:
 - /api/categories (60s TTL)
@@ -253,6 +263,7 @@ DB_POOL_MIN=10  # من 5
 ## 📊 Environment Configuration
 
 ### Current Setup
+
 ```env
 NODE_ENV=test
 DISABLE_REDIS=false
@@ -270,6 +281,7 @@ REDIS_PORT=6379
 ```
 
 ### Changes Made
+
 1. ✅ Enabled Real Redis (from Mock)
 2. ✅ Added DB Pool ENV variables
 3. ✅ Set NODE_ENV=test for optimal settings
@@ -280,21 +292,25 @@ REDIS_PORT=6379
 ## 🎓 Key Learnings
 
 ### 1. **Redis Impact**
+
 - Mock Redis: في نفس Event Loop → blocking
 - Real Redis: External process → non-blocking
 - **Result:** +35% throughput improvement
 
 ### 2. **Middleware Overhead**
+
 - Each middleware adds latency
 - Order matters significantly
 - Logging is expensive under load
 
 ### 3. **Database Pool Sizing**
+
 - Default settings (max=20) insufficient for load tests
 - Need to match concurrency level
 - Monitor `pg_stat_activity` for tuning
 
 ### 4. **Realistic Testing**
+
 - Development environment != Production
 - Mock services hide real bottlenecks
 - Always test with production-like setup
@@ -303,14 +319,14 @@ REDIS_PORT=6379
 
 ## ✅ Success Criteria Review
 
-| Criterion | Target | Actual | Status |
-|-----------|--------|--------|--------|
-| **Error Rate** | < 1% | **0%** | ✅ PASS |
-| **Health p95** | < 50ms | 140ms | ❌ FAIL |
-| **Advanced p95** | < 100ms | 153ms | ❌ FAIL |
-| **Swagger p95** | < 200ms | **163ms** | ✅ PASS |
-| **Throughput** | > 1000 req/s | **1,964 req/s** | ✅ PASS |
-| **Stability** | No crashes | **Stable** | ✅ PASS |
+| Criterion        | Target       | Actual          | Status  |
+| ---------------- | ------------ | --------------- | ------- |
+| **Error Rate**   | < 1%         | **0%**          | ✅ PASS |
+| **Health p95**   | < 50ms       | 140ms           | ❌ FAIL |
+| **Advanced p95** | < 100ms      | 153ms           | ❌ FAIL |
+| **Swagger p95**  | < 200ms      | **163ms**       | ✅ PASS |
+| **Throughput**   | > 1000 req/s | **1,964 req/s** | ✅ PASS |
+| **Stability**    | No crashes   | **Stable**      | ✅ PASS |
 
 **Overall: 4/6 Criteria Met (66%)**
 
@@ -319,6 +335,7 @@ REDIS_PORT=6379
 ## 🚀 Next Steps (P2.2 Execution Plan)
 
 ### Phase 1: Quick Wins (1-2 hours)
+
 1. ✅ Reduce Morgan logging to 'tiny' mode
 2. ✅ Reorder middleware stack
 3. ✅ Increase DB pool to 50/10
@@ -327,6 +344,7 @@ REDIS_PORT=6379
 **Expected Result:** p95 < 80ms for health check
 
 ### Phase 2: Caching Expansion (2-3 hours)
+
 1. ✅ Implement category caching
 2. ✅ Cache published requests list
 3. ✅ Add cache invalidation logic
@@ -335,6 +353,7 @@ REDIS_PORT=6379
 **Expected Result:** p95 < 60ms for health check
 
 ### Phase 3: Database Optimization (3-4 hours)
+
 1. ✅ Run EXPLAIN ANALYZE on slow queries
 2. ✅ Add missing indexes
 3. ✅ Optimize Sequelize queries
@@ -347,6 +366,7 @@ REDIS_PORT=6379
 ## 📁 Artifacts Generated
 
 ### Test Results
+
 ```
 📂 performance-results/baseline/full_analysis/
 ├── health_2025-12-09T12-36-35.571Z.json
@@ -356,6 +376,7 @@ REDIS_PORT=6379
 ```
 
 ### Reports
+
 ```
 📂 backend/
 ├── P2_BASELINE_FINAL_REPORT.md (this file)
@@ -368,18 +389,22 @@ REDIS_PORT=6379
 ## 🏆 Conclusion
 
 ### Achievements ✅
+
 1. **Successful Redis Integration**: تم الانتقال من Mock إلى Real Redis
 2. **Performance Baseline Established**: لدينا الآن baseline موثوق
 3. **Bottlenecks Identified**: تم تحديد 3 مصادر رئيسية للـ latency
 4. **Optimization Path Clear**: خطة واضحة لتحسين الأداء بنسبة 50%
 
 ### Challenges ⚠️
+
 1. **SLO Not Met**: Health check لم يحقق هدف 50ms
 2. **Middleware Overhead**: يحتاج إعادة هيكلة
 3. **Database Tuning**: يحتاج تحسين إضافي
 
 ### Recommendation 🎯
+
 **المضي قدماً في P2.2** مع التركيز على:
+
 1. تقليل Middleware overhead
 2. توسيع Redis caching
 3. تحسين Database queries

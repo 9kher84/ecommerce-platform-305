@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const smartPricingService = require('../services/smartPricingService');
-const { protect } = require('../middleware/authMiddleware');
+const smartPricingService = require("../services/smartPricingService");
+const { protect } = require("../middleware/authMiddleware");
 
 // Order 6: All functions must use auditService (handled inside service)
 
@@ -28,18 +28,18 @@ const { protect } = require('../middleware/authMiddleware');
  *       200:
  *         description: Calculation result
  */
-router.post('/calculate', protect, async (req, res, next) => {
-    try {
-        const result = await smartPricingService.calculatePrice(
-            req.user.id,
-            req.body.quantity,
-            req.body.basePrice,
-            req
-        );
-        res.json({ success: true, price: result });
-    } catch (err) {
-        next(err);
-    }
+router.post("/calculate", protect, async (req, res, next) => {
+  try {
+    const result = await smartPricingService.calculatePrice(
+      req.user.id,
+      req.body.quantity,
+      req.body.basePrice,
+      req,
+    );
+    res.json({ success: true, price: result });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -54,13 +54,13 @@ router.post('/calculate', protect, async (req, res, next) => {
  *       200:
  *         description: Anomaly report
  */
-router.get('/anomalies', protect, async (req, res, next) => {
-    try {
-        const report = await smartPricingService.checkAnomalies(req.user.id, req);
-        res.json({ success: true, report });
-    } catch (err) {
-        next(err);
-    }
+router.get("/anomalies", protect, async (req, res, next) => {
+  try {
+    const report = await smartPricingService.checkAnomalies(req.user.id, req);
+    res.json({ success: true, report });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

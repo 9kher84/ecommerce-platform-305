@@ -1,4 +1,5 @@
 # 🚀 E-COMMERCE PLATFORM - COMPLETE FEATURES & SPECIFICATIONS
+
 **التاريخ**: 2025-11-29  
 **الإصدار**: 2.0.0  
 **الحالة**: Production Ready
@@ -8,9 +9,11 @@
 ## 📋 **نظرة عامة على المشروع**
 
 ### **الوصف**
+
 منصة تجارة إلكترونية B2B متقدمة تربط المشترين بالبائعين من خلال نظام طلبات شراء وعروض أسعار تنافسية، مع دعم كامل للمفاوضات والصفقات والمدفوعات.
 
 ### **النموذج التجاري**
+
 - **B2B Marketplace** - ربط الشركات بالموردين
 - **RFQ System** - طلبات عروض الأسعار (Request for Quotation)
 - **Competitive Bidding** - مزايدة تنافسية بين البائعين
@@ -23,6 +26,7 @@
 ### **1. نظام المستخدمين (User Management)**
 
 #### **أنواع المستخدمين**
+
 ```
 ├─ Buyer (المشتري)
 │  ├─ Free Tier
@@ -40,6 +44,7 @@
 ```
 
 #### **المصادقة والأمان**
+
 - ✅ **JWT Authentication** - مصادقة آمنة بـ JSON Web Tokens
 - ✅ **Password Hashing** - تشفير كلمات المرور بـ bcrypt
 - ✅ **Role-Based Access Control (RBAC)** - صلاحيات حسب الدور
@@ -49,6 +54,7 @@
 - ✅ **Helmet Security Headers** - رؤوس أمان HTTP
 
 #### **ملف المستخدم**
+
 ```javascript
 User {
   id: UUID
@@ -74,6 +80,7 @@ User {
 ### **2. نظام طلبات الشراء (Purchase Requests)**
 
 #### **دورة حياة الطلب (State Machine)**
+
 ```
 draft → published → negotiating → accepted → completed
   │         │            │            │
@@ -82,6 +89,7 @@ draft → published → negotiating → accepted → completed
 ```
 
 #### **أنواع الطلبات**
+
 - **Quick Post** - طلب سريع (للمشترين المميزين)
 - **Standard Post** - طلب عادي
 - **Direct Post** - طلب مباشر لبائع محدد
@@ -89,10 +97,12 @@ draft → published → negotiating → accepted → completed
 - **Scheduled Post** - طلب مجدول
 
 #### **أنواع المزايدة**
+
 - **Public Auction** - مزاد علني (الجميع يرى العروض)
 - **Secret Auction** - مزاد سري (العروض مخفية)
 
 #### **الحقول الرئيسية**
+
 ```javascript
 PurchaseRequest {
   id: UUID
@@ -121,6 +131,7 @@ PurchaseRequest {
 ```
 
 #### **القيود والقواعد**
+
 - ✅ **Free Buyers**: 3 طلبات نشطة كحد أقصى
 - ✅ **Plan A Buyers**: 10 طلبات نشطة
 - ✅ **Plan B Buyers**: طلبات غير محدودة
@@ -133,10 +144,12 @@ PurchaseRequest {
 ### **3. نظام عروض الأسعار (Price Quotes)**
 
 #### **أنواع الأسعار**
+
 - **Fixed Price** - سعر ثابت
 - **Flexible Price** - نطاق سعري (min-max)
 
 #### **الحقول الرئيسية**
+
 ```javascript
 PriceQuote {
   id: UUID
@@ -173,6 +186,7 @@ PriceQuote {
 ```
 
 #### **القدرات**
+
 - ✅ **Submit Quote** - تقديم عرض سعر
 - ✅ **Counter Offer** - عرض مضاد من المشتري
 - ✅ **Negotiate** - مفاوضات متعددة
@@ -185,6 +199,7 @@ PriceQuote {
 ### **4. نظام الصفقات (Deals)**
 
 #### **دورة حياة الصفقة**
+
 ```
 processing → paid → delivered → completed
      │        │         │
@@ -193,6 +208,7 @@ processing → paid → delivered → completed
 ```
 
 #### **الحقول الرئيسية**
+
 ```javascript
 Deal {
   id: UUID
@@ -211,6 +227,7 @@ Deal {
 ```
 
 #### **القدرات**
+
 - ✅ **Create Deal** - إنشاء صفقة عند قبول عرض
 - ✅ **Payment Integration** - تكامل مع بوابة الدفع
 - ✅ **Delivery Tracking** - تتبع التسليم
@@ -235,6 +252,7 @@ Rating {
 ```
 
 #### **القواعد**
+
 - ✅ يمكن التقييم فقط بعد إكمال الصفقة
 - ✅ تقييم واحد لكل طرف في الصفقة
 - ✅ التقييمات تؤثر على الـ Rank
@@ -244,6 +262,7 @@ Rating {
 ### **6. نظام الإشعارات (Notifications)**
 
 #### **أنواع الإشعارات**
+
 - **New Quote** - عرض سعر جديد
 - **Quote Accepted** - قبول عرض
 - **Quote Rejected** - رفض عرض
@@ -253,6 +272,7 @@ Rating {
 - **Rating Received** - استلام تقييم
 
 #### **القنوات**
+
 - ✅ **In-App Notifications** - إشعارات داخل التطبيق
 - ✅ **WebSocket Real-time** - إشعارات فورية عبر Socket.IO
 - ✅ **Email Notifications** - إشعارات بريد إلكتروني (SMTP)
@@ -275,6 +295,7 @@ Notification {
 ### **7. نظام المرفقات (Attachments)**
 
 #### **الحماية الأمنية (5 شروط)**
+
 ```
 1. Admin → ✅ وصول كامل دائماً
 2. Owner (Buyer) → ✅ وصول كامل دائماً
@@ -284,11 +305,13 @@ Notification {
 ```
 
 #### **أنواع الملفات المدعومة**
+
 - **Images**: JPG, PNG, GIF, WebP
 - **Documents**: PDF, DOC, DOCX, XLS, XLSX
 - **Max Size**: 10MB per file
 
 #### **CDN Integration**
+
 - ✅ **AWS S3** - تخزين الملفات
 - ✅ **CloudFront** - CDN عالمي
 - ✅ **Cloudflare R2** - بديل أرخص
@@ -310,6 +333,7 @@ Category {
 ```
 
 #### **الفئات المتاحة**
+
 - إلكترونيات
 - أثاث
 - مواد بناء
@@ -323,6 +347,7 @@ Category {
 ## 🔐 **الأمان والحماية**
 
 ### **1. Authentication & Authorization**
+
 - ✅ JWT tokens with expiration
 - ✅ Password hashing (bcrypt, 10 rounds)
 - ✅ Role-based access control
@@ -330,6 +355,7 @@ Category {
 - ✅ Refresh token rotation
 
 ### **2. API Security**
+
 - ✅ Rate limiting (100 req/15min)
 - ✅ CORS protection
 - ✅ Helmet security headers
@@ -338,6 +364,7 @@ Category {
 - ✅ Input validation (Joi)
 
 ### **3. Data Protection**
+
 - ✅ Encrypted passwords
 - ✅ Secure file uploads
 - ✅ HTTPS only (production)
@@ -345,6 +372,7 @@ Category {
 - ✅ Read-only filesystems (Docker)
 
 ### **4. Business Logic Security**
+
 - ✅ State machine enforcement
 - ✅ Attachment protection middleware
 - ✅ Edit restrictions by subscription tier
@@ -356,18 +384,21 @@ Category {
 ## ⚡ **الأداء والتحسينات**
 
 ### **1. Database Optimization**
+
 - ✅ **Read/Write Splitting** - توجيه القراءة للـ Replicas
 - ✅ **Connection Pooling** - max 10, min 2 connections
 - ✅ **Indexes** - على الحقول المستخدمة بكثرة
 - ✅ **Query Optimization** - استعلامات محسّنة
 
 ### **2. Caching**
+
 - ✅ **Redis Cache** - تخزين مؤقت للبيانات
 - ✅ **Session Storage** - جلسات المستخدمين
 - ✅ **Query Cache** - نتائج الاستعلامات
 - ✅ **CDN Cache** - ملفات ثابتة
 
 ### **3. Performance Metrics**
+
 - ⚡ **40% faster** with Read/Write Splitting
 - ⚡ **60-80% less data** with GraphQL
 - ⚡ **70% faster** file loading with CDN
@@ -380,6 +411,7 @@ Category {
 ### **1. REST API**
 
 #### **Authentication**
+
 ```
 POST   /api/auth/register
 POST   /api/auth/login
@@ -388,6 +420,7 @@ GET    /api/auth/me
 ```
 
 #### **Purchase Requests**
+
 ```
 GET    /api/requests
 POST   /api/requests
@@ -399,6 +432,7 @@ POST   /api/requests/:id/cancel
 ```
 
 #### **Price Quotes**
+
 ```
 GET    /api/quotes
 POST   /api/quotes
@@ -410,6 +444,7 @@ POST   /api/quotes/:id/withdraw
 ```
 
 #### **Deals**
+
 ```
 GET    /api/deals
 GET    /api/deals/:id
@@ -418,6 +453,7 @@ POST   /api/deals/:id/complete
 ```
 
 #### **Admin**
+
 ```
 GET    /api/admin/users
 GET    /api/admin/users/:id
@@ -427,12 +463,14 @@ GET    /api/admin/stats
 ```
 
 #### **Payments**
+
 ```
 POST   /api/payments/webhook
 GET    /api/payments/status/:dealId
 ```
 
 #### **Attachments**
+
 ```
 POST   /api/attachments/upload
 GET    /api/attachments/:id
@@ -444,6 +482,7 @@ DELETE /api/attachments/:id
 ### **2. GraphQL API**
 
 #### **Queries**
+
 ```graphql
 # Users
 me
@@ -477,6 +516,7 @@ platformStats
 ```
 
 #### **Mutations**
+
 ```graphql
 # Auth
 register(input: RegisterInput!)
@@ -502,6 +542,7 @@ updateUserStatus(userId: ID!, isActive: Boolean!)
 ```
 
 #### **Subscriptions (Real-time)**
+
 ```graphql
 notificationReceived(userId: ID!)
 requestUpdated(requestId: ID!)
@@ -514,6 +555,7 @@ dealStatusChanged(dealId: ID!)
 ## 🐳 **البنية التحتية**
 
 ### **1. Docker Containers**
+
 ```
 ├─ PostgreSQL 15 (Database)
 │  ├─ Master (Write)
@@ -536,15 +578,16 @@ dealStatusChanged(dealId: ID!)
 ```
 
 ### **2. Resource Limits (Production)**
+
 ```yaml
 Backend:
   CPU: 2 cores
   Memory: 2GB
-  
+
 PostgreSQL:
   CPU: 2 cores
   Memory: 4GB
-  
+
 Redis:
   CPU: 1 core
   Memory: 512MB
@@ -555,6 +598,7 @@ Redis:
 ## 📚 **التكنولوجيا المستخدمة**
 
 ### **Backend**
+
 - **Runtime**: Node.js 18
 - **Framework**: Express.js 4.18
 - **ORM**: Sequelize 6.32
@@ -567,6 +611,7 @@ Redis:
 - **Security**: Helmet 7.0, bcrypt 6.0
 
 ### **DevOps**
+
 - **Containerization**: Docker
 - **Orchestration**: Docker Compose
 - **Reverse Proxy**: Nginx
@@ -575,6 +620,7 @@ Redis:
 - **Logging**: Morgan, Winston
 
 ### **Testing**
+
 - **Unit Tests**: Jest 29.5
 - **Load Tests**: Artillery
 - **Coverage**: 100% for critical paths
@@ -585,31 +631,32 @@ Redis:
 
 ### **للمشترين (Buyers)**
 
-| الميزة | Free | Plan A | Plan B |
-|--------|------|--------|--------|
-| **طلبات نشطة** | 3 | 10 | ∞ |
-| **تعديل الطلبات النشطة** | ❌ | ✅ | ✅ |
-| **طلبات سريعة** | ❌ | ✅ | ✅ |
-| **طلبات مباشرة** | ❌ | ✅ | ✅ |
-| **مزادات سرية** | ❌ | ❌ | ✅ |
-| **الأولوية** | عادية | عالية | أعلى |
-| **الدعم** | Email | Email + Chat | 24/7 Phone |
+| الميزة                   | Free  | Plan A       | Plan B     |
+| ------------------------ | ----- | ------------ | ---------- |
+| **طلبات نشطة**           | 3     | 10           | ∞          |
+| **تعديل الطلبات النشطة** | ❌    | ✅           | ✅         |
+| **طلبات سريعة**          | ❌    | ✅           | ✅         |
+| **طلبات مباشرة**         | ❌    | ✅           | ✅         |
+| **مزادات سرية**          | ❌    | ❌           | ✅         |
+| **الأولوية**             | عادية | عالية        | أعلى       |
+| **الدعم**                | Email | Email + Chat | 24/7 Phone |
 
 ### **للبائعين (Sellers)**
 
-| الميزة | Free | Plan A | Plan B |
-|--------|------|--------|--------|
-| **عروض شهرية** | 10 | 50 | ∞ |
-| **Smart Pricing Matrix** | ❌ | ✅ | ✅ |
-| **تحليلات متقدمة** | ❌ | ✅ | ✅ |
-| **API Access** | ❌ | ❌ | ✅ |
-| **الأولوية** | عادية | عالية | أعلى |
+| الميزة                   | Free  | Plan A | Plan B |
+| ------------------------ | ----- | ------ | ------ |
+| **عروض شهرية**           | 10    | 50     | ∞      |
+| **Smart Pricing Matrix** | ❌    | ✅     | ✅     |
+| **تحليلات متقدمة**       | ❌    | ✅     | ✅     |
+| **API Access**           | ❌    | ❌     | ✅     |
+| **الأولوية**             | عادية | عالية  | أعلى   |
 
 ---
 
 ## 🎯 **الميزات المتقدمة**
 
 ### **1. Smart Pricing Matrix**
+
 ```javascript
 SmartPricingMatrix {
   id: UUID
@@ -628,6 +675,7 @@ SmartPricingMatrix {
 - ✅ عروض أسعار فورية
 
 ### **2. Reports & Analytics**
+
 ```javascript
 Report {
   id: UUID
@@ -641,11 +689,13 @@ Report {
 ```
 
 ### **3. Referral System**
+
 - ✅ كود إحالة لكل مستخدم
 - ✅ مكافآت للإحالات الناجحة
 - ✅ تتبع الإحالات
 
 ### **4. Rank System**
+
 ```
 Bronze → Silver → Gold → Platinum → Custom
 ```
@@ -661,21 +711,25 @@ Bronze → Silver → Gold → Platinum → Custom
 ## 🔄 **التكاملات**
 
 ### **1. Payment Gateways**
+
 - ✅ Webhook endpoint: `POST /api/payments/webhook`
 - ✅ دعم متعدد لبوابات الدفع
 - ✅ تحديث تلقائي لحالة الصفقة
 
 ### **2. Email Service (SMTP)**
+
 - ✅ إشعارات البريد الإلكتروني
 - ✅ إعادة تعيين كلمة المرور
 - ✅ تأكيد الحساب
 
 ### **3. CDN/Storage**
+
 - ✅ AWS S3 + CloudFront
 - ✅ Cloudflare R2
 - ✅ DigitalOcean Spaces
 
 ### **4. Monitoring**
+
 - ✅ Sentry (Error tracking)
 - ✅ CloudWatch (AWS)
 - ✅ Custom logging
@@ -685,16 +739,19 @@ Bronze → Silver → Gold → Platinum → Custom
 ## 📱 **الواجهات المدعومة**
 
 ### **1. Web Application**
+
 - ✅ Responsive design
 - ✅ PWA support
 - ✅ Real-time updates (WebSockets)
 
 ### **2. Mobile Application**
+
 - ✅ GraphQL optimized (60-80% less data)
 - ✅ Offline support (planned)
 - ✅ Push notifications
 
 ### **3. Admin Dashboard**
+
 - ✅ User management
 - ✅ Platform statistics
 - ✅ Content moderation
@@ -705,26 +762,24 @@ Bronze → Silver → Gold → Platinum → Custom
 ## 🧪 **الاختبارات**
 
 ### **Unit Tests**
+
 ```
-✅ 9/9 tests passed
 ├─ State Machine (4 tests)
 └─ Premium Edit (5 tests)
 ```
 
 ### **Load Tests**
+
 ```
-✅ Artillery configured
 ├─ 100 concurrent users
 ├─ 200ms average latency
 └─ 167 req/s throughput
 ```
 
 ### **Security Tests**
+
 ```
-✅ Authentication bypass - Protected
-✅ SQL Injection - Protected
-✅ XSS - Protected
-✅ CSRF - Protected
+
 ```
 
 ---
@@ -732,12 +787,14 @@ Bronze → Silver → Gold → Platinum → Custom
 ## 📊 **الإحصائيات والمقاييس**
 
 ### **Performance**
+
 - ⚡ Average Response Time: 200ms
 - ⚡ P95 Latency: 168ms
 - ⚡ Throughput: 167 req/s
 - ⚡ Uptime: 99.9%
 
 ### **Scalability**
+
 - 📈 Concurrent Users: 400+
 - 📈 Database Connections: 10 (pooled)
 - 📈 Redis Memory: 512MB
@@ -748,16 +805,19 @@ Bronze → Silver → Gold → Platinum → Custom
 ## 🚀 **الإطلاق والنشر**
 
 ### **Development**
+
 ```bash
 docker-compose up -d
 ```
 
 ### **Production**
+
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### **Requirements**
+
 - ✅ Docker & Docker Compose
 - ✅ SSL Certificate (Let's Encrypt)
 - ✅ Domain name
@@ -770,11 +830,13 @@ docker-compose -f docker-compose.prod.yml up -d
 ## 📝 **التوثيق**
 
 ### **API Documentation**
+
 - ✅ OpenAPI/Swagger: `/api-docs`
 - ✅ GraphQL Playground: `/graphql`
 - ✅ Postman Collection (available)
 
 ### **Guides**
+
 - ✅ Frontend GraphQL Migration Guide
 - ✅ CDN Integration Guide
 - ✅ Deployment Guide
@@ -785,6 +847,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ## 🎯 **الخلاصة**
 
 ### **الإنجازات**
+
 - ✅ **11 Commands** مكتملة
 - ✅ **3 Phases** مغلقة
 - ✅ **100% Security** coverage
@@ -792,6 +855,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - ✅ **Production Ready**
 
 ### **الأرقام**
+
 - 📊 **20+ REST endpoints**
 - 📊 **40+ GraphQL queries/mutations**
 - 📊 **10+ Database models**
@@ -799,6 +863,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - 📊 **11 Comprehensive reports**
 
 ### **الجاهزية**
+
 - 🚀 **Production**: Ready
 - 🔐 **Security**: Hardened
 - ⚡ **Performance**: Optimized

@@ -21,14 +21,11 @@
 
 // تحقق من الملكية (Corrected: using userId as per schema)
 if (request.userId !== user.id) {
-  throw new Error('UNAUTHORIZED: Only the request owner can change its status');
+  throw new Error("UNAUTHORIZED: Only the request owner can change its status");
 }
 ```
 
 ## النتيجة
-
-✅ **تم التحصين:** الدالة المركزية لتغيير الحالة تعتمد الآن بشكل مؤكد على `userId`، وهو الحقل الصحيح للربط مع جدول المستخدمين.
-✅ **إغلاق الثغرة:** لا يمكن لأي مستخدم تغيير حالة طلب لا يملكه، حيث أن `userId` هو المفتاح الأجنبي الفعلي في قاعدة البيانات.
 
 ---
 
