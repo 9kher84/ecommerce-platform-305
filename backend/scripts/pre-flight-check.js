@@ -64,7 +64,7 @@ const runChecks = async () => {
   }
 
   // 2. Validate SSL Certificates (Production ONLY)
-  if (isProd) {
+  if (isProd && process.env.RENDER !== "true" && process.env.BYPASS_SSL_CHECK !== "true") {
     console.log("🔒 [2/4] Validating SSL Infrastructure (Production Mode)...");
     const certDir = path.join(__dirname, "../certs");
     const certFiles = ["server.crt", "server.key"];
@@ -88,7 +88,7 @@ const runChecks = async () => {
       }
     }
   } else {
-    console.log("⚠️  [2/4] SSL Check skipped (Non-Production Environment).");
+    console.log("⚠️  [2/4] SSL Check skipped (Non-Production Environment or Cloud Deployment like Render).");
   }
 
   // 3. Validate Redis Connection

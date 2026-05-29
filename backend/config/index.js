@@ -22,6 +22,12 @@ const config = {
     password: process.env.DB_PASSWORD,
     host: process.env.DB_HOST,
     dialect: "postgres",
+    dialectOptions: process.env.RENDER === "true" || process.env.DB_SSL_ENABLED === "true" ? {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      }
+    } : undefined,
     logging: false, // Default to false
     pool: {
       max:
