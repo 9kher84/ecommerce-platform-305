@@ -42,6 +42,7 @@ module.exports = (sequelize, DataTypes) => {
           "cancelled",
           "suspended",
           "expired",
+          "negotiating",
         ),
         defaultValue: "draft",
       },

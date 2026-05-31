@@ -29,6 +29,14 @@ const bootstrap = async () => {
     await sequelize.authenticate();
     console.log("✅ Database connection established.");
 
+    // Ensure ENUM has negotiating value
+    try {
+      await sequelize.query(`ALTER TYPE "enum_PurchaseRequests_status" ADD VALUE IF NOT EXISTS 'negotiating';`);
+      console.log("✅ Added negotiating to enum_PurchaseRequests_status");
+    } catch (e) {
+      console.log("ℹ️ Enum update skipped or already exists:", e.message);
+    }
+
     // Step 1: Sync core tables in order to avoid FK errors on free databases
     console.log("🔄 Syncing core models in correct dependency order...");
     await User.sync({ alter: true });
