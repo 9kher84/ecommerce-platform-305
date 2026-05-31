@@ -158,8 +158,11 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowed = config.security.corsOrigins;
-      if (!origin || allowed.indexOf(origin) !== -1) {
+      const allowed = config.security.corsOrigins || [];
+      const frontendUrl = "https://ecommerce-frontend-305.onrender.com";
+      if (!allowed.includes(frontendUrl)) allowed.push(frontendUrl);
+
+      if (!origin || allowed.indexOf(origin) !== -1 || origin.startsWith(frontendUrl)) {
         callback(null, true);
       } else {
         console.error(
