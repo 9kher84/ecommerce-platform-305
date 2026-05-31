@@ -3,7 +3,7 @@ services:
     name: ecommerce-backend-305
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm install && node scripts/render-bootstrap.js
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -29,6 +29,10 @@ services:
       - key: OWNER_ID
         sync: false
       - key: DB_ENCRYPTION_KEY
+        sync: false
+      - key: DB_SSL_ENABLED
+        value: "true"
+      - key: ADMIN_SEED_PASSWORD
         sync: false
 
   - type: web

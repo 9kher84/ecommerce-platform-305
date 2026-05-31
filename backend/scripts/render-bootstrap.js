@@ -14,6 +14,7 @@ process.env.RENDER = "true";
 const {
   sequelize,
   User,
+  Category,
   PurchaseRequest,
   PriceQuote,
   ActionLog,
@@ -32,13 +33,13 @@ const bootstrap = async () => {
     console.log("🔄 Syncing core models in correct dependency order...");
     await User.sync({ alter: true });
     console.log("✅ User table synced.");
-    
+
     await PurchaseRequest.sync({ alter: true });
     console.log("✅ PurchaseRequest table synced.");
-    
+
     await PriceQuote.sync({ alter: true });
     console.log("✅ PriceQuote table synced.");
-    
+
     await ActionLog.sync({ alter: true });
     console.log("✅ ActionLog table synced.");
 
@@ -47,8 +48,47 @@ const bootstrap = async () => {
     await sequelize.sync({ alter: true, force: false });
 
     console.log("✅ [Render Bootstrap] All tables created/updated successfully!");
-    console.log("🌟 Database is ready. Starting server...");
 
+    // Step 3: Seed initial data if DB is empty
+    console.log("🌱 Checking if initial seed data is needed...");
+
+    // Seed categories if empty
+    const catCount = await Category.count();
+    if (catCount === 0) {
+      console.log("📂 Seeding categories...");
+      await Category.bulkCreate([
+        { name_ar: "مواد البناء", name_en: "Construction" },
+        { name_ar: "إلكترونيات", name_en: "Electronics" },
+        { name_ar: "أثاث", name_en: "Furniture" },
+        { name_ar: "مواد غذائية", name_en: "Food & Beverages" },
+        { name_ar: "مستلزمات طبية", name_en: "Medical Supplies" },
+      ]);
+      console.log("✅ 5 categories seeded.");
+    } else {
+      console.log(`ℹ️  Categories already exist (${catCount}), skipping.`);
+    }
+
+    // Seed admin user if no users exist
+    const userCount = await User.count();
+    if (userCount === 0) {
+      console.log("👤 Seeding admin user...");
+      const bcrypt = require("bcrypt");
+      const adminPassword = process.env.ADMIN_SEED_PASSWORD || "admin123";
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      await User.create({
+        name: "مدير النظام",
+        email: "admin@test.com",
+        password: hashedPassword,
+        role: "admin",
+        subscriptionTier: "plan_b",
+        isActive: true,
+      });
+      console.log("✅ Admin user seeded: admin@test.com / admin123");
+    } else {
+      console.log(`ℹ️  Users already exist (${userCount}), skipping admin seed.`);
+    }
+
+    console.log("🌟 Database is ready. Starting server...");
     process.exit(0);
   } catch (error) {
     console.error("❌ [Render Bootstrap] Database sync failed:", error.message);
