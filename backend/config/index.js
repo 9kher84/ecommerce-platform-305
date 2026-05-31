@@ -56,7 +56,7 @@ const config = {
   security: {
     corsOrigins:
       process.env.NODE_ENV === "production"
-        ? [process.env.CLIENT_URL].filter(Boolean)
+        ? [process.env.CLIENT_URL, "https://ecommerce-frontend-305.onrender.com"].filter(Boolean)
         : [
             process.env.CLIENT_URL || "http://localhost:3000",
             "http://127.0.0.1:3000",
