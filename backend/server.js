@@ -50,6 +50,11 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 // Load env vars
 const app = express();
 
+// Render Health Check
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Sovereign Backend is running' });
+});
+
 // Load Error Monitor EARLY
 app.use(errorMonitor);
 
@@ -345,11 +350,6 @@ const startServer = async (startListening = true) => {
     console.log("💬 Chat Engine initialized");
 
     console.log("🔌 Socket.IO initialized");
-
-    // Render Health Check
-    app.get('/', (req, res) => {
-      res.status(200).json({ status: 'OK', message: 'Sovereign Backend is running' });
-    });
 
     // 5. Register REST API Routes
     app.use("/api/auth", authRoutes);
