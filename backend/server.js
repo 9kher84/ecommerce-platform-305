@@ -157,18 +157,21 @@ app.use(
 // Strictly Environment-Controlled CORS
 app.use(
   cors({
-    origin: (origin, callback) => {
-      const allowed = config.security.corsOrigins || [];
-      const frontendUrl = "https://ecommerce-frontend-305.onrender.com";
-      if (!allowed.includes(frontendUrl)) allowed.push(frontendUrl);
-
-      if (!origin || allowed.indexOf(origin) !== -1 || origin.startsWith(frontendUrl)) {
-        callback(null, true);
+    origin: function (origin, callback) {
+      // السماح بالطلبات التي لا تحتوي على origin (مثل الأدوات الداخلية أو طلبات السيرفر نفسه)
+      if (!origin) return callback(null, true);
+      
+      const targetOrigin = "https://ecommerce-frontend-305.onrender.com";
+      
+      // فحص مرن يتجاهل الشرطة المائلة والأحرف الكبيرة/الصغيرة
+      const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
+      const cleanTarget = targetOrigin.replace(/\/$/, "").toLowerCase();
+      
+      if (cleanOrigin === cleanTarget || cleanOrigin.includes("onrender.com")) {
+        return callback(null, true);
       } else {
-        console.error(
-          `🚨 CORS BLOCKED: Origin ${origin} is NOT in the sovereign allowlist.`,
-        );
-        callback(new Error("CORS Policy Violation: Origin not permitted."));
+        console.error(`🚨 CORS BLOCKED: Origin ${origin} is NOT permitted.`);
+        return callback(new Error("CORS Policy Violation: Origin not permitted."));
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
