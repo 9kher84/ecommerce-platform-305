@@ -7,8 +7,7 @@ const createRedisClient = () => {
   // الإنتاج: لا تسامح مع الفشل
   if (
     process.env.NODE_ENV === "production" &&
-    process.env.RENDER !== "true" &&
-    process.env.BYPASS_REDIS_CHECK !== "true"
+    process.env.REDIS_URL
   ) {
     const client = new Redis({
       host: process.env.REDIS_HOST || "localhost",

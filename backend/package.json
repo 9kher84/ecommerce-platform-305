@@ -8,6 +8,7 @@
   },
   "main": "server.js",
   "scripts": {
+    "build": "npx sequelize-cli db:migrate --env production",
     "start": "node scripts/pre-flight-check.js && node server.js",
     "start:render": "node server.js",
     "dev": "node scripts/pre-flight-check.js && nodemon server.js",

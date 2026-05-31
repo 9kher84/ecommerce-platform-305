@@ -5,7 +5,7 @@ const { getRedisClient } = require("../config/redis");
 const createStore = () => {
   const client = getRedisClient();
 
-  if (process.env.NODE_ENV === "production" && process.env.RENDER !== "true" && process.env.BYPASS_REDIS_CHECK !== "true") {
+  if (process.env.NODE_ENV === "production" && process.env.REDIS_URL) {
     try {
       const Store = RedisStore.default || RedisStore;
       return new Store({
