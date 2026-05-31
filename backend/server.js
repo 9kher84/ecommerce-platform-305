@@ -50,9 +50,12 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 // Load env vars
 const app = express();
 
-// Render Health Check
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Sovereign Backend is running' });
+// Health check for Render (required to prevent SIGTERM)
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Sovereign Backend is running" });
+});
+app.head("/", (req, res) => {
+  res.status(200).end();
 });
 
 // Load Error Monitor EARLY

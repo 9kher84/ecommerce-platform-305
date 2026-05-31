@@ -54,14 +54,12 @@ const config = {
     webhookSecret: process.env.PAYMENT_WEBHOOK_SECRET,
   },
   security: {
-    corsOrigins:
-      process.env.NODE_ENV === "production"
-        ? [process.env.CLIENT_URL, "https://ecommerce-frontend-305.onrender.com"].filter(Boolean)
-        : [
-            process.env.CLIENT_URL || "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:3001",
-          ],
+    corsOrigins: [
+      process.env.CLIENT_URL || "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "https://ecommerce-frontend-305.onrender.com"
+    ].filter(Boolean),
   },
 };
 
