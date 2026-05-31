@@ -155,30 +155,7 @@ app.use(
 );
 
 // Strictly Environment-Controlled CORS
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // السماح بالطلبات التي لا تحتوي على origin (مثل الأدوات الداخلية أو طلبات السيرفر نفسه)
-      if (!origin) return callback(null, true);
-      
-      const targetOrigin = "https://ecommerce-frontend-305.onrender.com";
-      
-      // فحص مرن يتجاهل الشرطة المائلة والأحرف الكبيرة/الصغيرة
-      const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
-      const cleanTarget = targetOrigin.replace(/\/$/, "").toLowerCase();
-      
-      if (cleanOrigin === cleanTarget || cleanOrigin.includes("onrender.com")) {
-        return callback(null, true);
-      } else {
-        console.error(`🚨 CORS BLOCKED: Origin ${origin} is NOT permitted.`);
-        return callback(new Error("CORS Policy Violation: Origin not permitted."));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    credentials: true,
-  }),
-);
+app.use(cors({ origin: true, credentials: true }));
 
 app.use(
   express.json({
