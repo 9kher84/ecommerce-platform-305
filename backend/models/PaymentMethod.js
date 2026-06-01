@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
+  console.log('PAYMENT_METHOD_MODEL_REFERENCE=', 'Users');
   const PaymentMethod = sequelize.define(
     "PaymentMethod",
     {
