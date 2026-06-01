@@ -433,16 +433,19 @@ const initSequelize = async () => {
   await sequelize.authenticate();
   if (process.env.RENDER !== "true") {
     // For PostgreSQL: disable constraints during sync
-    console.log("User table:", User.getTableName());
-    console.log("PaymentMethod table:", PaymentMethod.getTableName());
+    const PaymentMethod = sequelize.models.PaymentMethod;
+    const User = sequelize.models.User;
+    
+    console.log("USER_TABLE =", User?.getTableName());
     
     console.log(
-      'PAYMENT_METHOD_TABLE =',
-      sequelize.models.PaymentMethod?.getTableName()
+      "PAYMENT_METHOD_REFERENCE =",
+      PaymentMethod?.rawAttributes?.userId?.references
     );
+    
     console.log(
-      'PAYMENT_METHOD_ATTRIBUTES =',
-      sequelize.models.PaymentMethod?.rawAttributes?.userId
+      "PAYMENT_METHOD_USERID =",
+      PaymentMethod?.rawAttributes?.userId
     );
 
     try {
