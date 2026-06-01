@@ -21,7 +21,7 @@ module.exports = (sequelize) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
       },
@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
       },

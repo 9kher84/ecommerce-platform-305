@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
         comment: "Buyer requesting alternative quote",
@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
         comment: "New seller being approached",

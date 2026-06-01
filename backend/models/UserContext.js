@@ -7,7 +7,7 @@ module.exports = (sequelize) => {
       userId: {
         type: DataTypes.UUID,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
         primaryKey: true, // One context per user for now? Or allow multiple? ERD implies usage as context profile.
