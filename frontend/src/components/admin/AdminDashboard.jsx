@@ -24,7 +24,7 @@ const AdminDashboard = () => {
 
   const fetchAdmins = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/admins", {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/admins`, {
         withCredentials: true,
       });
       if (res.data.success) setAdmins(res.data.data);
@@ -35,7 +35,7 @@ const AdminDashboard = () => {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/logs", {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/logs`, {
         withCredentials: true,
       });
       if (res.data.success) setSysLogs(res.data.data);
@@ -47,7 +47,7 @@ const AdminDashboard = () => {
   const handleImpersonate = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/admin/impersonate",
+        `${process.env.REACT_APP_API_URL}/api/admin/impersonate`,
         { userId: impersonateId },
         { withCredentials: true },
       );

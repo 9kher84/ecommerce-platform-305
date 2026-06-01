@@ -26,7 +26,7 @@ const OverviewTab = () => {
       try {
         // Use absolute URL to bypass any potential proxy confusion
         const res = await axios.get(
-          "http://localhost:5000/api/dashboard/command",
+          `${process.env.REACT_APP_API_URL}/api/dashboard/command`,
           { withCredentials: true },
         );
         setStats(res.data);
