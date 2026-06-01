@@ -431,11 +431,85 @@ RegionAssignment.belongsTo(User, { foreignKey: "assigned_by", as: "assigner" });
 
 const initSequelize = async () => {
   await sequelize.authenticate();
-  if (process.env.RENDER !== "true") {
-    // Only auto-sync in development. On Render, we use render-bootstrap.js
+
+  const isCloud = process.env.RENDER === "true" || process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === "production";
+
+  if (!isCloud) {
+    // Development: simple sync
     await sequelize.sync({ alter: false, force: false });
   } else {
-    console.log("✅ Render environment detected. Skipping auto-sync on startup.");
+    // Cloud (Railway/Render): sync safely in dependency order
+    console.log("☁️ Cloud environment detected. Syncing tables in FK-safe order...");
+    try {
+      // Disable FK checks temporarily to avoid ordering issues
+      await sequelize.query("SET session_replication_role = 'replica';").catch(() => {});
+
+      // Tier 1: Independent tables (no FKs)
+      await User.sync({ alter: true });
+      await Category.sync({ alter: true });
+      await Region.sync({ alter: true });
+      await Permission.sync({ alter: true });
+      await Role.sync({ alter: true });
+      await Organization.sync({ alter: true });
+      await SystemSetting.sync({ alter: true });
+
+      // Tier 2: Depend on Tier 1
+      await UserCategory.sync({ alter: true });
+      await OrganizationUser.sync({ alter: true });
+      await RolePermission.sync({ alter: true });
+      await UserRole.sync({ alter: true });
+      await City.sync({ alter: true });
+      await Team.sync({ alter: true });
+      await RefreshToken.sync({ alter: true });
+      await AuditLog.sync({ alter: true });
+      await ActionLog.sync({ alter: true });
+      await UserContext.sync({ alter: true });
+      await PaymentMethod.sync({ alter: true });
+      await TrustScore.sync({ alter: true });
+      await Sanction.sync({ alter: true });
+      await BuyerLimit.sync({ alter: true });
+
+      // Tier 3: Depend on Tier 1 + 2
+      await Product.sync({ alter: true });
+      await PurchaseRequest.sync({ alter: true });
+      await PriceQuote.sync({ alter: true });
+      await Deal.sync({ alter: true });
+      await Rating.sync({ alter: true });
+      await Notification.sync({ alter: true });
+      await Report.sync({ alter: true });
+      await FailedNotification.sync({ alter: true });
+
+      // Tier 4: Depend on higher tiers
+      await SmartPricingMatrix.sync({ alter: true });
+      await SmartInventory.sync({ alter: true });
+      await InventoryMetrics.sync({ alter: true });
+      await AutoReplenishmentOrder.sync({ alter: true });
+      await PaymentTransaction.sync({ alter: true });
+      await PaymentAuditLog.sync({ alter: true });
+      await WithdrawalLog.sync({ alter: true });
+      await AlternativeQuote.sync({ alter: true });
+      await CommissionTransaction.sync({ alter: true });
+      await EventLog.sync({ alter: true });
+      await AdminActionLog.sync({ alter: true });
+      await Invoice.sync({ alter: true });
+      await Delegation.sync({ alter: true });
+      await SellerDecision.sync({ alter: true });
+      await BuyerDecisionContext.sync({ alter: true });
+      await MarketSilenceEvent.sync({ alter: true });
+      await SellerInteractionEvent.sync({ alter: true });
+      await SupervisorAssignment.sync({ alter: true });
+      await SupervisorCommissionShare.sync({ alter: true });
+      await SupervisorNotification.sync({ alter: true });
+      await RegionAssignment.sync({ alter: true });
+
+      // Re-enable FK checks
+      await sequelize.query("SET session_replication_role = 'origin';").catch(() => {});
+
+      console.log("✅ All tables synced successfully in FK-safe order.");
+    } catch (err) {
+      await sequelize.query("SET session_replication_role = 'origin';").catch(() => {});
+      throw err;
+    }
   }
 };
 
