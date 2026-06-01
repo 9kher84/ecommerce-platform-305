@@ -433,6 +433,8 @@ const initSequelize = async () => {
   await sequelize.authenticate();
   if (process.env.RENDER !== "true") {
     // For PostgreSQL: disable constraints during sync
+    console.log("User table:", User.getTableName());
+    console.log("PaymentMethod table:", PaymentMethod.getTableName());
     try {
       await sequelize.query('SET CONSTRAINTS ALL DEFERRED');
       await sequelize.sync({ alter: false, force: false });
