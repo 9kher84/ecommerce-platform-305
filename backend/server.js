@@ -278,6 +278,10 @@ const startServer = async (startListening = true) => {
     // 1. Initialize Database
     await initSequelize();
     console.log("✅ Database initialized successfully.");
+    
+    // Seed initial data
+    const seedCategories = require("./scripts/seedCategories");
+    await seedCategories();
 
     // 2. Initialize Background Jobs (If Redis Available)
     if (isRedisAvailable()) {

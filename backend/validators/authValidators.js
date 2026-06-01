@@ -4,7 +4,7 @@ const registerSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
-  role: Joi.string().valid("buyer", "seller", "marketer").default("buyer"),
+  role: Joi.string().valid("buyer", "seller", "marketer", "admin").default("buyer"),
   referrer_code: Joi.string().optional().allow(null, ""),
 });
 
