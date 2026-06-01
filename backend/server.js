@@ -140,6 +140,8 @@ app.use(
           "'self'",
           ...config.security.corsOrigins,
           "https://studio.apollographql.com",
+          "https://*.vercel.app",
+          "https://*.up.railway.app",
         ],
         frameSrc: ["'self'", "https://studio.apollographql.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
@@ -149,12 +151,15 @@ app.use(
     },
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "same-site" },
+    // Changed from same-site to cross-origin to allow Vercel frontend to access Railway backend
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     referrerPolicy: { policy: "no-referrer-when-downgrade" },
   }),
 );
 
 // Strictly Environment-Controlled CORS
+// Handle OPTIONS preflight requests explicitly before all routes
+app.options("*", cors({ origin: true, credentials: true }));
 app.use(cors({ origin: true, credentials: true }));
 
 app.use(

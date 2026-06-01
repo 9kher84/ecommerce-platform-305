@@ -59,7 +59,9 @@ const config = {
       process.env.FRONTEND_URL,
       "http://127.0.0.1:3000",
       "http://localhost:3001",
-      "https://ecommerce-frontend-305.onrender.com"
+      "https://ecommerce-frontend-305.onrender.com",
+      // Accept any *.vercel.app subdomain automatically
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     ].filter(Boolean),
   },
 };
