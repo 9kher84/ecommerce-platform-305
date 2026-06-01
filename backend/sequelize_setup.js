@@ -450,8 +450,22 @@ const initSequelize = async () => {
 
     try {
       await sequelize.query('SET CONSTRAINTS ALL DEFERRED');
+      
+      console.log('📦 Creating independent tables...');
+      await User.sync();        // لا يعتمد على أحد
+      await Category.sync();    // لا يعتمد على أحد
+
+      console.log('🔗 Creating dependent tables...');
+      await PurchaseRequest.sync();   // يعتمد على User و Category
+      await PriceQuote.sync();        // يعتمد على User و PurchaseRequest (Note: model is PriceQuote, not Quote)
+      await Deal.sync();              // يعتمد على PriceQuote و User
+      await PaymentMethod.sync();     // يعتمد على User
+      
+      // Sync the rest of the 30+ tables
+      console.log('🔄 Syncing remaining tables...');
       await sequelize.sync({ alter: false, force: false });
-      console.log("✅ All tables synced successfully in FK-safe order.");
+      
+      console.log("✅ Database synchronized successfully in ordered sequence!");
     } catch (error) {
       console.error('❌ Sequelize sync failed:', error);
       throw error;
