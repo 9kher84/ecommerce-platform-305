@@ -159,8 +159,19 @@ app.use(
 
 // Strictly Environment-Controlled CORS
 // Handle OPTIONS preflight requests explicitly before all routes
-app.options("*", cors({ origin: true, credentials: true }));
-app.use(cors({ origin: true, credentials: true }));
+const corsOptions = {
+  origin: [
+    "https://ecommerce-frontend-305.onrender.com",
+    "https://ecommerce-frontend-305.up.railway.app",
+    /\.railway\.app$/,
+    /\.onrender\.com$/,
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.options("*", cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use(
   express.json({
