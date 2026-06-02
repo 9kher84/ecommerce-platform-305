@@ -163,6 +163,7 @@ const corsOptions = {
   origin: [
     "https://ecommerce-frontend-305.onrender.com",
     "https://ecommerce-frontend-305.up.railway.app",
+    "https://ecommerce-platform-305-production.up.railway.app",
     /\.railway\.app$/,
     /\.onrender\.com$/,
   ],
