@@ -452,14 +452,14 @@ const initSequelize = async () => {
       await sequelize.query('SET CONSTRAINTS ALL DEFERRED');
       
       console.log('📦 Creating independent tables...');
-      await User.sync();        // لا يعتمد على أحد
-      await Category.sync();    // لا يعتمد على أحد
+      await User.sync({ alter: true });        // لا يعتمد على أحد
+      await Category.sync({ alter: true });    // لا يعتمد على أحد
 
       console.log('🔗 Creating dependent tables...');
-      await PurchaseRequest.sync();   // يعتمد على User و Category
-      await PriceQuote.sync();        // يعتمد على User و PurchaseRequest (Note: model is PriceQuote, not Quote)
-      await Deal.sync();              // يعتمد على PriceQuote و User
-      await PaymentMethod.sync();     // يعتمد على User
+      await PurchaseRequest.sync({ alter: true });   // يعتمد على User و Category
+      await PriceQuote.sync({ alter: true });        // يعتمد على User و PurchaseRequest (Note: model is PriceQuote, not Quote)
+      await Deal.sync({ alter: true });              // يعتمد على PriceQuote و User
+      await PaymentMethod.sync({ alter: true });     // يعتمد على User
       
       // Sync the rest of the 30+ tables
       console.log('🔄 Syncing remaining tables...');
