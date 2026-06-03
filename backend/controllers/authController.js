@@ -25,8 +25,8 @@ const sendTokenResponse = async (user, statusCode, res) => {
     // تحديد تاريخ انتهاء الصلاحية بناءً على 15 دقيقة (Access Token Validity)
     expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
     httpOnly: true, // Prevent XSS theft
-    secure: config.env === "production", // Send over HTTPS only in production
-    sameSite: "Lax", // Allow Cross-Port on Localhost
+    secure: true, // Send over HTTPS only in production
+    sameSite: "None", // Allow Cross-Port on Localhost
   };
 
   // إرسال الرمز كـ Cookie فقط، وإزالة الـ token من الـ JSON body
