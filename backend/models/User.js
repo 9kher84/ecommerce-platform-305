@@ -270,3 +270,4 @@ module.exports = (sequelize, DataTypes) => {
   return User;
 };
 // schema updated 06/07/2026 17:37:49
+// force rebuild 06/07/2026 18:01:25
