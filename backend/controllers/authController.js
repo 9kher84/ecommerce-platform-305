@@ -273,8 +273,8 @@ exports.logout = asyncHandler(async (req, res) => {
     res.cookie("token", "", {
       expires: new Date(0),
       httpOnly: true,
-      secure: config.env === "production",
-      sameSite: "Strict",
+      secure: true,
+      sameSite: "None",
     });
 
     res.status(200).json({
