@@ -142,17 +142,15 @@ exports.register = asyncHandler(async (req, res) => {
       is_primary: true,
     });
 
-    // Attach org to user object for the response if needed (though protect middleware handles it later)
+    // Attach org to user object and save to DB
     user.organization_id = org.id;
+    await user.save();
 
     // 🛡️ Assign Default RBAC Role
-    const { Role, UserRole } = require("../sequelize_setup");
+    const { Role } = require("../sequelize_setup");
     const defaultRole = await Role.findOne({ where: { name: user.role } });
     if (defaultRole) {
-      await UserRole.create({
-        userId: user.id,
-        roleId: defaultRole.id,
-      });
+      await user.addRole(defaultRole);
     }
   } catch (e) {
     console.error(
