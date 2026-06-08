@@ -227,7 +227,7 @@ module.exports = (sequelize, DataTypes) => {
         jti: uuidv4(),
       },
       secret,
-      { expiresIn: "15m" },
+      { expiresIn: "8h" },
     );
     console.log("DEBUG: Generated Token:", token);
     return token;

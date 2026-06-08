@@ -42,7 +42,7 @@ const config = {
   },
   jwt: {
     secret: process.env.JWT_SECRET || "supersecret",
-    accessExpiration: "15m",
+    accessExpiration: "8h",
     refreshExpiration: "7d",
   },
   redis: {

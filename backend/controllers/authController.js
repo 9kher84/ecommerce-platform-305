@@ -22,8 +22,8 @@ const sendTokenResponse = async (user, statusCode, res) => {
 
   // خيارات الكوكي (Cookies) - Security Hardening Day 2
   const options = {
-    // تحديد تاريخ انتهاء الصلاحية بناءً على 15 دقيقة (Access Token Validity)
-    expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+    // تحديد تاريخ انتهاء الصلاحية بناءً على 8 ساعات (Access Token Validity)
+    expires: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
     httpOnly: true, // Prevent XSS theft
     secure: true, // Send over HTTPS only in production
     sameSite: "None", // Allow Cross-Port on Localhost
