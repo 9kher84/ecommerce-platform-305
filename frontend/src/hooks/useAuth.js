@@ -77,12 +77,23 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(newUserData));
   };
 
+  const handleRegister = async (name, email, password, role, sectorIds) => {
+    try {
+      const response = await apiService.register(name, email, password, role, sectorIds);
+      return response;
+    } catch (error) {
+      console.error("Registration failed:", error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
     loading,
     login: handleLogin,
     logout: handleLogout,
+    register: handleRegister,
     updateUserData,
   };
 

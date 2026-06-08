@@ -73,6 +73,10 @@ export const login = async (email, password) => {
   return apiRequest("POST", "/api/auth/login", { email, password });
 };
 
+export const register = async (name, email, password, role, sectorIds = [1]) => {
+  return apiRequest("POST", "/api/auth/register", { name, email, password, role, sectorIds });
+};
+
 export const logout = () => {
   localStorage.removeItem("user");
   window.location.href = "/login";
