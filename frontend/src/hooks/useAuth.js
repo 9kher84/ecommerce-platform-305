@@ -60,15 +60,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // دالة تسجيل الخروج
   const handleLogout = async () => {
     try {
       await apiService.logout();
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Logout API error:", error);
     } finally {
+      localStorage.removeItem("user");
       setUser(null);
       setIsAuthenticated(false);
+      window.location.href = "/login";
     }
   };
 

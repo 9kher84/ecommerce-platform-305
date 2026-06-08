@@ -77,9 +77,8 @@ export const register = async (name, email, password, role, sectorIds = [1]) => 
   return apiRequest("POST", "/api/auth/register", { name, email, password, role, sectorIds });
 };
 
-export const logout = () => {
-  localStorage.removeItem("user");
-  window.location.href = "/login";
+export const logout = async () => {
+  return apiRequest("POST", "/api/auth/logout");
 };
 
 // ============================================================
