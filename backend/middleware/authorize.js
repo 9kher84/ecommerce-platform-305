@@ -195,10 +195,12 @@ const authorize = (permissionKey, resourceType = null, action = "view") => {
       // 2. RBAC Check (On Principal)
       if (permissionKey) {
         // Check if Principal (User being impersonated) has permission
+        console.log(`[Authorize] Checking permission '${permissionKey}' for user ${user.id} (role: ${user.role})`);
         const hasPermission = await RBACService.hasPermission(
           user.id,
           permissionKey,
         );
+        console.log(`[Authorize] hasPermission result: ${hasPermission}`);
         if (!hasPermission) {
           return res
             .status(403)
@@ -238,10 +240,14 @@ const authorize = (permissionKey, resourceType = null, action = "view") => {
 
       next();
     } catch (error) {
-      console.error("Authorization Middleware Error:", error);
+      console.error("❌ Authorization Middleware Error:", error.message);
+      console.error("❌ Authorization Stack:", error.stack);
+      if (error.name === "SequelizeDatabaseError") {
+        console.error("❌ Sequelize DB Error:", error.parent);
+      }
       return res
         .status(500)
-        .json({ error: "Internal Server Error during authorization" });
+        .json({ error: "Internal Server Error during authorization", details: error.message });
     }
   };
 };

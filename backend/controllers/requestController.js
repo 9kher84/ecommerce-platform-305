@@ -46,6 +46,8 @@ const getAllRequests = asyncHandler(async (req, res) => {
 
 // دالة لإنشاء طلب جديد
 const createRequest = asyncHandler(async (req, res) => {
+  console.log("🔥 CREATE REQUEST HIT with body:", JSON.stringify(req.body));
+  console.log("🔥 USER ID:", req.user?.id, "| ROLE:", req.user?.role);
   console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
   const buyerId = req.user.id;
   const { getDeviceFingerprint } = require("../utils/fraudDetection");
