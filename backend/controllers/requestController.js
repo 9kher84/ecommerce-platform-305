@@ -83,13 +83,16 @@ const createRequest = asyncHandler(async (req, res) => {
     ],
   });
 
-  console.log("REQUEST DEBUG", {
+  console.log("PRODUCTION USER DEBUG", {
     userId: req.user?.id,
+    email: req.user?.email,
     role: req.user?.role,
-    userSectorId: req.user?.sectorId,
-    requestSectorId: req.body?.sectorId,
-    categoryId: req.body?.categoryId,
-    queriedUserSectors: user ? user.sectors : null
+    sectorIdFromRequest: req.body?.sectorId,
+    categoryIdFromRequest: req.body?.categoryId,
+    sectorsFound: user?.sectors?.map(s => ({
+      id: s.id,
+      name: s.name_ar || s.name
+    }))
   });
 
   const isMember = user.sectors && user.sectors.length > 0;
