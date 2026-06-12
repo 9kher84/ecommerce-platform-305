@@ -46,6 +46,7 @@ const getAllRequests = asyncHandler(async (req, res) => {
 
 // دالة لإنشاء طلب جديد
 const createRequest = asyncHandler(async (req, res) => {
+  console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
   const buyerId = req.user.id;
   const { getDeviceFingerprint } = require("../utils/fraudDetection");
 
@@ -95,12 +96,31 @@ const createRequest = asyncHandler(async (req, res) => {
     organization_id: req.user.organization_id,
   };
 
-  const request = await RequestService.createRequest(buyerId, requestData);
-  res.status(201).json({
-    success: true,
-    message: "Purchase request created successfully",
-    data: request,
-  });
+  console.log("[createRequest] requestData being sent to service:", JSON.stringify(requestData, null, 2));
+
+  try {
+    const request = await RequestService.createRequest(buyerId, requestData);
+    res.status(201).json({
+      success: true,
+      message: "Purchase request created successfully",
+      data: request,
+    });
+  } catch (error) {
+    console.error("❌ CREATE REQUEST ERROR:", error);
+    console.error("STACK:", error.stack);
+    if (error.name === "SequelizeDatabaseError") {
+      console.error("Sequelize DB Error (parent):", error.parent);
+      console.error("Sequelize SQL:", error.sql);
+    }
+    if (error.name === "SequelizeValidationError") {
+      console.error("Sequelize Validation Errors:", error.errors);
+    }
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "خطأ في الخادم الداخلي",
+      details: process.env.NODE_ENV !== "production" ? error.stack : undefined,
+    });
+  }
 });
 
 // دالة للحصول على طلبات المستخدم

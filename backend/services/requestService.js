@@ -62,12 +62,14 @@ class RequestService {
     const canCreate = await SubscriptionService.canCreateRequest(buyerId);
     if (!canCreate.canCreate) throw new AppError(canCreate.reason, 403);
 
+    console.log("[Service] ✅ Subscription check passed, running validators...");
     this.validateContactNumbers(user.subscriptionTier, requestData);
     this.validateDeliveryLocations(user.subscriptionTier, requestData);
     this.validateAttachments(user.subscriptionTier, requestData);
     this.validatePrivacySettings(user.subscriptionTier, requestData);
     this.validateDirectPurchase(user.subscriptionTier, requestData);
     this.validateWrittenNumbers(requestData);
+    console.log("[Service] ✅ All validators passed, calling PurchaseRequest.create...");
 
     const request = await PurchaseRequest.create({
       userId: buyerId,
@@ -104,7 +106,10 @@ class RequestService {
       organization_id: requestData.organization_id || user.organization_id,
     });
 
+    console.log("[Service] ✅ PurchaseRequest.create succeeded, id:", request.id);
+
     await SubscriptionService.incrementPostCount(buyerId);
+    console.log("[Service] ✅ Post count incremented");
 
     try {
       const { AuditLog } = require("../sequelize_setup");
