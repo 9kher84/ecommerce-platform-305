@@ -83,6 +83,15 @@ const createRequest = asyncHandler(async (req, res) => {
     ],
   });
 
+  console.log("REQUEST DEBUG", {
+    userId: req.user?.id,
+    role: req.user?.role,
+    userSectorId: req.user?.sectorId,
+    requestSectorId: req.body?.sectorId,
+    categoryId: req.body?.categoryId,
+    queriedUserSectors: user ? user.sectors : null
+  });
+
   const isMember = user.sectors && user.sectors.length > 0;
   if (!isMember) {
     res.status(403);
