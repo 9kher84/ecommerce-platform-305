@@ -245,6 +245,80 @@ app.get("/api/health", async (req, res) => {
   res.status(code).json(health);
 });
 
+// 🔧 TEMP FIX ENDPOINT — Fix buyer sector membership
+// Protected by OWNER_SECRET env var
+// Usage: GET /api/internal/fix-sector?email=buyer1@test.com&sectorId=1&secret=YOUR_SECRET
+app.get("/api/internal/fix-sector", async (req, res) => {
+  const { email, sectorId, secret } = req.query;
+
+  // Security: must match OWNER_SECRET env var
+  if (!secret || secret !== process.env.OWNER_SECRET) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  if (!email || !sectorId) {
+    return res.status(400).json({ error: "email and sectorId are required" });
+  }
+
+  try {
+    const { User, Category } = require("./sequelize_setup");
+    const { Op } = require("sequelize");
+
+    // 1. Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: `User ${email} not found` });
+    }
+
+    // 2. Find sector
+    const sector = await Category.findOne({
+      where: { id: parseInt(sectorId), type: "SECTOR" }
+    });
+    if (!sector) {
+      const allSectors = await Category.findAll({ where: { type: "SECTOR" }, attributes: ["id", "name_ar", "name_en"] });
+      return res.status(404).json({ error: `Sector id=${sectorId} not found`, availableSectors: allSectors });
+    }
+
+    // 3. Check existing UserCategories
+    const [existing] = await sequelize.query(
+      `SELECT * FROM "UserCategories" WHERE "userId" = $1 AND "categoryId" = $2`,
+      { bind: [user.id, parseInt(sectorId)] }
+    );
+
+    if (existing.length > 0) {
+      return res.json({
+        status: "already_exists",
+        message: `User ${email} already linked to sector ${sectorId}`,
+        record: existing[0]
+      });
+    }
+
+    // 4. Insert
+    await sequelize.query(
+      `INSERT INTO "UserCategories" ("userId", "categoryId", "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())`,
+      { bind: [user.id, parseInt(sectorId)] }
+    );
+
+    // 5. Verify
+    const [after] = await sequelize.query(
+      `SELECT uc.*, c.name_ar, c.type FROM "UserCategories" uc LEFT JOIN "Categories" c ON c.id = uc."categoryId" WHERE uc."userId" = $1`,
+      { bind: [user.id] }
+    );
+
+    return res.json({
+      status: "✅ fixed",
+      user: { id: user.id, email: user.email, role: user.role },
+      sector: { id: sector.id, name: sector.name_ar },
+      userCategories: after,
+      message: "Sector membership added. Now test creating a Purchase Request."
+    });
+
+  } catch (e) {
+    console.error("fix-sector error:", e);
+    return res.status(500).json({ error: e.message, parent: e.parent?.message });
+  }
+});
+
 // Advanced Stats
 app.get("/api/health/advanced", async (req, res) => {
   // ... logic for advanced details ...
