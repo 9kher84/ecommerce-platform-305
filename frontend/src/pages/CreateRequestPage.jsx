@@ -112,6 +112,7 @@ const CreateRequestPage = () => {
       const requestData = {
         ...formData,
         // 🔥 RFQ Mapping
+        quantity: formData.quantity ? Number(formData.quantity) : null,
         delivery_date: formData.deliveryDates[0],
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
         deliveryDates: formData.deliveryDates.map((date) =>

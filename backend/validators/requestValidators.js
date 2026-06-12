@@ -15,12 +15,12 @@ const createRequestSchema = Joi.object({
 
   // Delivery Info
   deliveryDates: Joi.array().items(Joi.string().isoDate()).allow(null),
-  delivery_date: Joi.date().allow(null), // New field
+  delivery_date: Joi.alternatives().try(Joi.date(), Joi.string()).allow("", null), // New field
   delivery_city: Joi.string().allow("", null), // New field
   deliveryLocations: Joi.array()
     .items(
       Joi.object({
-        city: Joi.string().required(),
+        city: Joi.string().allow("", null),
         address: Joi.string().allow("", null),
         coordinates: Joi.object().allow(null),
         googleMapLink: Joi.string().allow("", null),
@@ -29,7 +29,7 @@ const createRequestSchema = Joi.object({
     .allow(null),
 
   // Contact Info
-  contactNumbers: Joi.array().items(Joi.string()).allow(null),
+  contactNumbers: Joi.array().items(Joi.string().allow("", null)).allow(null),
   contact_number: Joi.string().allow("", null), // New field
 
   // Settings
