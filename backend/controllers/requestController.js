@@ -49,7 +49,8 @@ const createRequest = asyncHandler(async (req, res) => {
   const buyerId = req.user.id;
   const { getDeviceFingerprint } = require("../utils/fraudDetection");
 
-  const { sectorId } = req.body;
+  let { sectorId } = req.body;
+  sectorId = sectorId || req.body.categoryId;
 
   // 🚀 Sovereign Sector Policy: Mandate Sector
   if (!sectorId) {
