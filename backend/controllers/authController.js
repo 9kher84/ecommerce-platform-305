@@ -182,6 +182,7 @@ exports.login = asyncHandler(async (req, res) => {
     where: { email },
     attributes: { include: ["password"] },
   });
+  console.log('LOGIN STEP 1');
 
   if (!user) {
     res.status(401);
@@ -194,8 +195,21 @@ exports.login = asyncHandler(async (req, res) => {
     throw new Error("الحساب غير نشط. الرجاء التواصل مع الدعم.");
   }
 
-  // 2. مقارنة كلمة المرور بأمان (bcrypt)
-  const isMatch = await user.comparePassword(password);
+  const bcrypt = require('bcrypt');
+  console.log('LOGIN STEP 1');
+  console.log('USER FOUND:', !!user);
+
+  if (user) {
+    console.log('USER EMAIL:', user.email);
+    console.log('HAS PASSWORD FIELD:', !!user.password);
+    console.log('PASSWORD HASH LENGTH:', user.password ? user.password.length : 0);
+  }
+
+  const isMatch = user
+    ? await bcrypt.compare(password, user.password)
+    : false;
+
+  console.log('BCRYPT RESULT:', isMatch);
 
   if (!isMatch) {
     res.status(401);
@@ -207,6 +221,7 @@ exports.login = asyncHandler(async (req, res) => {
 
   // إرسال رمز الاستجابة (JWT)
   sendTokenResponse(user, 200, res);
+  console.log('LOGIN STEP 3');
 });
 
 /**
