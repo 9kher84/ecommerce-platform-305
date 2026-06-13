@@ -205,6 +205,15 @@ exports.login = asyncHandler(async (req, res) => {
     console.log('PASSWORD HASH LENGTH:', user.password ? user.password.length : 0);
   }
 
+  if (user) {
+    console.log('DB USER ID:', user.id);
+    console.log('DB USER EMAIL:', user.email);
+    console.log('DB HASH:', user.password);
+  }
+
+  console.log('RAW PASSWORD RECEIVED:', password);
+  console.log('PASSWORD LENGTH:', password ? password.length : 0);
+
   const isMatch = user
     ? await bcrypt.compare(password, user.password)
     : false;
