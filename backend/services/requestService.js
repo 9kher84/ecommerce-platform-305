@@ -97,6 +97,7 @@ class RequestService {
       delivery_date: requestData.delivery_date,
       contact_number: requestData.contact_number,
       attachments: requestData.attachments || [],
+      expiresAt: requestData.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days
       price_range_min: requestData.price_range_min,
       price_range_max: requestData.price_range_max,
       fixed_price: requestData.fixed_price,
