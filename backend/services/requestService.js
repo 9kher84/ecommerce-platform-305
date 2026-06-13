@@ -553,13 +553,36 @@ class RequestService {
   // GET PUBLISHED REQUESTS (جديدة ومعدلة)
   // =========================
   static async getPublishedRequests(categoryId = null, filters = {}) {
+    const { Op } = require("sequelize");
     const where = {
       status: filters.status || { [Op.in]: ["published", "rfq_published"] },
-      expiresAt: { [Op.gt]: new Date() },
+      // Include requests with NULL expiresAt OR future expiresAt
+      [Op.or]: [
+        { expiresAt: null },
+        { expiresAt: { [Op.gt]: new Date() } },
+      ],
     };
     if (categoryId) where.categoryId = categoryId;
 
-    return await PurchaseRequest.findAll({
+    const limit = parseInt(filters.limit) || 50;
+    const page = parseInt(filters.page) || 1;
+    const offset = (page - 1) * limit;
+
+    if (filters.search) {
+      where[Op.or] = [
+        ...(where[Op.or] || []),
+        // search is handled separately — keep expiresAt filter intact
+      ];
+      // Reset or clause with both expiresAt and search
+      const expiresAtClause = [
+        { expiresAt: null },
+        { expiresAt: { [Op.gt]: new Date() } },
+      ];
+      where[Op.or] = expiresAtClause;
+      where.title = { [Op.iLike]: `%${filters.search}%` };
+    }
+
+    const rows = await PurchaseRequest.findAll({
       where,
       include: [
         {
@@ -574,8 +597,11 @@ class RequestService {
         },
       ],
       order: [["createdAt", "DESC"]],
-      limit: filters.limit || 50, // حد معقول افتراضي
+      limit,
+      offset,
     });
+
+    return rows;
   }
 
   // =========================

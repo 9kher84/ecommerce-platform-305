@@ -1,16 +1,20 @@
 /**
- * 🚀 RENDER BOOTSTRAP SCRIPT
- * Runs at every Deploy — ensures DB is ready and RBAC is synchronized.
- * Safe to run multiple times (idempotent).
+ * Sovereign RBAC Sync Script
+ * Purpose: Ensure all permissions exist, all roles have correct permissions,
+ *          and all existing users are linked to their role in UserRole table.
+ * 
+ * This script is idempotent — safe to run multiple times.
+ * Run on every deploy to keep RBAC synchronized.
  */
 
-const dotenv = require("dotenv");
-const path = require("path");
-dotenv.config({ path: path.join(__dirname, "../.env") });
-
-process.env.RENDER = "true";
-
-const { sequelize, User, Role, Permission, RolePermission, UserRole } = require("../sequelize_setup");
+const {
+  User,
+  Role,
+  Permission,
+  RolePermission,
+  UserRole,
+  sequelize,
+} = require("../sequelize_setup");
 
 const ROLE_PERMISSIONS = {
   buyer: [
@@ -51,63 +55,96 @@ const ROLE_PERMISSIONS = {
   ],
 };
 
-const bootstrap = async () => {
+async function syncRBAC() {
+  const t = await sequelize.transaction();
   try {
-    console.log("🚀 [Render Bootstrap] Starting...");
+    console.log("🚀 Starting Sovereign RBAC Sync...\n");
 
-    await sequelize.authenticate();
-    console.log("✅ Database connection verified.");
-
-    // === RBAC SYNC (idempotent) ===
-    console.log("🔐 Syncing RBAC roles and permissions...");
-
+    // === STEP 1: Ensure all roles exist ===
+    console.log("Step 1: Syncing Roles...");
     const roleMap = {};
     for (const roleName of Object.keys(ROLE_PERMISSIONS)) {
       const [role] = await Role.findOrCreate({
         where: { name: roleName },
         defaults: { name: roleName, description: `${roleName} role` },
+        transaction: t,
       });
       roleMap[roleName] = role;
     }
+    console.log(`  ✅ ${Object.keys(roleMap).length} roles ensured.`);
 
+    // === STEP 2: Ensure all permissions exist ===
+    console.log("Step 2: Syncing Permissions...");
     const allPerms = new Map();
     const uniquePerms = new Map();
     for (const perms of Object.values(ROLE_PERMISSIONS)) {
-      for (const p of perms) uniquePerms.set(p.key, p);
+      for (const p of perms) {
+        uniquePerms.set(p.key, p);
+      }
     }
     for (const [key, pData] of uniquePerms) {
-      const [perm] = await Permission.findOrCreate({ where: { key }, defaults: pData });
+      const [perm] = await Permission.findOrCreate({
+        where: { key },
+        defaults: pData,
+        transaction: t,
+      });
       allPerms.set(key, perm);
     }
+    console.log(`  ✅ ${allPerms.size} permissions ensured.`);
 
+    // === STEP 3: Link permissions to roles ===
+    console.log("Step 3: Linking Permissions to Roles...");
+    let rolePermCount = 0;
     for (const [roleName, perms] of Object.entries(ROLE_PERMISSIONS)) {
       const role = roleMap[roleName];
       if (!role) continue;
       for (const p of perms) {
         const perm = allPerms.get(p.key);
         if (!perm) continue;
-        await RolePermission.findOrCreate({ where: { roleId: role.id, permissionId: perm.id } });
+        await RolePermission.findOrCreate({
+          where: { roleId: role.id, permissionId: perm.id },
+          transaction: t,
+        });
+        rolePermCount++;
       }
     }
+    console.log(`  ✅ ${rolePermCount} role-permission links ensured.`);
 
-    // Backfill all existing users
-    const allUsers = await User.findAll({ attributes: ["id", "role"], paranoid: false });
-    let synced = 0;
+    // === STEP 4: Sync all existing users to UserRole table ===
+    console.log("Step 4: Syncing existing Users to UserRole table...");
+    const allUsers = await User.findAll({
+      attributes: ["id", "role"],
+      paranoid: false, // include soft-deleted for full coverage
+      transaction: t,
+    });
+
+    let userRoleSynced = 0;
+    let userRoleSkipped = 0;
     for (const user of allUsers) {
-      const role = roleMap[user.role];
-      if (!role) continue;
-      const [, created] = await UserRole.findOrCreate({ where: { userId: user.id, roleId: role.id } });
-      if (created) synced++;
+      const roleEnum = user.role; // buyer, seller, admin, super_admin, marketer
+      if (!roleEnum || !roleMap[roleEnum]) {
+        userRoleSkipped++;
+        continue;
+      }
+      const role = roleMap[roleEnum];
+      const [, created] = await UserRole.findOrCreate({
+        where: { userId: user.id, roleId: role.id },
+        transaction: t,
+      });
+      if (created) userRoleSynced++;
     }
+    console.log(`  ✅ Synced ${userRoleSynced} new UserRole entries.`);
+    console.log(`  ℹ️  Skipped ${userRoleSkipped} users (already synced or unknown role).`);
+    console.log(`  ℹ️  Total users processed: ${allUsers.length}`);
 
-    console.log(`✅ RBAC Sync Complete. ${synced} new UserRole entries created from ${allUsers.length} users.`);
-    console.log("🌟 Bootstrap complete.");
+    await t.commit();
+    console.log("\n✅ Sovereign RBAC Sync Complete.");
     process.exit(0);
-  } catch (error) {
-    console.error("❌ [Render Bootstrap] Failed:", error.message);
-    console.error(error.stack);
+  } catch (err) {
+    await t.rollback();
+    console.error("❌ RBAC Sync Failed:", err);
     process.exit(1);
   }
-};
+}
 
-bootstrap();
+syncRBAC();

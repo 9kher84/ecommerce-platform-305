@@ -29,21 +29,24 @@ const RFQsPage = () => {
   const fetchRFQs = async (currentPage = 1) => {
     setLoading(true);
     try {
-      const response = await apiService.getPublishedRequests(null, {
-        status: "rfq_published",
+      const filters = {
         page: currentPage,
         limit: 9,
-        search: searchTerm,
-        categoryId: selectedCategory !== "all" ? selectedCategory : null,
-      });
+      };
+      if (searchTerm) filters.search = searchTerm;
+      if (selectedCategory !== "all") filters.categoryId = selectedCategory;
 
-      const data = response.data || response;
-      setRfqs(data.requests || data || []);
-      if (data.pagination) {
+      const response = await apiService.getPublishedRequests(filters);
+
+      const data = response?.data ?? response;
+      const list = Array.isArray(data) ? data : (data?.requests ?? []);
+      setRfqs(list);
+      if (data?.pagination) {
         setPagination(data.pagination);
       }
     } catch (error) {
       console.error("Error fetching RFQs:", error);
+      setRfqs([]);
     } finally {
       setLoading(false);
     }
@@ -51,10 +54,12 @@ const RFQsPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await apiService.getCategories();
-      setCategories(response.data || response || []);
+      const response = await apiService.getAllCategories();
+      const list = response?.data ?? response;
+      setCategories(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error("Error fetching categories:", error);
+      setCategories([]);
     }
   };
 

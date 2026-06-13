@@ -97,9 +97,11 @@ export const getAllRequests = async (filters = {}) => {
 };
 
 export const getPublishedRequests = async (filters = {}) => {
+  const safeFilters = filters && typeof filters === "object" ? filters : {};
   const params = new URLSearchParams();
-  Object.keys(filters).forEach((key) => {
-    if (filters[key]) params.append(key, filters[key]);
+  Object.keys(safeFilters).forEach((key) => {
+    if (safeFilters[key] !== null && safeFilters[key] !== undefined && safeFilters[key] !== "")
+      params.append(key, safeFilters[key]);
   });
   return apiRequest("GET", `/api/requests/published?${params.toString()}`);
 };
