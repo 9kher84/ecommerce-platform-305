@@ -430,7 +430,34 @@ RegionAssignment.belongsTo(User, { foreignKey: "assigned_by", as: "assigner" });
 // ============================================================
 
 const initSequelize = async () => {
-  await sequelize.authenticate();
+  try {
+    const rawDbUrl = config.db.database || process.env.DATABASE_URL || '';
+    let safeUrl = rawDbUrl;
+    if (rawDbUrl.includes('postgres://')) {
+      safeUrl = rawDbUrl.replace(/:([^:@]+)@/, ':***@');
+    }
+    console.log('\n--- DB CONNECTION DIAGNOSTICS ---');
+    console.log('SAFE DATABASE_URL:', safeUrl);
+    console.log('HOST:', config.db.host);
+    console.log('DATABASE:', config.db.database);
+    console.log('USER:', config.db.username);
+    
+    await sequelize.authenticate();
+    
+    console.log('\n--- RAW SQL STARTUP DIAGNOSTICS ---');
+    const [dbRes] = await sequelize.query('SELECT current_database() as db;');
+    const [userRes] = await sequelize.query('SELECT current_user as usr;');
+    const [verRes] = await sequelize.query('SELECT version() as ver;');
+    
+    console.log('CURRENT DATABASE:', dbRes[0].db);
+    console.log('CURRENT USER:', userRes[0].usr);
+    console.log('POSTGRES VERSION:', verRes[0].ver);
+    console.log('---------------------------------\n');
+
+  } catch(e) {
+    console.error('DB STARTUP ERROR:', e);
+  }
+
   if (process.env.RENDER !== "true") {
     // For PostgreSQL: disable constraints during sync
     const PaymentMethod = sequelize.models.PaymentMethod;

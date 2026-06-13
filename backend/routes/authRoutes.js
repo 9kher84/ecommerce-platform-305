@@ -42,4 +42,15 @@ router.post("/logout", protect, authController.logout);
 // 🛡️ SECURITY POLICY: Impersonation is FORBIDDEN
 // router.post('/impersonate', ...); -> REMOVED
 
+// === 4. مسارات التشخيص المؤقتة ===
+router.get("/debug/db-user", async (req, res) => {
+  try {
+    const { sequelize } = require("../sequelize_setup");
+    const [results] = await sequelize.query(`SELECT id, email, password FROM "Users" WHERE email='seller1@test.com';`);
+    res.json({ source: "Raw PostgreSQL Query", data: results });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
