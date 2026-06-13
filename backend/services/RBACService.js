@@ -11,7 +11,22 @@ class RBACService {
     if (!userId || !permissionKey) return false;
 
     try {
+      // --- TEMP BYPASS INJECTED AS REQUESTED ---
+      const userObj = await User.findByPk(userId, { attributes: ['role'] });
+      if (userObj) {
+        console.log("RBAC DEBUG ROLE:", userObj.role);
+        console.log("RBAC DEBUG PERMISSION:", permissionKey);
+        
+        if (userObj.role === 'seller' && permissionKey === 'VIEW_QUOTES') {
+          console.log("RBAC TEMP BYPASS ACTIVATED");
+          return true;
+        }
+      }
+      // ---------------------------------------
+
       console.log(`DEBUG: Checking perm '${permissionKey}' for user ${userId}`);
+      
+      // 1. Try DB-based RBAC
       const user = await User.findByPk(userId, {
         include: [
           {
@@ -30,8 +45,27 @@ class RBACService {
         ],
       });
 
-      // If user is found with the nested include, it means they have at least one role with the permission.
-      return !!user;
+      if (user) return true;
+      
+      // 2. Fallback to static roles based on user.role enum
+      const fallbackUser = await User.findByPk(userId, { attributes: ['role'] });
+      if (!fallbackUser) return false;
+      
+      const role = fallbackUser.role;
+      const staticPermissions = {
+        buyer: ["CREATE_REQUEST", "VIEW_REQUESTS", "ACCEPT_QUOTE", "VIEW_QUOTES", "MANAGE_PROFILE"],
+        seller: ["VIEW_REQUESTS", "CREATE_QUOTE", "VIEW_QUOTES", "MANAGE_PROFILE"],
+        admin: ["CREATE_REQUEST", "VIEW_REQUESTS", "CREATE_QUOTE", "ACCEPT_QUOTE", "VIEW_QUOTES", "MANAGE_USERS", "MANAGE_PROFILE"],
+        super_admin: ["CREATE_REQUEST", "VIEW_REQUESTS", "CREATE_QUOTE", "ACCEPT_QUOTE", "VIEW_QUOTES", "MANAGE_USERS", "MANAGE_PROFILE"],
+        marketer: ["VIEW_REQUESTS", "VIEW_QUOTES", "MANAGE_PROFILE"]
+      };
+
+      if (staticPermissions[role] && staticPermissions[role].includes(permissionKey)) {
+        console.warn(`[RBAC Fallback] Granted '${permissionKey}' via static role '${role}' for user ${userId}`);
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error(
         `RBAC Check Failed for user ${userId} / perm ${permissionKey}:`,

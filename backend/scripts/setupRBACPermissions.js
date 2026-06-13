@@ -26,6 +26,7 @@ async function setupRBAC() {
       { key: "VIEW_REQUESTS", description: "View requests" },
       { key: "CREATE_QUOTE", description: "Submit price quote" },
       { key: "ACCEPT_QUOTE", description: "Accept a quote" },
+      { key: "VIEW_QUOTES", description: "View submitted quotes" },
     ];
 
     for (const p of permissions) {
@@ -47,6 +48,9 @@ async function setupRBAC() {
     });
     const pAcceptQuote = await Permission.findOne({
       where: { key: "ACCEPT_QUOTE" },
+    });
+    const pViewQuotes = await Permission.findOne({
+      where: { key: "VIEW_QUOTES" },
     });
 
     // Buyer permissions
@@ -71,6 +75,10 @@ async function setupRBAC() {
     if (sellerRole && pCreateQuote)
       await RolePermission.findOrCreate({
         where: { roleId: sellerRole.id, permissionId: pCreateQuote.id },
+      });
+    if (sellerRole && pViewQuotes)
+      await RolePermission.findOrCreate({
+        where: { roleId: sellerRole.id, permissionId: pViewQuotes.id },
       });
 
     console.log("✅ RBAC Setup Complete.");

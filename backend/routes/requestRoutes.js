@@ -80,7 +80,7 @@ router.get(
 router.get(
   "/published",
   protect,
-  authorize(null, "Request", "viewPublished"),
+  authorize(null, null, "viewPublished"),
   requestController.getPublishedRequests,
 );
 
