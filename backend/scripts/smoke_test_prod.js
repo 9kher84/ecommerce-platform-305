@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 async function runSmokeTest() {
   try {
-    const baseURL = 'https://ecommerce-backend-305.onrender.com/api';
+    const baseURL = 'https://ecommerce-platform-305.onrender.com/api';
     const email = `smoketest_${Date.now()}@test.com`;
     const password = 'Test@12345';
     let token = '';

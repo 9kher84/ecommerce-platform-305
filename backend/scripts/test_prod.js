@@ -2,7 +2,7 @@ const axios = require('axios');
 
 async function testProd() {
   try {
-    const baseURL = 'https://ecommerce-backend-305.onrender.com/api';
+    const baseURL = 'https://ecommerce-platform-305.onrender.com/api';
     
     console.log("1. Logging in...");
     const loginRes = await axios.post(`${baseURL}/auth/login`, {

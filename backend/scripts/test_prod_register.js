@@ -2,7 +2,7 @@ const axios = require('axios');
 
 async function testRegister() {
   try {
-    const baseURL = 'https://ecommerce-backend-305.onrender.com/api';
+    const baseURL = 'https://ecommerce-platform-305.onrender.com/api';
     
     console.log("1. Testing Registration for newuser@test.com...");
     const regRes = await axios.post(`${baseURL}/auth/register`, {

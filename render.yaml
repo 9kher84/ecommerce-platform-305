@@ -43,7 +43,4 @@ services:
     staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: ecommerce-backend-305
-          property: host
+        value: https://ecommerce-platform-305.onrender.com
