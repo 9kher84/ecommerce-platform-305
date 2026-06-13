@@ -1,4 +1,4 @@
-const { User, Category, RefreshToken } = require("../sequelize_setup");
+const { User, Category, RefreshToken, Role, UserRole, sequelize } = require("../sequelize_setup");
 const asyncHandler = require("express-async-handler");
 const { Op } = require("sequelize");
 const tokenBlacklist = require("../services/tokenBlacklist");
@@ -70,9 +70,7 @@ exports.register = asyncHandler(async (req, res) => {
     if (["buyer", "seller", "marketer"].includes(role)) {
       userRole = role;
     } else {
-      // If invalid role or admin/super_admin tried
       if (["admin", "super_admin"].includes(role)) {
-        // Silent fail to buyer
         userRole = "buyer";
       } else {
         res.status(400);
@@ -89,7 +87,6 @@ exports.register = asyncHandler(async (req, res) => {
       throw new Error("يجب اختيار قطاع واحد على الأقل (Sector is mandatory).");
     }
 
-    // Verify Sectors exist and are of type 'SECTOR' and are top-level (parentId: null)
     const validSectors = await Category.findAll({
       where: {
         id: { [Op.in]: sectorIds },
@@ -109,30 +106,33 @@ exports.register = asyncHandler(async (req, res) => {
   if (req.body.subscriptionTier === "plan_a") maturity_level = "GUIDED";
   if (req.body.subscriptionTier === "plan_b") maturity_level = "ADVANCED";
 
-  // إنشاء المستخدم
-  const user = await User.create({
-    name,
-    email,
-    password,
-    role: userRole,
-    referrer_code: referrer_code || null,
-    subscriptionTier: req.body.subscriptionTier || "free",
-    maturity_level,
-  });
-
-  // 🔗 Link User to Sectors
-  if (sectorIds && sectorIds.length > 0) {
-    await user.addSectors(sectorIds);
-  }
-
-  // 🏢 Create Organization for the new user
+  // === ATOMIC REGISTRATION TRANSACTION ===
+  const t = await sequelize.transaction();
+  let user;
   try {
+    // 1. Create User
+    user = await User.create({
+      name,
+      email,
+      password,
+      role: userRole,
+      referrer_code: referrer_code || null,
+      subscriptionTier: req.body.subscriptionTier || "free",
+      maturity_level,
+    }, { transaction: t });
+
+    // 2. Link User to Sectors
+    if (sectorIds && sectorIds.length > 0) {
+      await user.addSectors(sectorIds, { transaction: t });
+    }
+
+    // 3. Create Organization
     const { Organization, OrganizationUser } = require("../sequelize_setup");
     const orgName = req.body.businessName || `${name}'s Org`;
     const org = await Organization.create({
       name: orgName,
       subscription_plan: user.subscriptionTier,
-    });
+    }, { transaction: t });
 
     await OrganizationUser.create({
       organization_id: org.id,
@@ -140,28 +140,36 @@ exports.register = asyncHandler(async (req, res) => {
       title: user.role === "seller" ? "Owner" : "Manager",
       role: user.role,
       is_primary: true,
+    }, { transaction: t });
+
+    user.organization_id = org.id;
+    await user.save({ transaction: t });
+
+    // 4. Assign RBAC Role — ATOMIC, NOT OPTIONAL
+    // Find or create the role row to handle fresh databases
+    const [defaultRole] = await Role.findOrCreate({
+      where: { name: userRole },
+      defaults: { name: userRole, description: `${userRole} role` },
+      transaction: t,
     });
 
-    // Attach org to user object and save to DB
-    user.organization_id = org.id;
-    await user.save();
+    await UserRole.findOrCreate({
+      where: { userId: user.id, roleId: defaultRole.id },
+      transaction: t,
+    });
 
-    // 🛡️ Assign Default RBAC Role
-    const { Role } = require("../sequelize_setup");
-    const defaultRole = await Role.findOne({ where: { name: user.role } });
-    if (defaultRole) {
-      await user.addRole(defaultRole);
-    }
+    await t.commit();
   } catch (e) {
-    console.error(
-      "Failed to create organization or role during registration:",
-      e,
-    );
+    await t.rollback();
+    console.error("Registration failed during transaction:", e.message);
+    res.status(500);
+    throw new Error("فشل إنشاء الحساب. الرجاء المحاولة مرة أخرى.");
   }
 
   // إرسال رمز الاستجابة (JWT)
   sendTokenResponse(user, 201, res);
 });
+
 
 /**
  * @desc    تسجيل دخول المستخدم
