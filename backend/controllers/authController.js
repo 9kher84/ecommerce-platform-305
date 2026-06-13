@@ -205,14 +205,10 @@ exports.login = asyncHandler(async (req, res) => {
     console.log('PASSWORD HASH LENGTH:', user.password ? user.password.length : 0);
   }
 
-  if (user) {
-    console.log('DB USER ID:', user.id);
-    console.log('DB USER EMAIL:', user.email);
-    console.log('DB HASH:', user.password);
-  }
-
-  console.log('RAW PASSWORD RECEIVED:', password);
-  console.log('PASSWORD LENGTH:', password ? password.length : 0);
+  console.log('user.password =', user.password);
+  console.log('raw getDataValue =', user.getDataValue('password'));
+  console.log('dataValues.password =', user.dataValues.password);
+  console.log('toJSON.password =', user.toJSON().password);
 
   const isMatch = user
     ? await bcrypt.compare(password, user.password)
