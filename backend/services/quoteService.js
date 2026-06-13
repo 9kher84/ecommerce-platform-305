@@ -428,6 +428,40 @@ class QuoteService {
     }
     return quote;
   }
+
+  /**
+   * Get Seller Quotes
+   */
+  static async getSellerQuotes(sellerId, filters = {}) {
+    const { Organization } = require("../sequelize_setup");
+    const where = { sellerId: sellerId };
+    
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    const quotes = await PriceQuote.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "name", "businessName", "rank"],
+        },
+        {
+          model: PurchaseRequest,
+          as: "request",
+        },
+        {
+          model: Organization,
+          as: "organization",
+        }
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return quotes;
+  }
 }
 
 module.exports = QuoteService;
