@@ -140,8 +140,7 @@ app.use(
           "'self'",
           ...config.security.corsOrigins,
           "https://studio.apollographql.com",
-          "https://*.vercel.app",
-          "https://*.up.railway.app",
+          "https://*.onrender.com",
         ],
         frameSrc: ["'self'", "https://studio.apollographql.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
@@ -151,7 +150,7 @@ app.use(
     },
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     crossOriginEmbedderPolicy: false,
-    // Changed from same-site to cross-origin to allow Vercel frontend to access Railway backend
+    // cross-origin to allow Render frontend to access Render backend
     crossOriginResourcePolicy: { policy: "cross-origin" },
     referrerPolicy: { policy: "no-referrer-when-downgrade" },
   }),
@@ -162,10 +161,8 @@ app.use(
 const corsOptions = {
   origin: [
     "https://ecommerce-frontend-305.onrender.com",
-    "https://ecommerce-frontend-305.up.railway.app",
-    "https://ecommerce-platform-305-production.up.railway.app",
-    /\.railway\.app$/,
     /\.onrender\.com$/,
+    ...(process.env.NODE_ENV !== "production" ? ["http://localhost:3000", "http://localhost:5173"] : []),
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
