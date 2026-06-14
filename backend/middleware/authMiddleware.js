@@ -115,6 +115,71 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+// 1.5. Optional Auth Middleware
+exports.optionalAuth = catchAsync(async (req, res, next) => {
+  let token;
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  } else if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const secret = process.env.JWT_SECRET || "supersecret";
+    const decoded = jwt.verify(token, secret);
+
+    if (decoded.jti) {
+      const isRevoked = await tokenBlacklist.isBlacklisted(decoded.jti);
+      if (isRevoked) {
+        return next();
+      }
+    }
+
+    const { Role, Organization } = require("../sequelize_setup");
+    const currentUser = await User.findByPk(decoded.id, {
+      include: [
+        {
+          model: Role,
+          as: "roles",
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+        {
+          model: Organization,
+          as: "organizations",
+          through: {
+            where: { is_primary: true },
+            attributes: ["organization_id"],
+          },
+        },
+      ],
+    });
+
+    if (currentUser) {
+      if (currentUser.roles && currentUser.roles.length > 0) {
+        currentUser.role = currentUser.roles[0].name;
+      }
+      req.user = currentUser;
+      req.user.jti = decoded.jti;
+      req.user.exp = decoded.exp;
+      if (currentUser.organizations && currentUser.organizations.length > 0) {
+        req.user.organization_id = currentUser.organizations[0].id;
+      }
+    }
+  } catch (error) {
+    // Ignore invalid tokens for optional auth
+  }
+
+  next();
+});
+
 // 2. RestrictTo Middleware - Role Based Access Control
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {

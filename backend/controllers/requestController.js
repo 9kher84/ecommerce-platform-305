@@ -169,6 +169,7 @@ const getPublishedRequests = asyncHandler(async (req, res) => {
 
 // دالة للحصول على تفاصيل طلب معين
 const getRequestById = asyncHandler(async (req, res) => {
+  console.log("REQ.USER =", req.user);
   const requestId = req.params.id;
   const userId = req.user ? req.user.id : null;
 

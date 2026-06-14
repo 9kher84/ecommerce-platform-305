@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const requestController = require("../controllers/requestController");
 const requestStatusController = require("../controllers/requestStatusController");
-const { protect, restrictTo } = require("../middleware/authMiddleware");
+const { protect, restrictTo, optionalAuth } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validatorMiddleware");
 const { createRequestSchema } = require("../validators/requestValidators");
 const authorize = require("../middleware/authorize");
@@ -271,7 +271,7 @@ router.get(
  *       200:
  *         description: Request cancelled
  */
-router.get("/:id", requestController.getRequestById);
+router.get("/:id", optionalAuth, requestController.getRequestById);
 
 router.put(
   "/:id",
