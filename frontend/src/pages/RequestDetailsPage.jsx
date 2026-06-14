@@ -37,12 +37,28 @@ const RequestDetailsPage = () => {
   const fetchRequestDetails = async () => {
     setLoading(true);
     try {
-      const [requestRes, quotesRes] = await Promise.all([
-        apiService.getRequestById(id),
-        apiService.getRequestQuotes(id),
-      ]);
-      setRequest(requestRes.request);
-      setQuotes(quotesRes.data || []);
+      // 1. Fetch Request Details First
+      const requestRes = await apiService.getRequestById(id);
+      const reqData = requestRes.request;
+      setRequest(reqData);
+
+      // Default to quotes included in the request (if any)
+      let fetchedQuotes = reqData.quotes || [];
+
+      // 2. Determine if user should fetch full quotes
+      const isOwner = user?.id === reqData.buyerId;
+      const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+
+      if (isOwner || isAdmin) {
+        try {
+          const quotesRes = await apiService.getRequestQuotes(id);
+          fetchedQuotes = quotesRes.data || fetchedQuotes;
+        } catch (e) {
+          console.warn("Quotes unavailable", e);
+        }
+      }
+
+      setQuotes(fetchedQuotes);
     } catch (err) {
       setError(err.message);
     } finally {
