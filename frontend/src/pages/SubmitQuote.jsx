@@ -56,7 +56,7 @@ const SubmitQuote = () => {
       };
       await apiService.submitQuote(id, payload);
       setSuccess(true);
-      setTimeout(() => navigate("/seller-dashboard"), 3000);
+      setTimeout(() => navigate(`/requests/${id}`), 3000);
     } catch (error) {
       console.error("Error submitting quote:", error);
       alert(error.message || "حدث خطأ أثناء تقديم العرض");
@@ -83,13 +83,13 @@ const SubmitQuote = () => {
             تم تقديم عرضك بنجاح!
           </h2>
           <p className="text-gray-500 mb-8">
-            سيتم إخطار المشتري فوراً. سيتم توجيهك إلى لوحة التحكم خلال لحظات...
+            سيتم إخطار المشتري فوراً. سيتم توجيهك إلى صفحة الطلب خلال لحظات...
           </p>
           <button
-            onClick={() => navigate("/seller-dashboard")}
+            onClick={() => navigate(`/requests/${id}`)}
             className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
           >
-            العودة للوحة التحكم الآن
+            الانتقال لصفحة الطلب الآن
           </button>
         </div>
       </div>
