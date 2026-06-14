@@ -205,10 +205,19 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   PurchaseRequest.prototype.canReceiveQuotes = function () {
-    return (
-      this.status === "published" &&
+    const PUBLISHED_STATUSES = ["published", "rfq_published"];
+    const conditionResult = (
+      PUBLISHED_STATUSES.includes(this.status) &&
       (!this.expiresAt || new Date(this.expiresAt) > new Date())
     );
+
+    console.log("QUOTE ACCEPTANCE RESULT", {
+      requestId: this.id,
+      status: this.status,
+      result: conditionResult
+    });
+
+    return conditionResult;
   };
 
   PurchaseRequest.prototype.canBeModified = function () {
