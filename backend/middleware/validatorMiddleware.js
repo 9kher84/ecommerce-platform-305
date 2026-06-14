@@ -9,7 +9,9 @@ const validateRequest = (schema) => {
     const { error } = schema.validate(req.body, { abortEarly: false, allowUnknown: true });
 
     if (error) {
+      console.log("VALIDATION ERROR DETAILS:", error.details);
       const errors = error.details.map((detail) => detail.message);
+      console.log("VALIDATION ERRORS:", errors);
       return res.status(400).json({
         success: false,
         message: "Validation Error",

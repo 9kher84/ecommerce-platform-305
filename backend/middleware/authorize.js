@@ -212,9 +212,11 @@ const authorize = (permissionKey, resourceType = null, action = "view") => {
       if (resourceType) {
         let resource = req.resource;
 
-        if (!resource && action !== "create" && action !== "create_quote") {
+        const bypassResourceCheckActions = ["create", "create_quote", "viewPublished", "list"];
+        
+        if (!resource && !bypassResourceCheckActions.includes(action)) {
           console.error(
-            `[Authorization Error] Resource of type '${resourceType}' expected but req.resource is undefined.`,
+            `[Authorization Error] Resource of type '${resourceType}' expected but req.resource is undefined. Action: ${action}`,
           );
           return res
             .status(500)

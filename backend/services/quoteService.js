@@ -39,7 +39,21 @@ class QuoteService {
     const request = await PurchaseRequest.findByPk(quoteData.purchaseRequestId);
     if (!request) throw new AppError("Purchase request not found", 404);
 
+    console.log("REQUEST FROM DB", {
+      id: request?.id,
+      status: request?.status,
+      expiresAt: request?.expiresAt,
+      publishedAt: request?.publishedAt
+    });
+
     if (!request.canReceiveQuotes()) {
+      console.log("QUOTE DEBUG REQUEST", {
+        id: request.id,
+        status: request.status,
+        expiresAt: request.expiresAt,
+        now: new Date(),
+        publishedAt: request.publishedAt
+      });
       throw new AppError(
         "This request is not accepting quotes (expired or not published)",
         400,

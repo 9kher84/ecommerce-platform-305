@@ -36,6 +36,8 @@ const RFQsPage = () => {
       if (searchTerm) filters.search = searchTerm;
       if (selectedCategory !== "all") filters.categoryId = selectedCategory;
 
+      console.log("RFQ FILTER STATE", filters);
+      
       const response = await apiService.getPublishedRequests(filters);
 
       const data = response?.data ?? response;

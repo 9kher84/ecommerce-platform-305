@@ -103,7 +103,18 @@ export const getPublishedRequests = async (filters = {}) => {
     if (safeFilters[key] !== null && safeFilters[key] !== undefined && safeFilters[key] !== "")
       params.append(key, safeFilters[key]);
   });
-  return apiRequest("GET", `/api/requests/published?${params.toString()}`);
+  
+  const finalUrl = `/api/requests/published?${params.toString()}`;
+  const categoryId = safeFilters.categoryId || null;
+  const selectedCategory = safeFilters.category || null;
+  
+  console.log("DEBUG FRONTEND API:", {
+    finalUrl,
+    selectedCategory,
+    categoryId
+  });
+
+  return apiRequest("GET", finalUrl);
 };
 
 export const getMarketplaceRequests = async (filters = {}) => {
