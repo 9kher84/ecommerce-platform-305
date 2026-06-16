@@ -108,6 +108,8 @@ class QuoteService {
       status: "pending",
     });
 
+    console.log("CREATED QUOTE", quote);
+
     const submittedPrice =
       quoteData.priceType === "fixed"
         ? quoteData.fixedPrice

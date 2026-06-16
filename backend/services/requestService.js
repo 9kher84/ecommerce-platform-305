@@ -643,6 +643,7 @@ class RequestService {
       console.log(`Request found: ${plainReq.id}, Status: ${plainReq.status}`);
 
       // تحديد صلاحيات المستخدم
+      console.log("REQ USER ID PASSED TO SERVICE =", userId);
       const user = userId ? await User.findByPk(userId) : null;
       const isOwner = user && user.id === plainReq.userId;
       const isAdmin =
@@ -653,24 +654,18 @@ class RequestService {
       let quotes = [];
       const quoteWhere = { purchaseRequestId: requestId };
 
+      console.log("USER ROLE =", user?.role);
+      console.log("IS SELLER =", isSeller);
+      console.log("REQUEST ID =", requestId);
+      console.log("QUOTE WHERE =", quoteWhere);
+
       if (isOwner || isAdmin) {
         // المالك أو الأدمن: يرون جميع الـ quotes
-        quotes = await PriceQuote.findAll({
-          where: quoteWhere,
-          include: [
-            {
-              model: User,
-              as: "seller",
-              attributes: ["id", "name", "businessName", "rank"],
-            },
-          ],
-          order: [["createdAt", "DESC"]],
-        });
-      } else if (isSeller) {
-        // البائع: يرون فقط الـ quotes الخاصة بهم في المزاد السري
-        if (plainReq.auction_type === "secret") {
-          quoteWhere.sellerId = userId;
-        }
+        console.log("USER ID", userId);
+        console.log("IS SELLER", isSeller);
+        console.log("QUOTE WHERE", quoteWhere);
+
+        console.log("FINAL QUOTE WHERE", JSON.stringify(quoteWhere, null, 2));
 
         quotes = await PriceQuote.findAll({
           where: quoteWhere,
@@ -682,7 +677,44 @@ class RequestService {
             },
           ],
           order: [["createdAt", "DESC"]],
+          logging: console.log,
         });
+        console.log("QUOTES FOUND", quotes.length);
+      } else if (isSeller) {
+        // البائع: يرون فقط الـ quotes الخاصة بهم في المزاد السري
+        if (plainReq.auction_type === "secret") {
+          quoteWhere.sellerId = userId;
+        }
+
+        console.log("USER ROLE =", user?.role);
+        console.log("USER ID =", userId);
+        console.log("REQUEST ID =", requestId);
+        console.log("QUOTE WHERE =", JSON.stringify(quoteWhere));
+
+        const directCount = await PriceQuote.count({
+          where: { purchaseRequestId: requestId }
+        });
+        console.log("DIRECT COUNT =", directCount);
+
+        const rawQuotes = await PriceQuote.findAll({
+          where: { purchaseRequestId: requestId },
+          raw: true,
+        });
+        console.log("RAW QUOTES LENGTH =", rawQuotes.length);
+
+        quotes = await PriceQuote.findAll({
+          where: quoteWhere,
+          include: [
+            {
+              model: User,
+              as: "seller",
+              attributes: ["id", "name", "businessName", "rank"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          logging: console.log,
+        });
+        console.log("NORMAL QUOTES LENGTH =", quotes.length);
 
         // في المزاد العام، إخفاء معلومات البائعين الآخرين
         if (plainReq.auction_type === "public" && quotes.length > 0) {
