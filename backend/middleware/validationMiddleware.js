@@ -88,8 +88,8 @@ const updateProfileSchema = Joi.object({
   phone: Joi.string().optional(),
   address: Joi.string().optional(),
   // Buyer Dashboard Fields
-  mobile: Joi.string().optional(),
-  businessName: Joi.string().optional(),
+  mobile: Joi.string().allow('', null).optional(),
+  businessName: Joi.string().allow('', null).optional(),
   notificationSettings: Joi.object().optional(),
   // Seller Dashboard Fields
   jobTitle: Joi.string().optional(),

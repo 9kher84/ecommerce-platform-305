@@ -43,6 +43,7 @@ router.get(
  */
 router.get(
   "/unread-count",
+  protect,
   asyncHandler(async (req, res) => {
     const { Notification } = require("../sequelize_setup");
     const count = await Notification.count({

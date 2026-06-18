@@ -425,7 +425,7 @@ const SellerDashboard = () => {
 
       // 6. My Quotes
       const quotesRes = await apiService.getMyQuotes();
-      setQuotes(quotesRes.data || []);
+      setQuotes(quotesRes.quotes || []);
     } catch (error) {
       console.error("Error fetching dashboard data", error);
     } finally {

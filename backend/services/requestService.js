@@ -454,11 +454,11 @@ class RequestService {
       where.status = { [Op.ne]: "draft" };
     } else if (userRole === "seller" || userRole === "buyer") {
       // فقط المنشورة أو قيد التفاوض
-      where.status = { [Op.in]: ["published", "negotiating"] };
+      where.status = { [Op.in]: ["published", "negotiating", "rfq_published"] };
       where.expiresAt = { [Op.gt]: new Date() };
     } else {
       // الزوار: نفس البائع/المشتري
-      where.status = { [Op.in]: ["published", "negotiating"] };
+      where.status = { [Op.in]: ["published", "negotiating", "rfq_published"] };
       where.expiresAt = { [Op.gt]: new Date() };
     }
 

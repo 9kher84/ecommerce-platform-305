@@ -57,7 +57,7 @@ const RFQsPage = () => {
   const fetchCategories = async () => {
     try {
       const response = await apiService.getAllCategories();
-      const list = response?.data ?? response;
+      const list = response?.data?.categories ?? response?.categories ?? [];
       setCategories(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -225,7 +225,7 @@ const RFQsPage = () => {
                       <div className="inline-block h-6 w-6 rounded-full bg-gray-400 border-2 border-white ring-2 ring-gray-100"></div>
                     </div>
                     <span className="text-xs text-gray-500">
-                      تم تقديم {rfq.quotesCount || 0} عروض
+                      تم تقديم {rfq.quoteCount || 0} عروض
                     </span>
                   </div>
                 </div>
