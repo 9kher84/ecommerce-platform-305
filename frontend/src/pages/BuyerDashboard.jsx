@@ -146,7 +146,7 @@ const BuyerDashboard = () => {
 
       // 3. Requests
       const requestsRes = await apiService.getMyRequests();
-      setRequests(requestsRes.data || []);
+      setRequests(requestsRes.data?.data || requestsRes.data || []);
 
       // 4. Deals (Invoices)
       const dealsRes = await apiService.getDeals();

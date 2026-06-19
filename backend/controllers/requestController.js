@@ -105,7 +105,8 @@ const createRequest = asyncHandler(async (req, res) => {
 
   const requestData = {
     ...req.body,
-    sectorId, // Explicitly included
+    sectorId,
+    categoryId: req.body.categoryId || null,
     deviceFingerprint: getDeviceFingerprint(req),
     organization_id: req.user.organization_id,
   };
@@ -142,11 +143,20 @@ const getMyRequests = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const requests = await RequestService.getBuyerRequests(userId, req.query);
 
-  res.status(200).json({
-    success: true,
-    count: requests.length,
-    data: requests,
-  });
+  if (requests.pagination) {
+    res.status(200).json({
+      success: true,
+      data: requests.data,
+      pagination: requests.pagination,
+      count: requests.data.length,
+    });
+  } else {
+    res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests,
+    });
+  }
 });
 
 // دالة للحصول على الطلبات المنشورة

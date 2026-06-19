@@ -455,11 +455,17 @@ class RequestService {
     } else if (userRole === "seller" || userRole === "buyer") {
       // فقط المنشورة أو قيد التفاوض
       where.status = { [Op.in]: ["published", "negotiating", "rfq_published"] };
-      where.expiresAt = { [Op.gt]: new Date() };
+      where[Op.or] = [
+        { expiresAt: null },
+        { expiresAt: { [Op.gt]: new Date() } },
+      ];
     } else {
       // الزوار: نفس البائع/المشتري
       where.status = { [Op.in]: ["published", "negotiating", "rfq_published"] };
-      where.expiresAt = { [Op.gt]: new Date() };
+      where[Op.or] = [
+        { expiresAt: null },
+        { expiresAt: { [Op.gt]: new Date() } },
+      ];
     }
 
     // ج) فلتر التصنيف - PRESERVED EXACTLY
@@ -490,6 +496,7 @@ class RequestService {
       // حذف الشروط المكررة - PRESERVED EXACTLY
       delete where.status;
       delete where.expiresAt;
+      delete where[Op.or];
       if (where.userId) delete where.userId;
       if (where.categoryId) delete where.categoryId;
       // لا نحذف delivery_city لأنه جزء من currentConditions

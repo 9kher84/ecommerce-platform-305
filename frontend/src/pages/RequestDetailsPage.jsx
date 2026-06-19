@@ -46,7 +46,7 @@ const RequestDetailsPage = () => {
       let fetchedQuotes = reqData.quotes || [];
 
       // 2. Determine if user should fetch full quotes
-      const isOwner = user?.id === reqData.buyerId;
+      const isOwner = user?.id === reqData.userId || user?.id === reqData.buyerId;
       const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
       if (isOwner || isAdmin) {
@@ -296,7 +296,7 @@ const RequestDetailsPage = () => {
     );
   }
 
-  const isBuyer = user?.id === request.buyerId;
+  const isBuyer = user?.id === request.userId;
   const isSeller = user?.role === "seller";
   // Check backend flag OR frontend logic (fallback)
   const isFreeBuyerViewingOthers =
