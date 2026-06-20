@@ -1094,7 +1094,7 @@ const RequestDetailsPage = () => {
                         </div>
                       )}
                     </div>
-                  ))()}
+                  ))})()}
                 </div>
               )}
             </div>
