@@ -92,9 +92,9 @@ const updateProfileSchema = Joi.object({
   businessName: Joi.string().allow('', null).optional(),
   notificationSettings: Joi.object().optional(),
   // Seller Dashboard Fields
-  jobTitle: Joi.string().optional(),
-  commercialRegister: Joi.string().optional(),
-  city: Joi.string().optional(),
+  jobTitle: Joi.string().allow('', null).optional(),
+  commercialRegister: Joi.string().allow('', null).optional(),
+  city: Joi.string().allow('', null).optional(),
 });
 
 // 5. Create Post (Buyer Request) - V2

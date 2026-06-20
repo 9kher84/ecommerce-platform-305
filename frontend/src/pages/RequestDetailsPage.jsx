@@ -834,6 +834,11 @@ const RequestDetailsPage = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 {request.title}
               </h1>
+              {isBuyer && (
+                <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-semibold">
+                  ✅ أنت صاحب هذا الطلب
+                </div>
+              )}
               <p className="text-gray-600 mt-2">رقم الطلب: #{request.id}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -954,7 +959,9 @@ const RequestDetailsPage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {quotes.map((quote) => (
+                  {(() => {
+                    const visibleQuotes = quotes.filter(q => q.status !== "withdrawn");
+                    return visibleQuotes.map((quote) => (
                     <div
                       key={quote.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -1087,7 +1094,7 @@ const RequestDetailsPage = () => {
                         </div>
                       )}
                     </div>
-                  ))}
+                  ))()}
                 </div>
               )}
             </div>

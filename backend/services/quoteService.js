@@ -39,6 +39,18 @@ class QuoteService {
     const request = await PurchaseRequest.findByPk(quoteData.purchaseRequestId);
     if (!request) throw new AppError("Purchase request not found", 404);
 
+    const requestId = quoteData.purchaseRequestId;
+    const existingQuote = await PriceQuote.findOne({
+      where: {
+        purchaseRequestId: requestId,
+        sellerId: sellerId,
+        status: { [Op.notIn]: ["withdrawn", "rejected"] },
+      },
+    });
+    if (existingQuote) {
+      throw new AppError("لقد قدمت عرضاً بالفعل لهذا الطلب", 400);
+    }
+
     console.log("REQUEST FROM DB", {
       id: request?.id,
       status: request?.status,
@@ -402,6 +414,28 @@ class QuoteService {
     return Deal.findOne({
       where: { purchaseRequestId: quote.purchaseRequestId },
     });
+  }
+
+  /**
+   * Reject Quote
+   */
+  static async rejectQuote(quoteId, buyerId, reason) {
+    const quote = await PriceQuote.findByPk(quoteId, {
+      include: [{ model: PurchaseRequest, as: "request" }],
+    });
+    if (!quote) throw new AppError("Quote not found", 404);
+    if (quote.request.userId !== buyerId)
+      throw new AppError("Unauthorized", 403);
+    if (quote.status !== "pending" && quote.status !== "negotiating")
+      throw new AppError("Quote cannot be rejected in its current state", 400);
+
+    quote.status = "rejected";
+    quote.decisionStatus = "rejected";
+    quote.decisionAt = new Date();
+    if (reason) quote.buyerNotes = reason;
+    await quote.save();
+
+    return quote;
   }
 
   /**

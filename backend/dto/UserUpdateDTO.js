@@ -7,6 +7,12 @@ class UserUpdateDTO {
       "address",
       "language",
       "theme",
+      "mobile",
+      "businessName",
+      "notificationSettings",
+      "jobTitle",
+      "commercialRegister",
+      "city",
       // Excludes: email (requires verify), password, role, subscriptionTier
     ];
   }

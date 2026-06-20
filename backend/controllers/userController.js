@@ -62,13 +62,15 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
   if (user) {
     // تحديث الحقول المسموح بها فقط بعد التطهير
     if (sanitizedData.name) user.name = sanitizedData.name;
-    if (sanitizedData.mobile) user.mobile = sanitizedData.mobile;
-    if (sanitizedData.businessName)
+    if (sanitizedData.mobile !== undefined) user.mobile = sanitizedData.mobile;
+    if (sanitizedData.businessName !== undefined)
       user.businessName = sanitizedData.businessName;
-    if (sanitizedData.jobTitle) user.jobTitle = sanitizedData.jobTitle;
-    if (sanitizedData.commercialRegister)
+    if (sanitizedData.jobTitle !== undefined) user.jobTitle = sanitizedData.jobTitle;
+    if (sanitizedData.commercialRegister !== undefined)
       user.commercialRegister = sanitizedData.commercialRegister;
-    if (sanitizedData.city) user.city = sanitizedData.city;
+    if (sanitizedData.city !== undefined) user.city = sanitizedData.city;
+    if (sanitizedData.notificationSettings !== undefined)
+      user.notificationSettings = sanitizedData.notificationSettings;
 
     // ... تكملة منطق حفظ البيانات وحماية كلمة المرور
     await user.save();

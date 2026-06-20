@@ -184,7 +184,7 @@ class SubscriptionService {
 
     // Reset counter if new week
     const now = new Date();
-    const lastReset = new Date(user.lastWeekReset);
+    const lastReset = user.lastWeekReset ? new Date(user.lastWeekReset) : new Date(0);
     const daysSinceReset = (now - lastReset) / (1000 * 60 * 60 * 24);
 
     if (daysSinceReset >= 7) {
