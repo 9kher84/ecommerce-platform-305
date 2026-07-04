@@ -15,7 +15,7 @@ const SENSITIVE_PATTERNS = [
   /(AKIA[0-9A-Z]{16})/g,
 
   // High Entropy Strings (Potential API Keys or Tokens) - Simple heuristic
-  /\b[A-Za-z0-9-_]{40,}\b/g,
+  // Removed faulty regex that corrupts JWTs: /\b[A-Za-z0-9-_]{40,}\b/g,
 
   // Internal Paths
   /\/var\/www\/html/g,
