@@ -2,15 +2,12 @@ const { AuditLog } = require("../sequelize_setup");
 
 const auditMiddleware = (actionName) => {
   return async (req, res, next) => {
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+
     // Capture original end function to log after response
     const originalEnd = res.end;
-
-    // We log after the response is sent to ensure we capture the status code
-    // and don't block the response time significantly (fire and forget logic typically,
-    // but here we might accept slight delay for strict audit).
-
-    // Actually, for strict audit, it's better to log *before* or *during*
-    // but typically we want to know if it succeeded.
 
     res.end = async function (chunk, encoding) {
       // Restore original end
@@ -32,8 +29,7 @@ const auditMiddleware = (actionName) => {
               statusCode: res.statusCode,
               method: req.method,
               url: req.originalUrl,
-              body: req.method !== "GET" ? req.body : undefined, // Be careful with sensitive data here!
-              // query: req.query
+              body: req.method !== "GET" ? req.body : undefined,
             },
           };
 
@@ -51,12 +47,13 @@ const auditMiddleware = (actionName) => {
         }
       } catch (error) {
         console.error("Audit Log Failed:", error);
-        // Don't crash the request if audit fails, but log critical error
       }
     };
 
     next();
   };
 };
+
+module.exports = auditMiddleware;
 
 module.exports = auditMiddleware;

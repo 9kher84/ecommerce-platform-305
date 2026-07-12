@@ -7,7 +7,7 @@ describe("🚨 Strict Sovereignty & Red Team Smoke Test", () => {
     // Check if the check logic exists in the config file
     const redisFile = path.join(__dirname, "../config/redis.js");
     const content = fs.readFileSync(redisFile, "utf8");
-    expect(content).toContain("process.env.NODE_ENV === 'production'");
+    expect(content).toContain('process.env.NODE_ENV === "production"');
     expect(content).toContain("process.exit(1)");
   });
 
@@ -37,7 +37,7 @@ describe("🚨 Strict Sovereignty & Red Team Smoke Test", () => {
     const vaultFile = path.join(__dirname, "../scripts/secrets-vault.js");
     if (fs.existsSync(vaultFile)) {
       const content = fs.readFileSync(vaultFile, "utf8");
-      expect(content).toContain("process.env.NODE_ENV === 'production'");
+      expect(content).toContain('process.env.NODE_ENV === "production"');
       expect(content).toContain("process.exit(1)");
     }
   });

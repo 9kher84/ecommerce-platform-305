@@ -115,6 +115,7 @@ const messages = {
     SUCCESS_REQUEST_CREATED: "تم إنشاء الطلب بنجاح",
     SUCCESS_QUOTE_SUBMITTED: "تم تقديم العرض بنجاح",
     SUCCESS_OPERATION: "تمت العملية بنجاح",
+    ERR_FRAUD_SELF_TRADING: "⛔ يمنع التداول مع الذات. لا يمكنك تقديم عرض على طلبك الخاص.",
   },
 
   // English Messages
@@ -228,6 +229,7 @@ const messages = {
     SUCCESS_REQUEST_CREATED: "Request created successfully",
     SUCCESS_QUOTE_SUBMITTED: "Quote submitted successfully",
     SUCCESS_OPERATION: "Operation completed successfully",
+    ERR_FRAUD_SELF_TRADING: "⛔ Self-trading is prohibited. You cannot quote on your own request.",
   },
 };
 

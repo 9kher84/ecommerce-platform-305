@@ -1,0 +1,26 @@
+[
+  {
+    "method": "GET",
+    "path": "/"
+  },
+  {
+    "method": "HEAD",
+    "path": "/"
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/*"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health"
+  },
+  {
+    "method": "GET",
+    "path": "/api/internal/fix-sector"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health/advanced"
+  }
+]

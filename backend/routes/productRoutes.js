@@ -11,6 +11,7 @@ const {
   updateSmartInventory,
   bulkUpload,
   confirmBulkUpload,
+  approveProposal,
 } = require("../controllers/productController");
 
 // All Routes Protected and Seller Only
@@ -151,5 +152,25 @@ router
  *         description: Product deleted
  */
 router.route("/:id").put(updateProduct).delete(deleteProduct);
+
+/**
+ * @swagger
+ * /api/products/{id}/approve-proposal:
+ *   post:
+ *     summary: Approve AI proposals for product
+ *     tags: [Products]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposals approved and merged
+ */
+router.post("/:id/approve-proposal", approveProposal);
 
 module.exports = router;

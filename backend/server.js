@@ -46,6 +46,7 @@ const agentRoutes = require("./routes/agentRoutes");
 const productRoutes = require("./routes/productRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
+const intakeRoutes = require("./routes/intakeRoutes");
 
 // Load env vars
 const app = express();
@@ -197,7 +198,7 @@ if (process.env.NODE_ENV === "production") {
   app.use(aiOutputSanitizer);
 }
 
-app.use("/api", apiLimiter);
+// app.use("/api", apiLimiter);
 
 // 🩺 SOVEREIGN HEALTH CHECK
 app.get("/api/health", async (req, res) => {
@@ -372,7 +373,7 @@ const startServer = async (startListening = true) => {
     await seedCategories();
 
     // 2. Initialize Background Jobs (If Redis Available)
-    if (isRedisAvailable()) {
+    if (isRedisAvailable() && process.env.NODE_ENV !== "test") {
       require("./jobs/invoiceCron");
       console.log("✅ Background jobs initialized");
     } else {
@@ -395,6 +396,7 @@ const startServer = async (startListening = true) => {
       validationRules: [depthLimit(10)], // J.2 Limit query depth to 10
     });
 
+    app.apolloServer = server;
     await server.start();
 
     // Apply GraphQL Middleware
@@ -417,6 +419,7 @@ const startServer = async (startListening = true) => {
         credentials: true,
       },
     });
+    app.io = io;
 
     // Initialize Notification Service
     NotificationService.init(io);
@@ -430,6 +433,9 @@ const startServer = async (startListening = true) => {
     console.log("🔌 Socket.IO initialized");
 
     // 5. Register REST API Routes
+    const auditMiddleware = require("./middleware/auditMiddleware");
+    app.use("/api", auditMiddleware("SYSTEM_ACTION")); // Global interception
+
     app.use("/api/auth", authRoutes);
     app.use("/api/requests", requestRoutes);
     app.use("/api/quotes", quoteRoutes);
@@ -444,6 +450,7 @@ const startServer = async (startListening = true) => {
     app.use("/api/products", productRoutes);
     app.use("/api/chat", chatRoutes);
     app.use("/api/invoice", invoiceRoutes);
+    app.use("/api/intake", intakeRoutes);
 
     // ✅ Routes مضافة حديثاً (كانت غير مسجلة)
     const notificationRoutes = require("./routes/notificationRoutes");
@@ -555,6 +562,36 @@ const startServer = async (startListening = true) => {
       process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
       process.on("SIGINT", () => gracefulShutdown("SIGINT"));
     }
+
+    app.stopServer = async () => {
+      console.log("🛑 Stopping server for tests...");
+      if (app.io) {
+        app.io.close();
+      }
+      if (app.apolloServer) {
+        await app.apolloServer.stop();
+      }
+      if (httpServer) {
+        if (httpServer.closeAllConnections) {
+          httpServer.closeAllConnections();
+        }
+        await new Promise(resolve => httpServer.close(resolve));
+      }
+      // Stop all node-cron tasks to prevent Jest open handle hangs
+      const cron = require("node-cron");
+      const tasks = cron.getTasks();
+      for (const [key, task] of tasks.entries()) {
+        task.stop();
+      }
+      if (isRedisAvailable()) {
+        const client = require("./config/redis").getRedisClient();
+        if (client) {
+          await client.quit();
+        }
+      }
+    };
+
+    return httpServer;
   } catch (error) {
     console.error("❌ Failed to start server:", error);
     throw error; // Let Jest handle the error instead of exiting

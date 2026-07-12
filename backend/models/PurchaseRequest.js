@@ -185,6 +185,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true,
       },
+      assetTypeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // For mapping Demand Intents properly
+      },
       approval_status: {
         type: DataTypes.STRING,
         defaultValue: "none", // pending_approval, approved, rejected, none

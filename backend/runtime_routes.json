@@ -1,0 +1,1052 @@
+[
+  {
+    "path": "/",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "*",
+    "methods": [
+      "OPTIONS"
+    ],
+    "middlewares": [
+      "corsMiddleware"
+    ]
+  },
+  {
+    "path": "/api/health",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/internal/fix-sector",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/health/advanced",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/auth/register",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/auth/login",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/auth/refresh",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/auth/logout",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/auth/debug/db-user",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/requests",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/my-requests",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/published",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/quotes",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/status",
+    "methods": [
+      "PUT"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/status-history",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/allowed-statuses",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/requests/:id",
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/publish",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/request-modification",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/repost",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/requests/:id/price-radar",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/my-quotes",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/request/:requestId",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/negotiate",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/respond",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/accept",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/reject",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/withdraw",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/modify",
+    "methods": [
+      "PUT"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/quotes/:id/decision",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/users/register",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/users/login",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/users/profile",
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/users/admin/all",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/users/admin/:id",
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap",
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/admin/permissions",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/users/all",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isOwner",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/users/:id/update",
+    "methods": [
+      "PUT"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isOwner",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/users/:id/delete",
+    "methods": [
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isOwner",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/users/:id/toggle-status",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isOwner",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/admins",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isAdmin",
+      "getAdmins"
+    ]
+  },
+  {
+    "path": "/api/admin/admins/:id",
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isOwner",
+      "updateAdmin"
+    ]
+  },
+  {
+    "path": "/api/admin/edit-field",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isAdmin",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/kill-switch",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/logs",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/admin/invoices/:id/resolve-dispute",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "isAdmin",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/attachments/:id",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "protectAttachment",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/payments/initiate",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/payments/methods",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/payments/methods/:methodId",
+    "methods": [
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/payments/status/:dealId",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/payments/webhook",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/deals",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/deals/:id",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/deals/:id/status",
+    "methods": [
+      "PATCH"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/categories",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/categories/:id",
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/dashboard/buyer/stats",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/dashboard/buyer/invoices",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/dashboard/seller/stats",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/dashboard/seller/invoices",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/dashboard/match-radar",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/dashboard/command",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/agents/webhook",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/products",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/bulk",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/bulk/confirm",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/upload",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/:id/smart-inventory",
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "middlewares": [
+      "asyncUtilWrap",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/:id",
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "middlewares": [
+      "asyncUtilWrap",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/products/:id/approve-proposal",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/chat/:requestId",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/invoice/public/:token",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/invoice/extract-text",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/invoice/my",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/invoice/:id",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/invoice/:id/proof",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/invoice/:id/confirm",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/notifications",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/notifications/unread-count",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous",
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/notifications/read-all",
+    "methods": [
+      "PATCH"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/notifications/read",
+    "methods": [
+      "PATCH"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/notifications/:id/read",
+    "methods": [
+      "PATCH"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/notifications/:id",
+    "methods": [
+      "DELETE"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/ratings",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/ratings/user/:userId",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "asyncUtilWrap"
+    ]
+  },
+  {
+    "path": "/api/internal/shutdown-drill",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/owner/deals/:dealId/assign-supervisor",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/owner/supervisors/available",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/owner/commission-reports",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/owner/assignments/:assignmentId",
+    "methods": [
+      "DELETE"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/supervisor/deals",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/supervisor/commissions",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/supervisor/notifications",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/supervisor/notifications/:id/read",
+    "methods": [
+      "PUT"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/supervisor/reports/custom",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/mcp/manifest.json",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/mcp",
+    "methods": [
+      "POST"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  }
+]

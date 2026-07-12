@@ -49,6 +49,15 @@ class DealService {
     const invoice = await InvoiceService.createInvoice(deal.id, invoiceData);
 
     // 5. Create Commission Transaction
+    console.log("=== DEAL SERVICE DEBUG ===");
+    console.log("sellerId:", acceptedQuote.sellerId);
+    console.log("buyerId:", purchaseRequest.userId);
+    console.log("dealId:", deal.id);
+    console.log("invoiceId:", invoice.id);
+    console.log("requestId:", purchaseRequest.id);
+    console.log("quoteId:", acceptedQuote.id);
+    console.log("==========================");
+
     const commission = await CommissionTransaction.create({
       dealId: deal.id,
       sellerId: acceptedQuote.sellerId,

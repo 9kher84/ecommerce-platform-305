@@ -1,0 +1,68 @@
+[
+  {
+    "method": "GET",
+    "path": "/",
+    "middlewares": "anonymous",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Yes",
+    "frontendFile": "setupTests.js",
+    "frontendFunc": "Sidebar"
+  },
+  {
+    "method": "HEAD",
+    "path": "/",
+    "middlewares": "anonymous",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Yes",
+    "frontendFile": "setupTests.js",
+    "frontendFunc": "Sidebar"
+  },
+  {
+    "method": "OPTIONS",
+    "path": "*",
+    "middlewares": "corsMiddleware",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Yes",
+    "frontendFile": "ownerService.js",
+    "frontendFunc": "Sidebar"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "middlewares": "anonymous",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Yes",
+    "frontendFile": "ownerService.js",
+    "frontendFunc": "-"
+  },
+  {
+    "method": "GET",
+    "path": "/api/internal/fix-sector",
+    "middlewares": "anonymous",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Unused by Frontend",
+    "frontendFile": "-",
+    "frontendFunc": "-"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health/advanced",
+    "middlewares": "anonymous",
+    "requiresJWT": "No",
+    "requiresRole": "No",
+    "tested": "No",
+    "frontendUsed": "Unused by Frontend",
+    "frontendFile": "-",
+    "frontendFunc": "-"
+  }
+]

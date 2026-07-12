@@ -22,6 +22,7 @@ const UserCategory = require("./models/UserCategory")(sequelize, DataTypes);
 const Organization = require("./models/Organization")(sequelize);
 const OrganizationUser = require("./models/OrganizationUser")(sequelize);
 
+const AssetType = require("./models/AssetType")(sequelize, DataTypes);
 const Product = require("./models/Product")(sequelize, DataTypes);
 const PurchaseRequest = require("./models/PurchaseRequest")(
   sequelize,
@@ -265,7 +266,11 @@ Category.hasMany(PurchaseRequest, { foreignKey: "categoryId", as: "requests" });
 
 // Product
 Product.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+Product.belongsTo(Organization, { foreignKey: "ownerOrganizationId", as: "ownerOrganization" }); // Ownership concept
 Product.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
+Product.belongsTo(AssetType, { foreignKey: "assetTypeId", as: "assetType" });
+AssetType.hasMany(Product, { foreignKey: "assetTypeId", as: "products" });
+
 Product.hasOne(SmartInventory, {
   foreignKey: "productId",
   as: "smartInventory",
@@ -297,6 +302,9 @@ PurchaseRequest.belongsTo(Category, {
   foreignKey: "categoryId",
   as: "category",
 });
+PurchaseRequest.belongsTo(AssetType, { foreignKey: "assetTypeId", as: "assetType" });
+AssetType.hasMany(PurchaseRequest, { foreignKey: "assetTypeId", as: "requests" });
+
 PurchaseRequest.hasMany(PriceQuote, {
   foreignKey: "purchaseRequestId",
   as: "quotes",
@@ -514,6 +522,7 @@ module.exports = {
   User,
   Category,
   UserCategory,
+  AssetType,
 
   Product,
   PurchaseRequest,

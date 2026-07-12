@@ -25,9 +25,9 @@ class PricingEngine {
         },
       ],
       attributes: [
-        [sequelize.fn("AVG", sequelize.col("amount")), "avgPrice"],
-        [sequelize.fn("MIN", sequelize.col("amount")), "minPrice"],
-        [sequelize.fn("MAX", sequelize.col("amount")), "maxPrice"],
+        [sequelize.fn("AVG", sequelize.cast(sequelize.col("amount"), "numeric")), "avgPrice"],
+        [sequelize.fn("MIN", sequelize.cast(sequelize.col("amount"), "numeric")), "minPrice"],
+        [sequelize.fn("MAX", sequelize.cast(sequelize.col("amount"), "numeric")), "maxPrice"],
       ],
       raw: true,
     });

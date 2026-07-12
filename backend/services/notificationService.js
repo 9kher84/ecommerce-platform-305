@@ -45,7 +45,7 @@ class NotificationService {
     try {
       // 1. Persistence (DB)
       const notification = await Notification.create({
-        userId,
+        recipientId: userId,
         type,
         title: data.title || "Notification",
         message: data.message || "",

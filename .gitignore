@@ -143,3 +143,4 @@ performance-results/
 *.dump
 backend/config/vault_secrets.json
 .env
+repo_archive.zip

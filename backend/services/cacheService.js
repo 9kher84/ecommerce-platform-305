@@ -1,17 +1,9 @@
-const Redis = require("ioredis");
+const { getRedisClient } = require("../config/redis");
 const logger = require("../utils/logger"); // Sovereign Logger
 
 class CacheService {
   constructor() {
-    this.client = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
-      port: process.env.REDIS_PORT || 6379,
-      maxRetriesPerRequest: 1, // Fail fast
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-    });
+    this.client = getRedisClient();
 
     this.client.on("error", (err) => {
       // Only log once to avoid spamming
@@ -54,7 +46,7 @@ class CacheService {
     if (this.useMemoryCache) {
       this.memoryCache.set(key, value);
       // Simple TTL for memory cache
-      setTimeout(() => this.memoryCache.delete(key), ttl * 1000);
+      setTimeout(() => this.memoryCache.delete(key), ttl * 1000).unref();
       return;
     }
     try {
