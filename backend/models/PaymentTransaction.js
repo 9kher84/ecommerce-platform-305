@@ -27,7 +27,7 @@ module.exports = (sequelize) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "Users",
+          model: "users",
           key: "id",
         },
         comment: "User who initiated the payment",

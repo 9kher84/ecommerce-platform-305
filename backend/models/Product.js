@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSON, // Added for I18n { ar: String, en: String }
         allowNull: true,
       },
+      assetTypeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Nullable for backward compatibility
+      },
+      ownerOrganizationId: {
+        type: DataTypes.UUID,
+        allowNull: true, // Nullable for backward compatibility; User is actor, Org is owner
+      },
       productTier: {
         type: DataTypes.ENUM("basic", "smart", "ai_assisted"),
         defaultValue: "basic",
@@ -74,6 +82,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       negotiationStrategy: {
         type: DataTypes.JSON,
+        allowNull: true,
+      },
+      ai_proposals: {
+        type: DataTypes.JSONB,
         allowNull: true,
       },
     },

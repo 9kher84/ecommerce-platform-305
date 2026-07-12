@@ -1,0 +1,16 @@
+{
+  "supply": {
+    "status": 201,
+    "success": true,
+    "id": "ddd5d530-5fd7-46a1-a47d-a94f4117e973"
+  },
+  "demand": {
+    "status": 201,
+    "success": true,
+    "id": "cb1980c4-2a20-48fb-881c-c38030da8583"
+  },
+  "db_verification": {
+    "supplyInserted": true,
+    "demandInserted": true
+  }
+}

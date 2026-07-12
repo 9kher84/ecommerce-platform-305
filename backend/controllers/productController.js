@@ -55,15 +55,6 @@ exports.getProducts = asyncHandler(async (req, res) => {
  * @access Private (Seller)
  */
 exports.addProduct = asyncHandler(async (req, res) => {
-  // 1. Check limit (Max 20 products)
-  const count = await Product.count({ where: { sellerId: req.user.id } });
-  if (count >= 20) {
-    res.status(400);
-    throw new Error(
-      "لقد وصلت للحد الأقصى من المنتجات (20 منتج). يرجى حذف بعض المنتجات لإضافة المزيد.",
-    );
-  }
-
   let {
     name,
     categoryId,
@@ -105,7 +96,7 @@ exports.addProduct = asyncHandler(async (req, res) => {
     name: structuredName,
     categoryId,
     stockLevel: quantity || stockLevel || 0,
-    unit,
+    unit: unit || "piece",
     description: structuredDesc,
     origin,
     productionDate,
@@ -244,6 +235,41 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc   Approve AI Proposal for Product Enrichment
+ * @route  POST /api/products/:id/approve-proposal
+ * @access Private (Seller)
+ */
+exports.approveProposal = asyncHandler(async (req, res) => {
+  const product = await Product.findOne({
+    where: { id: req.params.id, sellerId: req.user.id },
+  });
+
+  if (!product) {
+    res.status(404);
+    throw new Error("المنتج غير موجود");
+  }
+
+  if (!product.ai_proposals || Object.keys(product.ai_proposals).length === 0) {
+    res.status(400);
+    throw new Error("لا توجد اقتراحات ذكية لاعتمادها");
+  }
+
+  // Merge the proposals into the product fields
+  const updates = {
+    ...product.ai_proposals,
+    ai_proposals: null // Clear proposals after approval
+  };
+
+  await product.update(updates);
+
+  res.status(200).json({
+    success: true,
+    message: "تم اعتماد التحديثات الذكية بنجاح",
+    product: product
+  });
+});
+
+/**
  * @desc   Get Smart Inventory (Seller Only)
  * @route  GET /api/products/:id/smart-inventory
  * @access Private (Seller)
@@ -308,18 +334,32 @@ exports.updateSmartInventory = asyncHandler(async (req, res) => {
  * @access Private (Seller)
  */
 exports.bulkUpload = asyncHandler(async (req, res) => {
-  // 1. Process File (In real logic this processes req.file)
-  // For now mocking data mapping
-  const mockData = req.body.data || []; // Expecting JSON for this mock step
+  let extractedData = [];
+  
+  if (req.body.rawText) {
+    // 🧠 AI Extraction Simulation (OCR/LLM)
+    // Converts unstructured text like "Iron 16mm - 50\nCement - 15" into JSON
+    const lines = req.body.rawText.split('\n');
+    extractedData = lines.filter(line => line.trim() !== '').map(line => {
+      const parts = line.split('-'); // Simple heuristic for mock
+      return {
+        name: parts[0]?.trim() || line.trim(),
+        estimatedPrice: parts[1] ? parseFloat(parts[1].trim()) : null,
+        unit: "piece" // Auto-defaulted by our previous frictionless logic
+      };
+    });
+  } else {
+    extractedData = req.body.data || [];
+  }
 
   // 2. Do NOT Save automatically - Cache with Service
-  const { token, expiresInSeconds } = await cacheBulkData(mockData);
+  const { token, expiresInSeconds } = await cacheBulkData(extractedData);
 
   // Return preview to user
   res.status(200).json({
     success: true,
-    message: "Bulk processing processed. Please confirm preview.",
-    preview: mockData,
+    message: "تم تحليل البيانات بنجاح. يرجى مراجعة المسودة وتأكيدها.",
+    preview: extractedData,
     previewToken: token,
     expiresInSeconds,
   });
@@ -338,23 +378,48 @@ exports.confirmBulkUpload = asyncHandler(async (req, res) => {
     throw new Error("Preview token required");
   }
 
-  // 1. Retrieve cached preview data using sovereign service (One-time use)
+  // 1. Retrieve cached preview data
   const data = await retrieveAndInvalidate(previewToken);
 
-  if (!data) {
+  if (!data || !Array.isArray(data)) {
     res.status(400);
     throw new Error("Invalid or expired preview token");
   }
 
-  // 3. Insert to DB (Process the cached data)
-  // Mocking insertion loop
+  // 2. Insert to DB
   const results = [];
-  // for (const item of data) { insert... }
+  for (const item of data) {
+    // Basic structured name logic
+    let structuredName = item.name;
+    if (typeof item.name === "string") {
+      structuredName = { ar: item.name, en: item.name };
+    }
+
+    const product = await Product.create({
+      sellerId: req.user.id,
+      name: structuredName,
+      estimatedPrice: item.estimatedPrice,
+      unit: item.unit || "piece",
+      stockLevel: 0
+    });
+
+    // Create Smart Inventory Entry silently
+    await SmartInventory.create({
+      productId: product.id,
+      sellerId: req.user.id,
+      storageCapacity: 0,
+      expectedIncomingStock: [],
+      storageDurationDays: 0,
+      warehousePressureScore: 0.0,
+    });
+
+    results.push(product.id);
+  }
 
   res.status(200).json({
     success: true,
-    message: "Bulk upload confirmed.",
-    count: results.length, // Mock 0
+    message: "تم حفظ الكاتالوج بنجاح.",
+    count: results.length,
   });
 });
 

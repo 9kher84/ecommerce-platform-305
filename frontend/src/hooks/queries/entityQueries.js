@@ -1,0 +1,31 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { entityService } from '../../services/entityService';
+
+export const useRequests = (params) => {
+  return useQuery({
+    queryKey: ['requests', 'list', params],
+    queryFn: () => entityService.getRequests(params),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const useRequestDetails = (id) => {
+  return useQuery({
+    queryKey: ['requests', 'detail', id],
+    queryFn: () => entityService.getRequestDetails(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useUpdateRequestStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, status }) => entityService.updateRequestStatus(id, status),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'detail', variables.id] });
+    },
+  });
+};

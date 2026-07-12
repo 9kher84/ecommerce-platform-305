@@ -30,7 +30,7 @@ exports.addToBlacklist = async (jti, expiresInSeconds) => {
       setTimeout(() => {
         mockBlacklist.delete(jti);
         console.log(`🧹 [Mock Blacklist] Auto-removed expired JTI: ${jti}`);
-      }, expiresInSeconds * 1000);
+      }, expiresInSeconds * 1000).unref();
 
       console.log(
         `🔒 [Mock Blacklist] Added JTI: ${jti} (Expires in ${expiresInSeconds}s)`,

@@ -1,0 +1,690 @@
+openapi: 3.0.0
+info:
+  title: Sovereign Ecommerce Platform
+  version: 1.0.0
+paths:
+  /api/admin/permissions:
+    get:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/admin/users/all:
+    get:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/admin/users/{id}/update':
+    put:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/admin/users/{id}/delete':
+    delete:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/admin/users/{id}/toggle-status':
+    post:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/admin/admins:
+    get:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/admin/admins/{id}':
+    put:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/admin/edit-field:
+    post:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/admin/kill-switch:
+    post:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/admin/logs:
+    get:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/admin/invoices/{id}/resolve-dispute':
+    post:
+      summary: Endpoint from adminRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/agents/webhook:
+    post:
+      summary: Endpoint from agentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/ai/learn:
+    post:
+      summary: Endpoint from aiRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/ai/payment-assist:
+    post:
+      summary: Endpoint from aiRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/ai/support:
+    post:
+      summary: Endpoint from aiRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/attachments/{id}':
+    get:
+      summary: Endpoint from attachmentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/register:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/login:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/refresh:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/me:
+    get:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/logout:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/forgot-password:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/auth/reset-password/{token}':
+    put:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/impersonate:
+    post:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/auth/debug/db-user:
+    get:
+      summary: Endpoint from authRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/categories:
+    get:
+      summary: Endpoint from categoryRoutes.js
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Endpoint from categoryRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/categories/{id}':
+    get:
+      summary: Endpoint from categoryRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/chat/{requestId}':
+    get:
+      summary: Endpoint from chatRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/buyer/stats:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/buyer/invoices:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/seller/stats:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/seller/invoices:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/match-radar:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/command:
+    get:
+      summary: Endpoint from dashboardRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/deals:
+    get:
+      summary: Endpoint from dealRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/deals/{id}':
+    get:
+      summary: Endpoint from dealRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/intake/analyze:
+    post:
+      summary: Endpoint from intakeRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/intake/create:
+    post:
+      summary: Endpoint from intakeRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/invoice/public/{token}':
+    get:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/invoice/extract-text:
+    post:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/invoice/my:
+    get:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/invoice/{id}':
+    get:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/invoice/{id}/proof':
+    post:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/invoice/{id}/confirm':
+    post:
+      summary: Endpoint from invoiceRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/mcp/manifest.json:
+    get:
+      summary: Endpoint from mcpRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/mcp:
+    post:
+      summary: Endpoint from mcpRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/notifications:
+    get:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/notifications/unread-count:
+    get:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/notifications/read-all:
+    patch:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/notifications/read:
+    patch:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/notifications/{id}/read':
+    patch:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/notifications/{id}':
+    delete:
+      summary: Endpoint from notificationRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/owner/deals/{dealId}/assign-supervisor':
+    post:
+      summary: Endpoint from ownerRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/owner/supervisors/available:
+    get:
+      summary: Endpoint from ownerRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/owner/commission-reports:
+    get:
+      summary: Endpoint from ownerRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/owner/assignments/{assignmentId}':
+    delete:
+      summary: Endpoint from ownerRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/payments/initiate:
+    post:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/payments/methods:
+    get:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/payments/methods/{methodId}':
+    delete:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/payments/status/{dealId}':
+    get:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/payments/history:
+    get:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/payments/webhook:
+    post:
+      summary: Endpoint from paymentRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/pricingMatrix:
+    post:
+      summary: Endpoint from pricingMatrixRoutes.js
+      responses:
+        '200':
+          description: OK
+    get:
+      summary: Endpoint from pricingMatrixRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/pricingMatrix/{id}':
+    put:
+      summary: Endpoint from pricingMatrixRoutes.js
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Endpoint from pricingMatrixRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/products/bulk:
+    post:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/products/bulk/confirm:
+    post:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/products/upload:
+    post:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/products/{id}/approve-proposal':
+    post:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/products:
+    get:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/products/{id}':
+    put:
+      summary: Endpoint from productRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/quotes:
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/quotes/my-quotes:
+    get:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/request/{requestId}':
+    get:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/negotiate':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/respond':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/accept':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/reject':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/withdraw':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/modify':
+    put:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/quotes/{id}/decision':
+    post:
+      summary: Endpoint from quoteRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/ratings:
+    post:
+      summary: Endpoint from ratingRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/ratings/user/{userId}':
+    get:
+      summary: Endpoint from ratingRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/requests:
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/requests/my-requests:
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/requests/published:
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/quotes':
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/status':
+    put:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/status-history':
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/allowed-statuses':
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}':
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/publish':
+    post:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/request-modification':
+    post:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/repost':
+    post:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/requests/{id}/price-radar':
+    get:
+      summary: Endpoint from requestRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/smartPricing/calculate:
+    post:
+      summary: Endpoint from smartPricingRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/smartPricing/anomalies:
+    get:
+      summary: Endpoint from smartPricingRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/supervisor/deals:
+    get:
+      summary: Endpoint from supervisorRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/supervisor/commissions:
+    get:
+      summary: Endpoint from supervisorRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/supervisor/notifications:
+    get:
+      summary: Endpoint from supervisorRoutes.js
+      responses:
+        '200':
+          description: OK
+  '/api/supervisor/notifications/{id}/read':
+    put:
+      summary: Endpoint from supervisorRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/supervisor/reports/custom:
+    get:
+      summary: Endpoint from supervisorRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/users/register:
+    post:
+      summary: Endpoint from userRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/users/login:
+    post:
+      summary: Endpoint from userRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/users/admin/all:
+    get:
+      summary: Endpoint from userRoutes.js
+      responses:
+        '200':
+          description: OK
+  /api/users/profile:
+    get:
+      summary: Endpoint from userRoutes.js
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Endpoint from userRoutes.js
+      responses:
+        '200':
+          description: OK

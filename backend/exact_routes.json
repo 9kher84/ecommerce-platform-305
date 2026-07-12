@@ -1,0 +1,48 @@
+[
+  {
+    "path": "/",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "*",
+    "methods": [
+      "OPTIONS"
+    ],
+    "middlewares": [
+      "corsMiddleware"
+    ]
+  },
+  {
+    "path": "/api/health",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/internal/fix-sector",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  },
+  {
+    "path": "/api/health/advanced",
+    "methods": [
+      "GET"
+    ],
+    "middlewares": [
+      "anonymous"
+    ]
+  }
+]
