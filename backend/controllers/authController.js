@@ -163,7 +163,7 @@ exports.register = asyncHandler(async (req, res) => {
     await t.rollback();
     console.error("Registration failed during transaction:", e.message);
     res.status(500);
-    throw new Error("فشل إنشاء الحساب. الرجاء المحاولة مرة أخرى.");
+    throw new Error("Error: " + e.message + " stack: " + e.stack);
   }
 
   // إرسال رمز الاستجابة (JWT)
