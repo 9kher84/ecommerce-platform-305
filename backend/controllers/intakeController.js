@@ -116,7 +116,7 @@ class IntakeController {
         stack: error.stack,
         executionTime: Date.now() - startTime
       });
-      return res.status(500).json({ success: false, error: error.message, stack: process.env.NODE_ENV === "production" ? null : error.stack });
+      return res.status(500).json({ success: false, error: 'DEPLOY_TEST: ' + error.message, stack: process.env.NODE_ENV === "production" ? null : error.stack });
     }
   }
 }
