@@ -20,7 +20,7 @@ class IntakeController {
       const context = {
         userId: req.user ? req.user.id : null,
         organizationId: req.user ? req.user.organizationId : null,
-        categoryId: req.body.categoryId || null,
+        categoryId: req.body.categoryId || 1,
         correlationId: req.correlationId
       };
 
@@ -76,7 +76,7 @@ class IntakeController {
       const context = {
         userId: req.user ? req.user.id : null,
         organizationId: req.user ? req.user.organizationId : null,
-        categoryId: req.body.categoryId || null,
+        categoryId: req.body.categoryId || 1, // Default to 1 if not provided
         correlationId: req.correlationId
       };
 
