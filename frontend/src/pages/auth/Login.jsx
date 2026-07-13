@@ -16,6 +16,9 @@ export const Login = () => {
   
   const from = location.state?.from?.pathname || '/dashboard';
 
+  const onSubmit = (data) => {
+    setAuthError('');
+    loginMutation.mutate(data, {
       onSuccess: (res) => {
         login(res.data?.user || res.data); // Depend on API response structure
         navigate(from);
