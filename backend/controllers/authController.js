@@ -206,7 +206,6 @@ exports.login = asyncHandler(async (req, res) => {
   const bcrypt = require('bcrypt');
   // removed logs
 
-  if (user) {
     // removed logs
 
   const isMatch = user
