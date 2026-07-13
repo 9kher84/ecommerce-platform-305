@@ -36,7 +36,8 @@ function createIntakeEngineComposition(db = null, externalServices = {}) {
     const sequelizeSetup = require("../sequelize_setup");
     db = {
       Product: sequelizeSetup.Product,
-      PurchaseRequest: sequelizeSetup.PurchaseRequest
+      PurchaseRequest: sequelizeSetup.PurchaseRequest,
+      sequelize: sequelizeSetup.sequelize
     };
   }
   
