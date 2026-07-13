@@ -24,7 +24,8 @@ export const IntakeWizard = () => {
     
     createMutation.mutate({
       opportunity: analysisResult.opportunity,
-      validationMetadata: analysisResult.validation
+      validationMetadata: analysisResult.validation,
+      categoryId: 1 // Default sector
     }, {
       onSuccess: () => {
         setText('');
