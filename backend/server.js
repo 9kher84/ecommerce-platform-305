@@ -31,6 +31,10 @@ const { Server } = require("socket.io");
 const NotificationService = require("./services/notificationService");
 const cacheService = require("./services/cacheService");
 
+// System Routes
+app.get("/api/deploy_test", (req, res) => res.send("DEPLOYED_7FF021F"));
+app.use("/api/health", require("./routes/healthRoutes"));
+
 // Import Routes
 const authRoutes = require("./routes/authRoutes");
 const requestRoutes = require("./routes/requestRoutes");
