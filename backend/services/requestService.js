@@ -1040,13 +1040,14 @@ class RequestService {
       reason: reason || "State Transition",
       timestamp: new Date().toISOString(),
     });
-    
     // 3. Persist
-    await request.update({
-      status: newStatus,
-      // Only include statusHistory if the model supports it, but since it doesn't, we omit it or pass it. 
-      // It's safer to not pass nonexistent fields to update.
-    });
+    await PurchaseRequest.update(
+      { status: newStatus },
+      { where: { id: requestId } }
+    );
+    
+    // Also update the local instance so the return value is correct
+    request.status = newStatus;
 
     const actualActor = authContext?.actor ||
       authContext?.principal || { id: request.userId };
