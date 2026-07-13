@@ -1029,11 +1029,9 @@ class RequestService {
     }
 
     // 2. Apply State
-    request.status = newStatus;
-
     // 2.1 Update Status History (Legacy Support)
     const { actor } = authContext || {};
-    const statusHistory = request.statusHistory || []; // Assuming model has this field as JSONB
+    const statusHistory = request.getDataValue("statusHistory") || []; // Safely get if it exists
     statusHistory.push({
       from: currentStatus,
       to: newStatus,
@@ -1042,12 +1040,14 @@ class RequestService {
       reason: reason || "State Transition",
       timestamp: new Date().toISOString(),
     });
-    // Ensure we write it back if it's a JSON field
-    request.setDataValue("statusHistory", statusHistory);
-    // request.statusHistory = statusHistory; // Sequelize sometimes needs setDataValue for JSON updates trigger
-
     // 3. Persist
-    await request.save();
+    await PurchaseRequest.sequelize.query(
+      'UPDATE "PurchaseRequests" SET status = :status WHERE id = :id',
+      { replacements: { status: newStatus, id: requestId } }
+    );
+    
+    // Also update the local instance so the return value is correct
+    request.status = newStatus;
 
     const actualActor = authContext?.actor ||
       authContext?.principal || { id: request.userId };

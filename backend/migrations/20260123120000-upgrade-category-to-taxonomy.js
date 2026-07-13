@@ -2,36 +2,37 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const transaction = await queryInterface.sequelize.transaction();
     try {
-      // 1. Add 'type' column to Categories
-      await queryInterface.addColumn(
-        "Categories",
-        "type",
-        {
-          type: Sequelize.ENUM("SECTOR", "PRODUCT_CATEGORY"),
-          defaultValue: "PRODUCT_CATEGORY",
-          allowNull: false,
-        },
-        { transaction },
-      );
-
-      // 2. Add 'parentId' column to Categories
-      await queryInterface.addColumn(
-        "Categories",
-        "parentId",
-        {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: "Categories",
-            key: "id",
+      try {
+        // 1. Add 'type' column to Categories
+        await queryInterface.addColumn(
+          "Categories",
+          "type",
+          {
+            type: Sequelize.ENUM("SECTOR", "PRODUCT_CATEGORY"),
+            defaultValue: "PRODUCT_CATEGORY",
+            allowNull: false,
           },
-          onUpdate: "CASCADE",
-          onDelete: "SET NULL",
-        },
-        { transaction },
-      );
+        );
+      } catch (e) { console.warn('Categories.type skipped:', e.message); }
+
+      try {
+        // 2. Add 'parentId' column to Categories
+        await queryInterface.addColumn(
+          "Categories",
+          "parentId",
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: "Categories",
+              key: "id",
+            },
+            onUpdate: "CASCADE",
+            onDelete: "SET NULL",
+          },
+        );
+      } catch(e) { console.warn('Categories.parentId skipped:', e.message); }
 
       // 3. Create UserCategories table (Junction)
       await queryInterface.createTable(
@@ -66,18 +67,13 @@ module.exports = {
             onUpdate: "CASCADE",
           },
         },
-        { transaction },
       );
 
       // 4. Data Migration: Direct SQL Update for robustness
       await queryInterface.sequelize.query(
         'UPDATE "Categories" SET "type" = \'PRODUCT_CATEGORY\' WHERE "type" IS NULL',
-        { transaction },
       );
-
-      await transaction.commit();
     } catch (err) {
-      await transaction.rollback();
       throw err;
     }
   },
@@ -85,19 +81,16 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
     const transaction = await queryInterface.sequelize.transaction();
     try {
-      await queryInterface.dropTable("UserCategories", { transaction });
+      await queryInterface.dropTable("UserCategories");
       await queryInterface.removeColumn("Categories", "parentId", {
         transaction,
       });
-      await queryInterface.removeColumn("Categories", "type", { transaction });
+      await queryInterface.removeColumn("Categories", "type");
       // Clean up ENUM (Postgres specific if needed)
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_Categories_type";',
-        { transaction },
       );
-      await transaction.commit();
     } catch (err) {
-      await transaction.rollback();
       throw err;
     }
   },
