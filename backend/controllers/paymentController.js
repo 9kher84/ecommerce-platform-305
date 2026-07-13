@@ -89,7 +89,7 @@ exports.initiatePayment = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Payment Initiation Error:", error); // Added for debugging
+    console.error("❌ Payment Initiation Error:", error);
     await logSecurityAlert({
       action: "payment_initiation_failed",
       details: {

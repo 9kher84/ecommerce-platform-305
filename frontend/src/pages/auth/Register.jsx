@@ -4,11 +4,13 @@ import { useForm } from 'react-hook-form';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useRegister } from '../../hooks/queries/authQueries';
+import { useAuth } from '../../providers/AuthProvider';
 
 export const Register = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm();
   const registerMutation = useRegister();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [authError, setAuthError] = useState('');
 
   const password = watch('password');
@@ -26,8 +28,9 @@ export const Register = () => {
     }
 
     registerMutation.mutate(submitData, {
-      onSuccess: () => {
-        window.location.href = '/dashboard';
+      onSuccess: (res) => {
+        login(res.data?.user || res.data);
+        navigate('/dashboard');
       },
       onError: (error) => {
         setAuthError(error.message || 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.');

@@ -163,7 +163,7 @@ exports.register = asyncHandler(async (req, res) => {
     await t.rollback();
     console.error("Registration failed during transaction:", e.message);
     res.status(500);
-    throw new Error("Error: " + e.message + " stack: " + e.stack);
+    throw new Error("فشل إنشاء الحساب. الرجاء المحاولة مرة أخرى.");
   }
 
   // إرسال رمز الاستجابة (JWT)
@@ -190,7 +190,7 @@ exports.login = asyncHandler(async (req, res) => {
     where: { email },
     attributes: { include: ["password"] },
   });
-  console.log('LOGIN STEP 1');
+  // removed logs
 
   if (!user) {
     res.status(401);
@@ -204,25 +204,16 @@ exports.login = asyncHandler(async (req, res) => {
   }
 
   const bcrypt = require('bcrypt');
-  console.log('LOGIN STEP 1');
-  console.log('USER FOUND:', !!user);
+  // removed logs
 
   if (user) {
-    console.log('USER EMAIL:', user.email);
-    console.log('HAS PASSWORD FIELD:', !!user.password);
-    console.log('PASSWORD HASH LENGTH:', user.password ? user.password.length : 0);
-  }
-
-  console.log('user.password =', user.password);
-  console.log('raw getDataValue =', user.getDataValue('password'));
-  console.log('dataValues.password =', user.dataValues.password);
-  console.log('toJSON.password =', user.toJSON().password);
+    // removed logs
 
   const isMatch = user
     ? await bcrypt.compare(password, user.password)
     : false;
 
-  console.log('BCRYPT RESULT:', isMatch);
+  // removed logs
 
   if (!isMatch) {
     res.status(401);
@@ -234,7 +225,7 @@ exports.login = asyncHandler(async (req, res) => {
 
   // إرسال رمز الاستجابة (JWT)
   sendTokenResponse(user, 200, res);
-  console.log('LOGIN STEP 3');
+  // removed logs
 });
 
 /**
@@ -257,8 +248,7 @@ exports.getMe = asyncHandler(async (req, res) => {
     success: true,
     data: user,
   });
-  console.log('User data fetched for:', user.id);
-  console.log('Status: Success');
+  // removed logs
 });
 
 /**

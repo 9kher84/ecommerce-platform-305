@@ -11,17 +11,14 @@ export const Login = () => {
   const loginMutation = useLogin();
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [authError, setAuthError] = useState('');
   
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const onSubmit = (data) => {
-    setAuthError('');
-    loginMutation.mutate(data, {
-      onSuccess: () => {
-        // useAuth provider will sync automatically on reload/re-render but it might take a cycle
-        // usually we can just navigate or force a window reload to ensure context picks up
-        window.location.href = from;
+      onSuccess: (res) => {
+        login(res.data?.user || res.data); // Depend on API response structure
+        navigate(from);
       },
       onError: (error) => {
         setAuthError(error.message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.');

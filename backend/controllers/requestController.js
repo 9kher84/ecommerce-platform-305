@@ -46,9 +46,6 @@ const getAllRequests = asyncHandler(async (req, res) => {
 
 // دالة لإنشاء طلب جديد
 const createRequest = asyncHandler(async (req, res) => {
-  console.log("🔥 CREATE REQUEST HIT with body:", JSON.stringify(req.body));
-  console.log("🔥 USER ID:", req.user?.id, "| ROLE:", req.user?.role);
-  console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
   const buyerId = req.user.id;
   const { getDeviceFingerprint } = require("../utils/fraudDetection");
 
@@ -83,18 +80,6 @@ const createRequest = asyncHandler(async (req, res) => {
     ],
   });
 
-  console.log("PRODUCTION USER DEBUG", {
-    userId: req.user?.id,
-    email: req.user?.email,
-    role: req.user?.role,
-    sectorIdFromRequest: req.body?.sectorId,
-    categoryIdFromRequest: req.body?.categoryId,
-    sectorsFound: user?.sectors?.map(s => ({
-      id: s.id,
-      name: s.name_ar || s.name
-    }))
-  });
-
   const isMember = user.sectors && user.sectors.length > 0;
   if (!isMember) {
     res.status(403);
@@ -111,8 +96,7 @@ const createRequest = asyncHandler(async (req, res) => {
     organization_id: req.user.organization_id,
   };
 
-  console.log("[createRequest] requestData being sent to service:", JSON.stringify(requestData, null, 2));
-
+    // removed debug logs
   try {
     const request = await RequestService.createRequest(buyerId, requestData);
     res.status(201).json({
@@ -179,7 +163,6 @@ const getPublishedRequests = asyncHandler(async (req, res) => {
 
 // دالة للحصول على تفاصيل طلب معين
 const getRequestById = asyncHandler(async (req, res) => {
-  console.log("REQ.USER =", req.user);
   const requestId = req.params.id;
   const userId = req.user ? req.user.id : null;
 

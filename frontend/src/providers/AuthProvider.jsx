@@ -42,6 +42,11 @@ export const AuthProvider = ({ children }) => {
     queryClient.clear(); // Clear all react-query cache on logout
   };
 
+  const login = (userData) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+  };
+
   // Keep internal state synced with react-query (if profile updates)
   // Or we can just rely on the context for basic auth state
   
@@ -54,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, logout, login }}>
       {children}
     </AuthContext.Provider>
   );
