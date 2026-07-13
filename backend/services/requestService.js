@@ -1041,9 +1041,9 @@ class RequestService {
       timestamp: new Date().toISOString(),
     });
     // 3. Persist
-    await PurchaseRequest.update(
-      { status: newStatus },
-      { where: { id: requestId } }
+    await PurchaseRequest.sequelize.query(
+      'UPDATE "PurchaseRequests" SET status = :status WHERE id = :id',
+      { replacements: { status: newStatus, id: requestId } }
     );
     
     // Also update the local instance so the return value is correct
