@@ -8,6 +8,7 @@ const CityPolicy = require("./CityPolicy");
 
 const policies = {
   Request: RequestPolicy,
+  PurchaseRequest: RequestPolicy,
   Quote: QuotePolicy,
   User: UserPolicy,
   City: CityPolicy,

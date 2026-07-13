@@ -7,11 +7,13 @@ module.exports = {
     // but in many setups addColumn with ENUM works if Sequelize handles it.
     // However, safest for Postgres is to check/create type.
 
-    await queryInterface.addColumn("Users", "maturity_level", {
-      type: Sequelize.ENUM("BASIC", "GUIDED", "ADVANCED"),
-      defaultValue: "BASIC",
-      allowNull: false,
-    });
+    try {
+      await queryInterface.addColumn("Users", "maturity_level", {
+        type: Sequelize.ENUM("BASIC", "GUIDED", "ADVANCED"),
+        defaultValue: "BASIC",
+        allowNull: false,
+      });
+    } catch(e) { console.warn('maturity_level skipped:', e.message); }
   },
 
   down: async (queryInterface, Sequelize) => {
