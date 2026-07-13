@@ -73,7 +73,7 @@ router.get(
   "/request/:requestId",
   protect,
   loadResource(PurchaseRequest, "requestId"),
-  authorize("viewQuotes", "Request"),
+  authorize(null, "Request", "viewQuotes"),
   quoteController.getQuotesForRequest,
 );
 

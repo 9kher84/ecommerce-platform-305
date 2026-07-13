@@ -9,6 +9,14 @@ export const useRequests = (params) => {
   });
 };
 
+export const useMyRequests = (params) => {
+  return useQuery({
+    queryKey: ['requests', 'my-requests', params],
+    queryFn: () => entityService.getMyRequests(params),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
 export const useRequestDetails = (id) => {
   return useQuery({
     queryKey: ['requests', 'detail', id],
@@ -25,6 +33,20 @@ export const useUpdateRequestStatus = () => {
     mutationFn: ({ id, status }) => entityService.updateRequestStatus(id, status),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'my-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'detail', variables.id] });
+    },
+  });
+};
+
+export const useUpdateRequest = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => entityService.updateRequest(id, data),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'my-requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'detail', variables.id] });
     },
   });

@@ -31,9 +31,7 @@ const { Server } = require("socket.io");
 const NotificationService = require("./services/notificationService");
 const cacheService = require("./services/cacheService");
 
-// System Routes
-app.get("/api/deploy_test", (req, res) => res.send("DEPLOYED_7FF021F"));
-app.use("/api/health", require("./routes/healthRoutes"));
+
 
 // Import Routes
 const authRoutes = require("./routes/authRoutes");
@@ -54,6 +52,9 @@ const intakeRoutes = require("./routes/intakeRoutes");
 
 // Load env vars
 const app = express();
+
+// System Routes
+app.get("/api/deploy_test", (req, res) => res.send("DEPLOYED_7FF021F"));
 
 // Health check for Render (required to prevent SIGTERM)
 app.get("/", (req, res) => {

@@ -1,14 +1,21 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRequestDetails, useUpdateRequestStatus } from '../../hooks/queries/entityQueries';
+import { useSubmitQuote, useQuotesForRequest } from '../../hooks/queries/quoteQueries';
 import { Button } from '../../components/common/Button';
+import { QuoteForm } from '../../components/quotes/QuoteForm';
+import { QuoteCard } from '../../components/quotes/QuoteCard';
+import { useAuth } from '../../providers/AuthProvider';
 
 export const RequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: response, isLoading, isError, error } = useRequestDetails(id);
   const updateStatusMutation = useUpdateRequestStatus();
-
+  const submitQuoteMutation = useSubmitQuote();
+  const { data: quotesData } = useQuotesForRequest(id);
+  
   if (isLoading) {
     return (
       <div className="flex justify-center p-12">
@@ -27,7 +34,7 @@ export const RequestDetails = () => {
 
   // The runtime audit states get request returns { success: true, data: Request } 
   // Note: getRequests list returns pagination, but getRequestDetails returns single object in data
-  const request = response?.data;
+  const request = response?.request || response?.data;
 
   if (!request) {
     return <div className="p-4 text-center text-gray-500">Request not found</div>;
@@ -100,6 +107,35 @@ export const RequestDetails = () => {
           </div>
         )}
       </div>
+
+      {user?.role === 'seller' && ['active', 'published'].includes(request.status) && (
+        <div className="p-6 border-t border-gray-200">
+          <QuoteForm 
+            onSubmit={(data) => {
+              submitQuoteMutation.mutate({
+                purchaseRequestId: request.id,
+                price: data.price,
+                deliveryDate: data.deliveryDate,
+                notes: data.notes
+              }, {
+                onSuccess: () => alert('Quote submitted successfully!')
+              });
+            }}
+            isLoading={submitQuoteMutation.isPending}
+          />
+        </div>
+      )}
+
+      {user?.role === 'buyer' && ['active', 'published', 'quoting'].includes(request.status) && quotesData?.quotes?.length > 0 && (
+        <div className="p-6 border-t border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Received Quotes</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {quotesData.quotes.map(quote => (
+              <QuoteCard key={quote.id} quote={quote} role="buyer" />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

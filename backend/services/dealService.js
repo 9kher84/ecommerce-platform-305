@@ -30,8 +30,13 @@ class DealService {
     // 2. Calculate Commission
     const commissionPercentage =
       parseFloat(process.env.COMMISSION_PERCENTAGE) || 1.0;
+    const finalAmount =
+      acceptedQuote.priceType === "fixed"
+        ? acceptedQuote.fixedPrice
+        : acceptedQuote.priceRangeMin;
+
     const commissionAmount =
-      (acceptedQuote.amount * commissionPercentage) / 100;
+      (parseFloat(finalAmount) * commissionPercentage) / 100;
 
     // 3. Create Deal
     const deal = await Deal.create({
@@ -39,7 +44,7 @@ class DealService {
       priceQuoteId: acceptedQuote.id,
       sellerId: acceptedQuote.sellerId,
       buyerId: purchaseRequest.userId,
-      finalAmount: acceptedQuote.amount,
+      finalAmount: finalAmount,
       status: "processing",
       invoiceData, // keep old for backward compatibility
       organization_id: purchaseRequest.organization_id,

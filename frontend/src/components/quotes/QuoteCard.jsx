@@ -58,6 +58,7 @@ export const QuoteCard = ({ quote, role }) => {
         </span>
         <Link 
           to={`/quotes/${quote.id}`}
+          state={{ quote }}
           className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
         >
           View Negotiation →

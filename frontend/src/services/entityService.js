@@ -6,6 +6,11 @@ export const entityService = {
     return response.data; 
   },
 
+  getMyRequests: async (params) => {
+    const response = await apiClient.get('/api/requests/my-requests', { params });
+    return response.data;
+  },
+
   getRequestDetails: async (id) => {
     const response = await apiClient.get(`/api/requests/${id}`);
     return response.data;
@@ -13,6 +18,11 @@ export const entityService = {
 
   updateRequestStatus: async (id, status) => {
     const response = await apiClient.put(`/api/requests/${id}/status`, { status });
+    return response.data;
+  },
+
+  updateRequest: async (id, data) => {
+    const response = await apiClient.put(`/api/requests/${id}`, data);
     return response.data;
   },
 

@@ -2,9 +2,11 @@ import React from 'react';
 import { useAuth } from '../../providers/AuthProvider';
 import { Button } from '../../components/common/Button';
 import { useBuyerStats, useSellerStats } from '../../hooks/queries/dashboardQueries';
+import { BuyerDrafts } from '../../components/dashboard/BuyerDrafts';
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = React.useState('stats');
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -26,7 +28,33 @@ export const Dashboard = () => {
           </p>
         </div>
         
-        <DashboardStats role={user?.role} />
+        {user?.role === 'buyer' && (
+          <div className="flex border-b border-gray-200 mb-6">
+            <button
+              className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+                activeTab === 'stats'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('stats')}
+            >
+              الإحصائيات
+            </button>
+            <button
+              className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+                activeTab === 'drafts'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('drafts')}
+            >
+              المسودات (Drafts)
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'stats' && <DashboardStats role={user?.role} />}
+        {activeTab === 'drafts' && user?.role === 'buyer' && <BuyerDrafts />}
       </div>
     </div>
   );

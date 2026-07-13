@@ -8,6 +8,7 @@ import { MatchRadar } from './pages/dashboard/MatchRadar';
 import { IntakeWizard } from './pages/intake/IntakeWizard';
 import { RequestsList } from './pages/requests/RequestsList';
 import { RequestDetails } from './pages/requests/RequestDetails';
+import { EditDraft } from './pages/requests/EditDraft';
 import { ProductsList } from './pages/products/ProductsList';
 import { QuotesList } from './pages/quotes/QuotesList';
 import { QuoteDetails } from './pages/quotes/QuoteDetails';
@@ -99,6 +100,17 @@ export const App = () => {
           <ProtectedRoute>
             <div className="p-8">
               <RequestDetails />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/requests/:id/edit" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <EditDraft />
             </div>
           </ProtectedRoute>
         } 
