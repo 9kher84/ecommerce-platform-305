@@ -49,10 +49,16 @@ const createRequest = asyncHandler(async (req, res) => {
   const buyerId = req.user.id;
   const { getDeviceFingerprint } = require("../utils/fraudDetection");
 
-  let { sectorId } = req.body;
-  sectorId = sectorId || req.body.categoryId;
+  const { header, items, invitations } = req.body;
 
-  // 🚀 Sovereign Sector Policy: Mandate Sector
+  if (!header) {
+    res.status(400);
+    throw new Error("بيانات الـ Header مفقودة في الطلب.");
+  }
+
+  let sectorId = header.sectorId || header.categoryId;
+
+  // 🚀 Sovereign Sector Policy: Mandate Sector (Checked on Header)
   if (!sectorId) {
     res.status(400);
     throw new Error("القطاع (Sector) إلزامي لإنشاء طلب شراء.");
@@ -88,17 +94,14 @@ const createRequest = asyncHandler(async (req, res) => {
     );
   }
 
-  const requestData = {
-    ...req.body,
-    sectorId,
-    categoryId: req.body.categoryId || null,
-    deviceFingerprint: getDeviceFingerprint(req),
-    organization_id: req.user.organization_id,
-  };
+  header.sectorId = sectorId;
+  header.deviceFingerprint = getDeviceFingerprint(req);
+  header.organization_id = req.user.organization_id;
 
-    // removed debug logs
+  const commandData = { header, items, invitations };
+
   try {
-    const request = await RequestService.createRequest(buyerId, requestData);
+    const request = await RequestService.createRequest(buyerId, commandData);
     res.status(201).json({
       success: true,
       message: "Purchase request created successfully",

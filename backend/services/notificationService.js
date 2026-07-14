@@ -46,10 +46,9 @@ class NotificationService {
       // 1. Persistence (DB)
       const notification = await Notification.create({
         recipientId: userId,
-        type,
-        title: data.title || "Notification",
-        message: data.message || "",
-        data: data.data || {}, // Store metadata separately from title/message
+        entityType: data.entityType || type || "system",
+        entityId: data.entityId || null,
+        message: data.message || data.title || "Notification",
         isRead: false,
       });
 

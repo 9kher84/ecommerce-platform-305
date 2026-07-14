@@ -12,31 +12,19 @@ const { User } = require("../sequelize_setup");
  * @access محمي
  */
 exports.getUserProfile = asyncHandler(async (req, res) => {
+  const { Organization } = require("../sequelize_setup");
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["password", "emailVerificationToken", "newEmail"] },
+    include: [{ model: Organization, as: "organizations" }],
   });
 
   if (user) {
+    const { mapLegacyUser } = require("../utils/LegacyUserMapper");
+    const mappedUser = mapLegacyUser(user, user.organizations && user.organizations.length > 0 ? user.organizations[0] : null);
+
     res.status(200).json({
       success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-        businessName: user.businessName,
-        jobTitle: user.jobTitle,
-        commercialRegister: user.commercialRegister,
-        city: user.city,
-        role: user.role,
-        subscriptionTier: user.subscriptionTier,
-        registrationDate: user.createdAt,
-        publishedRequestsCount: user.publishedRequestsCount,
-        buyerRating: user.buyerRating,
-        completedDealsCount: user.completedDealsCount,
-        notificationSettings: user.notificationSettings,
-        rank: user.rank,
-      },
+      user: mappedUser,
     });
   } else {
     res.status(404);

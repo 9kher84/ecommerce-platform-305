@@ -13,7 +13,25 @@ const {
   retrieveAndInvalidate,
 } = require("../services/bulkPreviewCacheService");
 const { Op } = require("sequelize");
+const CatalogFacade = require("../services/CatalogFacade");
+const CatalogWriteFacade = require("../services/CatalogWriteFacade");
+const { shouldRouteToCanary } = require("../utils/canaryUtils");
 
+exports.interceptionMetrics = {
+  legacy_requests: 0,
+  legacy_total_latency_ms: 0,
+  new_catalog_requests: 0,
+  new_total_latency_ms: 0,
+  fallback_requests: 0,
+  fallback_total_latency_ms: 0,
+  fallback_reasons: {
+    timeout: 0,
+    database: 0,
+    adapter: 0,
+    validation: 0,
+    unknown: 0
+  }
+};
 /**
  * @desc   Get seller's inventory
  * @route  GET /api/products
@@ -21,6 +39,53 @@ const { Op } = require("sequelize");
  */
 // OPTIMIZE: This query could be cached.
 exports.getProducts = asyncHandler(async (req, res) => {
+  const startTime = Date.now();
+  let fallbackStartTime = null;
+
+  if (shouldRouteToCanary(req)) {
+    try {
+      const filters = {
+        sellerId: req.user.id,
+        page: req.query.page,
+        limit: req.query.limit,
+        category: req.query.category,
+        search: req.query.search,
+        status: req.query.status
+      };
+      
+      const pagination = { page: req.query.page, limit: req.query.limit };
+      
+      console.log(`[Shadow Migration] Routing query to New Catalog Architecture...`);
+      const results = await CatalogFacade.getProducts(filters, pagination);
+      
+      exports.interceptionMetrics.new_catalog_requests++;
+      exports.interceptionMetrics.new_total_latency_ms += (Date.now() - startTime);
+      
+      return res.status(200).json(results);
+    } catch (err) {
+      console.error(`[Shadow Migration] CatalogFacade Failed. Fallback to Legacy. Error:`, err.message);
+      
+      exports.interceptionMetrics.fallback_requests++;
+      // Categorize fallback
+      if (err.message.toLowerCase().includes('timeout')) {
+        exports.interceptionMetrics.fallback_reasons.timeout++;
+      } else if (err.message.toLowerCase().includes('database') || err.message.toLowerCase().includes('sequelize')) {
+        exports.interceptionMetrics.fallback_reasons.database++;
+      } else if (err.message.toLowerCase().includes('adapter')) {
+        exports.interceptionMetrics.fallback_reasons.adapter++;
+      } else if (err.message.toLowerCase().includes('validation') || err.message.toLowerCase().includes('invalid')) {
+        exports.interceptionMetrics.fallback_reasons.validation++;
+      } else {
+        exports.interceptionMetrics.fallback_reasons.unknown++;
+      }
+      
+      fallbackStartTime = Date.now();
+      // Fallback executes below
+    }
+  }
+
+  console.log(`[Shadow Migration] Routing query to Legacy Product Table...`);
+
   const products = await Product.findAll({
     where: { sellerId: req.user.id },
     attributes: [
@@ -41,6 +106,13 @@ exports.getProducts = asyncHandler(async (req, res) => {
     ],
     order: [["createdAt", "DESC"]],
   });
+  const endTime = Date.now();
+  if (fallbackStartTime) {
+    exports.interceptionMetrics.fallback_total_latency_ms += (endTime - fallbackStartTime);
+  } else {
+    exports.interceptionMetrics.legacy_requests++;
+    exports.interceptionMetrics.legacy_total_latency_ms += (endTime - startTime);
+  }
 
   res.status(200).json({
     success: true,
@@ -70,6 +142,24 @@ exports.addProduct = asyncHandler(async (req, res) => {
     purchasePrice,
     productTier,
   } = req.body;
+  if (process.env.USE_NEW_CATALOG_WRITES === 'true') {
+    try {
+      console.log(`[Shadow Migration] Routing POST to New Catalog Architecture...`);
+      const newProduct = await CatalogWriteFacade.addProduct(req.body, req.user.id);
+      
+      // Still do notifications and silent profiling for business logic compatibility
+      processProductOpportunity(req.user.id, categoryId);
+      logSilentProfile("PRODUCT_ADD", { sellerId: req.user.id, tier: productTier });
+      
+      return res.status(201).json({
+        success: true,
+        product: newProduct
+      });
+    } catch (err) {
+      console.error(`[Shadow Migration] CatalogWriteFacade POST Failed. Fallback to Legacy. Error:`, err.message);
+      // Fallback executes below
+    }
+  }
 
   // A. I18n Structure Handling
   let structuredName = name;
@@ -142,6 +232,20 @@ exports.addProduct = asyncHandler(async (req, res) => {
  * @access Private (Seller)
  */
 exports.updateProduct = asyncHandler(async (req, res) => {
+  if (process.env.USE_NEW_CATALOG_WRITES === 'true') {
+    try {
+      console.log(`[Shadow Migration] Routing PUT to New Catalog Architecture...`);
+      const updatedProduct = await CatalogWriteFacade.updateProduct(req.params.id, req.body, req.user.id);
+      return res.status(200).json({
+        success: true,
+        product: updatedProduct
+      });
+    } catch (err) {
+      console.error(`[Shadow Migration] CatalogWriteFacade PUT Failed. Fallback to Legacy. Error:`, err.message);
+      // Fallback executes below
+    }
+  }
+
   const product = await Product.findOne({
     where: { id: req.params.id, sellerId: req.user.id },
   });
@@ -429,6 +533,17 @@ exports.confirmBulkUpload = asyncHandler(async (req, res) => {
  * @access Private (Seller)
  */
 exports.deleteProduct = asyncHandler(async (req, res) => {
+  if (process.env.USE_NEW_CATALOG_WRITES === 'true') {
+    try {
+      console.log(`[Shadow Migration] Routing DELETE to New Catalog Architecture...`);
+      const result = await CatalogWriteFacade.deleteProduct(req.params.id, req.user.id);
+      return res.status(200).json(result);
+    } catch (err) {
+      console.error(`[Shadow Migration] CatalogWriteFacade DELETE Failed. Fallback to Legacy. Error:`, err.message);
+      // Fallback executes below
+    }
+  }
+
   const product = await Product.findOne({
     where: { id: req.params.id, sellerId: req.user.id },
   });

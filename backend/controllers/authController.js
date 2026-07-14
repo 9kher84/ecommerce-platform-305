@@ -1,10 +1,11 @@
-const { User, Category, RefreshToken, Role, UserRole, sequelize } = require("../sequelize_setup");
+const { User, Category, RefreshToken, Role, UserRole, sequelize, Organization } = require("../sequelize_setup");
 const asyncHandler = require("express-async-handler");
 const { Op } = require("sequelize");
 const tokenBlacklist = require("../services/tokenBlacklist");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const config = require("../config");
+const emailService = require("../services/emailService");
 
 /**
  * دالة مساعدة لإنشاء وإرسال رمز JWT في الـ Response
@@ -29,6 +30,9 @@ const sendTokenResponse = async (user, statusCode, res) => {
     sameSite: "None", // Allow Cross-Port on Localhost
   };
 
+  const { mapLegacyUser } = require("../utils/LegacyUserMapper");
+  const mappedUser = mapLegacyUser(user, user.organizations && user.organizations.length > 0 ? user.organizations[0] : null);
+
   // إرسال الرمز كـ Cookie فقط، وإزالة الـ token من الـ JSON body
   // Refresh Token يرسل في JSON body للاستخدام اللاحق
   res
@@ -38,15 +42,8 @@ const sendTokenResponse = async (user, statusCode, res) => {
       success: true,
       token, // 🔥 Access Token (Restored for client/test access)
       refreshToken, // 🔥 New: Refresh Token (Sent explicitly)
-      // إرسال بيانات المستخدم بدون كلمة المرور
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        subscriptionTier: user.subscriptionTier,
-        isActive: user.isActive,
-      },
+      // إرسال بيانات المستخدم مدمجة بالتوافقية
+      user: mappedUser,
     });
 };
 
@@ -166,6 +163,9 @@ exports.register = asyncHandler(async (req, res) => {
     throw new Error("فشل إنشاء الحساب. الرجاء المحاولة مرة أخرى.");
   }
 
+  // إرسال رسالة الترحيب
+  await emailService.sendRegistrationWelcome(user);
+
   // إرسال رمز الاستجابة (JWT)
   sendTokenResponse(user, 201, res);
 });
@@ -189,6 +189,7 @@ exports.login = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     where: { email },
     attributes: { include: ["password"] },
+    include: [{ model: Organization, as: "organizations" }],
   });
   // removed logs
 
@@ -236,6 +237,7 @@ exports.getMe = asyncHandler(async (req, res) => {
   // يتم تمرير بيانات المستخدم المحمي (req.user) بواسطة middleware/authMiddleware.js
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["password"] }, // استبعاد كلمة المرور بشكل صريح
+    include: [{ model: Organization, as: "organizations" }],
   });
 
   if (!user) {
@@ -243,9 +245,12 @@ exports.getMe = asyncHandler(async (req, res) => {
     throw new Error("لم يتم العثور على بيانات المستخدم.");
   }
 
+  const { mapLegacyUser } = require("../utils/LegacyUserMapper");
+  const mappedUser = mapLegacyUser(user, user.organizations && user.organizations.length > 0 ? user.organizations[0] : null);
+
   res.status(200).json({
     success: true,
-    data: user,
+    data: mappedUser,
   });
   // removed logs
 });
@@ -406,8 +411,77 @@ exports.refresh = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Admin Impersonation Login
- * @route   POST /api/auth/impersonate
- * @access  Admin Only
+ * @desc    Forgot Password
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
  */
-// impersonate removed due to security policy (Zero Trust)
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400);
+    throw new Error("يرجى توفير البريد الإلكتروني");
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    // Return same message for security reasons (don't leak if email exists)
+    return res.status(200).json({ success: true, message: "تم إرسال رابط إعادة التعيين بنجاح" });
+  }
+
+  // Get reset token (this hashes it and sets it in DB)
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validate: false }); // skip validations since we are just updating tokens
+
+  // إرسال البريد الإلكتروني (Service handles errors internally and returns status)
+  await emailService.sendPasswordReset(user, resetToken);
+
+  res.status(200).json({
+    success: true,
+    message: "تم إرسال رابط إعادة التعيين بنجاح",
+  });
+});
+
+/**
+ * @desc    Reset Password
+ * @route   PUT /api/auth/reset-password/:token
+ * @access  Public
+ */
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  if (!password) {
+    res.status(400);
+    throw new Error("يرجى توفير كلمة المرور الجديدة");
+  }
+
+  const crypto = require("crypto");
+  // Hash token to compare
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    where: {
+      resetPasswordToken,
+      resetPasswordExpire: {
+        [Op.gt]: Date.now(), // Token not expired
+      },
+    },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("الرابط غير صالح أو منتهي الصلاحية");
+  }
+
+  // Set new password
+  user.password = password; // The hook in User.beforeSave will hash it
+  user.resetPasswordToken = null;
+  user.resetPasswordExpire = null;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "تمت إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.",
+  });
+});

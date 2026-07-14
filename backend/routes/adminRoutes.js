@@ -62,7 +62,34 @@ router.get("/permissions", protect, (req, res) => {
 router.get("/users/all", protect, isOwner, async (req, res) => {
   try {
     const { User } = require("../sequelize_setup");
-    const users = await User.findAll({
+    const { Op } = require("sequelize");
+    
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const offset = (page - 1) * limit;
+
+    // Filtering & Searching
+    const { search, role, isActive } = req.query;
+    const where = {};
+
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+    
+    if (role) {
+      where.role = role;
+    }
+    
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
+    const { count, rows: users } = await User.findAndCountAll({
+      where,
       attributes: [
         "id",
         "name",
@@ -76,8 +103,20 @@ router.get("/users/all", protect, isOwner, async (req, res) => {
         "isActive",
       ],
       order: [["createdAt", "DESC"]],
+      limit,
+      offset
     });
-    res.json({ success: true, data: users });
+
+    res.json({ 
+      success: true, 
+      data: users,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     console.error("Get All Users Error:", error);
     res.status(500).json({ success: false, error: error.message });

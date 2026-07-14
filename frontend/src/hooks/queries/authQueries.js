@@ -51,3 +51,15 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: (data) => authService.forgotPassword(data),
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: (data) => authService.resetPassword(data),
+  });
+};

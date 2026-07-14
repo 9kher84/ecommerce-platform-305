@@ -6,6 +6,7 @@ const {
   getBuyerInvoices,
   getSellerStats,
   getSellerInvoices,
+  getAdminStats,
 } = require("../controllers/dashboardController");
 
 // Buyer Dashboard Routes
@@ -41,6 +42,16 @@ router.get(
   protect,
   restrictTo("admin", "super_admin", "owner"), // أزلنا التعليق وحمينا المسار
   getCommandData,
+);
+
+const { isAdmin, hasPermission } = require("../middleware/adminMiddleware");
+
+router.get(
+  "/admin/stats",
+  protect,
+  isAdmin,
+  hasPermission("manage_users"),
+  getAdminStats
 );
 
 module.exports = router;

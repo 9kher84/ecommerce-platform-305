@@ -34,6 +34,22 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
+      commercial_register_image: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      vat_certificate_image: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      industry_type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      establishment_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
     },
     {
       tableName: "organizations",

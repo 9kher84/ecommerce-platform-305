@@ -28,17 +28,46 @@ const PurchaseRequest = require("./models/PurchaseRequest")(
   sequelize,
   DataTypes,
 );
+const PurchaseRequestItem = require("./models/PurchaseRequestItem")(
+  sequelize,
+  DataTypes,
+);
+const PurchaseRequestInvitation = require("./models/PurchaseRequestInvitation")(
+  sequelize,
+  DataTypes,
+);
+const Quotation = require("./models/Quotation")(
+  sequelize,
+  DataTypes,
+);
+const QuotationItem = require("./models/QuotationItem")(
+  sequelize,
+  DataTypes,
+);
+const Award = require("./models/Award")(sequelize, DataTypes);
+const AwardLine = require("./models/AwardLine")(sequelize, DataTypes);
+const PurchaseOrder = require("./models/PurchaseOrder")(sequelize, DataTypes);
+const PurchaseOrderLine = require("./models/PurchaseOrderLine")(sequelize, DataTypes);
+const Shipment = require("./models/Shipment")(sequelize, DataTypes);
+const ShipmentLine = require("./models/ShipmentLine")(sequelize, DataTypes);
+const Receipt = require("./models/Receipt")(sequelize, DataTypes);
+const ReceiptLine = require("./models/ReceiptLine")(sequelize, DataTypes);
 const PriceQuote = require("./models/PriceQuote")(sequelize, DataTypes);
 const Deal = require("./models/Deal")(sequelize, DataTypes);
 const Rating = require("./models/Rating")(sequelize, DataTypes);
 const Notification = require("./models/Notification")(sequelize, DataTypes);
+const SLARecord = require("./models/SLARecord")(sequelize, DataTypes);
 const Report = require("./models/Report")(sequelize, DataTypes);
-
+const ProductDNA = require("./models/ProductDNA")(sequelize, DataTypes);
+const AttributeSchema = require("./models/AttributeSchema")(sequelize, DataTypes);
+const ProductDNAAttribute = require("./models/ProductDNAAttribute")(sequelize, DataTypes);
+const SellerListing = require("./models/SellerListing")(sequelize, DataTypes);
 const SmartPricingMatrix = require("./models/SmartPricingMatrix")(
   sequelize,
   DataTypes,
 );
 const SmartInventory = require("./models/SmartInventory")(sequelize, DataTypes);
+const InventoryTransaction = require("./models/InventoryTransaction")(sequelize, DataTypes);
 const RefreshToken = require("./models/RefreshToken")(sequelize, DataTypes);
 
 const AuditLog = require("./models/AuditLog")(sequelize, DataTypes);
@@ -258,7 +287,44 @@ CommissionTransaction.belongsTo(Invoice, {
 });
 
 // System Logging
-User.hasMany(EventLog, { foreignKey: "actor_id", as: "events" });
+User.hasMany(EventLog, { foreignKey: "actorId", as: "eventLogs" });
+
+// ============================================================
+// 📦 CATALOG (PRODUCT DNA) RELATIONSHIPS
+// ============================================================
+
+ProductDNA.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
+Category.hasMany(ProductDNA, { foreignKey: "categoryId", as: "productDnas" });
+
+ProductDNA.belongsToMany(AttributeSchema, {
+  through: ProductDNAAttribute,
+  foreignKey: "dnaId",
+  otherKey: "attributeId",
+  as: "attributes"
+});
+
+AttributeSchema.belongsToMany(ProductDNA, {
+  through: ProductDNAAttribute,
+  foreignKey: "attributeId",
+  otherKey: "dnaId",
+  as: "productDnas"
+});
+
+ProductDNA.hasMany(ProductDNAAttribute, { foreignKey: "dnaId", as: "dnaAttributes" });
+ProductDNAAttribute.belongsTo(ProductDNA, { foreignKey: "dnaId", as: "productDna" });
+
+AttributeSchema.hasMany(ProductDNAAttribute, { foreignKey: "attributeId", as: "schemaAttributes" });
+ProductDNAAttribute.belongsTo(AttributeSchema, { foreignKey: "attributeId", as: "attributeSchema" });
+
+// SellerListing Relationships
+ProductDNA.hasMany(SellerListing, { foreignKey: "dnaId", as: "sellerListings" });
+SellerListing.belongsTo(ProductDNA, { foreignKey: "dnaId", as: "productDna" });
+
+Organization.hasMany(SellerListing, { foreignKey: "organizationId", as: "listings" });
+SellerListing.belongsTo(Organization, { foreignKey: "organizationId", as: "organization" });
+
+User.hasMany(SellerListing, { foreignKey: "createdByUserId", as: "createdListings" });
+SellerListing.belongsTo(User, { foreignKey: "createdByUserId", as: "creator" });
 
 // Category
 Category.hasMany(Product, { foreignKey: "categoryId", as: "products" });
@@ -311,6 +377,85 @@ PurchaseRequest.hasMany(PriceQuote, {
 });
 PurchaseRequest.hasOne(Deal, { foreignKey: "purchaseRequestId", as: "deal" });
 
+// --- RFQ Multi-line Associations ---
+PurchaseRequest.hasMany(PurchaseRequestItem, { foreignKey: "purchaseRequestId", as: "items" });
+PurchaseRequestItem.belongsTo(PurchaseRequest, { foreignKey: "purchaseRequestId", as: "request" });
+
+PurchaseRequestItem.belongsTo(ProductDNA, { foreignKey: "productDNAId", as: "productDNA" });
+PurchaseRequestItem.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
+
+PurchaseRequest.hasMany(PurchaseRequestInvitation, { foreignKey: "purchaseRequestId", as: "invitations" });
+PurchaseRequestInvitation.belongsTo(PurchaseRequest, { foreignKey: "purchaseRequestId", as: "request" });
+PurchaseRequestInvitation.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+
+Quotation.belongsTo(PurchaseRequest, { foreignKey: "purchaseRequestId", as: "request" });
+PurchaseRequest.hasMany(Quotation, { foreignKey: "purchaseRequestId", as: "quotations" });
+
+Quotation.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+Quotation.belongsTo(PurchaseRequestInvitation, { foreignKey: "invitationId", as: "invitation" });
+
+Quotation.hasMany(QuotationItem, { foreignKey: "quotationId", as: "items" });
+QuotationItem.belongsTo(Quotation, { foreignKey: "quotationId", as: "quotation" });
+QuotationItem.belongsTo(PurchaseRequestItem, { foreignKey: "purchaseRequestItemId", as: "requestItem" });
+QuotationItem.belongsTo(ProductDNA, { foreignKey: "productDNAId", as: "productDNA" });
+// -----------------------------------
+// --- Award & Negotiation Engine ---
+Award.belongsTo(PurchaseRequest, { foreignKey: "purchaseRequestId", as: "request" });
+PurchaseRequest.hasMany(Award, { foreignKey: "purchaseRequestId", as: "awards" });
+Award.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+Organization.hasMany(Award, { foreignKey: "sellerOrganizationId", as: "awards" });
+
+Award.hasMany(AwardLine, { foreignKey: "awardId", as: "lines" });
+AwardLine.belongsTo(Award, { foreignKey: "awardId", as: "award" });
+
+AwardLine.belongsTo(PurchaseRequestItem, { foreignKey: "purchaseRequestItemId", as: "requestItem" });
+PurchaseRequestItem.hasMany(AwardLine, { foreignKey: "purchaseRequestItemId", as: "awardLines" });
+
+AwardLine.belongsTo(QuotationItem, { foreignKey: "quotationItemId", as: "quotationItem" });
+QuotationItem.hasMany(AwardLine, { foreignKey: "quotationItemId", as: "awardLines" });
+
+AwardLine.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+AwardLine.belongsTo(ProductDNA, { foreignKey: "productDNAId", as: "productDNA" });
+
+// --- Purchase Order Engine ---
+PurchaseOrder.belongsTo(Award, { foreignKey: "awardId", as: "award" });
+Award.hasOne(PurchaseOrder, { foreignKey: "awardId", as: "purchaseOrder" });
+
+PurchaseOrder.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+PurchaseOrder.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+
+PurchaseOrder.hasMany(PurchaseOrderLine, { foreignKey: "purchaseOrderId", as: "lines" });
+PurchaseOrderLine.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
+
+PurchaseOrderLine.belongsTo(AwardLine, { foreignKey: "awardLineId", as: "awardLine" });
+AwardLine.hasOne(PurchaseOrderLine, { foreignKey: "awardLineId", as: "purchaseOrderLine" });
+
+PurchaseOrderLine.belongsTo(ProductDNA, { foreignKey: "productDNAId", as: "productDNA" });
+
+// --- Fulfillment Engine ---
+Shipment.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
+PurchaseOrder.hasMany(Shipment, { foreignKey: "purchaseOrderId", as: "shipments" });
+
+Shipment.belongsTo(Organization, { foreignKey: "sellerOrganizationId", as: "seller" });
+
+Shipment.hasMany(ShipmentLine, { foreignKey: "shipmentId", as: "lines" });
+ShipmentLine.belongsTo(Shipment, { foreignKey: "shipmentId", as: "shipment" });
+
+ShipmentLine.belongsTo(PurchaseOrderLine, { foreignKey: "purchaseOrderLineId", as: "purchaseOrderLine" });
+
+Receipt.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
+PurchaseOrder.hasMany(Receipt, { foreignKey: "purchaseOrderId", as: "receipts" });
+
+Receipt.belongsTo(Shipment, { foreignKey: "shipmentId", as: "shipment" });
+Shipment.hasMany(Receipt, { foreignKey: "shipmentId", as: "receipts" });
+
+Receipt.belongsTo(User, { foreignKey: "buyerId", as: "buyer" });
+
+Receipt.hasMany(ReceiptLine, { foreignKey: "receiptId", as: "lines" });
+ReceiptLine.belongsTo(Receipt, { foreignKey: "receiptId", as: "receipt" });
+
+ReceiptLine.belongsTo(PurchaseOrderLine, { foreignKey: "purchaseOrderLineId", as: "purchaseOrderLine" });
+// -----------------------------------
 // Price Quote
 PriceQuote.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
 PriceQuote.belongsTo(PurchaseRequest, {
@@ -526,14 +671,28 @@ module.exports = {
 
   Product,
   PurchaseRequest,
+  PurchaseRequestItem,
+  PurchaseRequestInvitation,
+  Quotation,
+  QuotationItem,
+  Award,
+  AwardLine,
+  PurchaseOrder,
+  PurchaseOrderLine,
+  Shipment,
+  ShipmentLine,
+  Receipt,
+  ReceiptLine,
   PriceQuote,
   Deal,
   Rating,
   Notification,
+  SLARecord,
   Report,
 
   SmartPricingMatrix,
   SmartInventory,
+  InventoryTransaction,
   RefreshToken,
 
   AuditLog,
@@ -578,4 +737,8 @@ module.exports = {
   Organization,
   OrganizationUser,
   FailedNotification,
+  ProductDNA,
+  AttributeSchema,
+  ProductDNAAttribute,
+  SellerListing,
 };

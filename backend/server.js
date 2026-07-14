@@ -49,6 +49,8 @@ const productRoutes = require("./routes/productRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const intakeRoutes = require("./routes/intakeRoutes");
+const ownerRoutes = require("./routes/ownerRoutes");
+const systemRoutes = require("./routes/systemRoutes");
 
 // Load env vars
 const app = express();
@@ -443,7 +445,10 @@ const startServer = async (startListening = true) => {
 
     app.use("/api/auth", authRoutes);
     app.use("/api/requests", requestRoutes);
-    app.use("/api/quotes", quoteRoutes);
+    app.use("/api/quotes", quoteRoutes); // Legacy PriceQuote
+    app.use("/api/v2/quotations", require("./routes/quotationRoutes")); // New Quotation Engine
+    app.use("/api/v2/awards", require("./routes/awardRoutes")); // New Award Engine
+    app.use("/api/v2/purchase-orders", require("./routes/purchaseOrderRoutes")); // Procurement & Acceptance
     app.use("/api/users", userRoutes);
     app.use("/api/admin", adminRoutes);
     app.use("/api/attachments", attachmentRoutes);
@@ -456,8 +461,12 @@ const startServer = async (startListening = true) => {
     app.use("/api/chat", chatRoutes);
     app.use("/api/invoice", invoiceRoutes);
     app.use("/api/intake", intakeRoutes);
+    
+    // NEW: System Routes (Canary Metrics, etc)
+    const systemRoutes = require("./routes/systemRoutes");
+    app.use("/api/system", systemRoutes);
 
-    // ✅ Routes مضافة حديثاً (كانت غير مسجلة)
+    // Routes مضافة حديثاً (كانت غير مسجلة)
     const notificationRoutes = require("./routes/notificationRoutes");
     app.use("/api/notifications", notificationRoutes);
 

@@ -24,7 +24,8 @@ const STATUS_TRANSITIONS = {
   rfq_published: ["quoting", "cancelled"],
   under_review: ["published", "cancelled"],
   quoting: ["awaiting_decision", "deal_in_progress"], // Allow direct transition to deal
-  awaiting_decision: ["accepted", "deal_in_progress"],
+  awaiting_decision: ["accepted", "partially_awarded", "deal_in_progress"],
+  partially_awarded: ["accepted", "deal_in_progress"],
   accepted: ["deal_in_progress", "completed"],
   deal_in_progress: ["completed", "cancelled"],
   completed: [],
@@ -42,7 +43,9 @@ class RequestService {
   // =========================
   // CREATE REQUEST
   // =========================
-  static async createRequest(buyerId, requestData) {
+  static async createRequest(buyerId, commandData) {
+    const { sequelize, PurchaseRequestItem, PurchaseRequestInvitation } = require("../sequelize_setup");
+    
     const user = await User.findByPk(buyerId);
     if (!user) throw new AppError("User not found", 404);
     if (user.role !== "buyer")
@@ -52,9 +55,11 @@ class RequestService {
       throw new AppError("حسابك مقيد. لا يمكنك إنشاء طلبات جديدة حالياً.", 403);
     }
 
+    const { header, items, invitations } = commandData;
+
     if (
       user.subscriptionTier === "free" &&
-      requestData.post_type === "direct"
+      header.post_type === "direct"
     ) {
       throw new AppError("الشراء المباشر يتطلب خطة أ أو خطة ب", 403);
     }
@@ -63,148 +68,201 @@ class RequestService {
     if (!canCreate.canCreate) throw new AppError(canCreate.reason, 403);
 
     console.log("[Service] ✅ Subscription check passed, running validators...");
-    this.validateContactNumbers(user.subscriptionTier, requestData);
-    this.validateDeliveryLocations(user.subscriptionTier, requestData);
-    this.validateAttachments(user.subscriptionTier, requestData);
-    this.validatePrivacySettings(user.subscriptionTier, requestData);
-    this.validateDirectPurchase(user.subscriptionTier, requestData);
-    this.validateWrittenNumbers(requestData);
-    console.log("[Service] ✅ All validators passed, calling PurchaseRequest.create...");
-
-    const request = await PurchaseRequest.create({
-      userId: buyerId,
-      title: requestData.title,
-      categoryId: requestData.categoryId,
-      sectorId: requestData.sectorId,
-      description: requestData.description,
-      quantity: requestData.quantity,
-      unit: requestData.unit,
-      deliveryLocations: requestData.deliveryLocations || [],
-      deliveryDates: requestData.deliveryDates,
-      requiresDelivery: requestData.requiresDelivery !== false,
-      requiresInstallation: requestData.requiresInstallation || false,
-      contactNumbers: requestData.contactNumbers || [],
-      images: requestData.images || [],
-      pdfAttachments: requestData.pdfAttachments || [],
-      hideOffers: requestData.hideOffers || false,
-      hidePersonalInfo: requestData.hidePersonalInfo || false,
-      directPurchase: requestData.directPurchase || false,
-      targetSellerId: requestData.targetSellerId || null,
-      status: "draft",
-      post_type: requestData.post_type || "standard",
-      auction_type: requestData.auction_type || "public",
-      delivery_city: requestData.delivery_city,
-      delivery_date: requestData.delivery_date,
-      contact_number: requestData.contact_number,
-      attachments: requestData.attachments || [],
-      expiresAt: requestData.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days
-      price_range_min: requestData.price_range_min,
-      price_range_max: requestData.price_range_max,
-      fixed_price: requestData.fixed_price,
-      advanced_options: requestData.advanced_options || {},
-      is_active: true,
-      deviceFingerprint: requestData.deviceFingerprint,
-      organization_id: requestData.organization_id || user.organization_id,
-    });
-
-    console.log("[Service] ✅ PurchaseRequest.create succeeded, id:", request.id);
-
-    await SubscriptionService.incrementPostCount(buyerId);
-    console.log("[Service] ✅ Post count incremented");
-
-    try {
-      const { AuditLog } = require("../sequelize_setup");
-      await AuditLog.create({
-        user_id: buyerId,
-        organization_id: request.organization_id || null,
-        action: "CREATE_REQUEST",
-        entity_type: "PurchaseRequest",
-        entity_id: request.id,
-        new_data: request.toJSON(),
-      });
-    } catch (err) {
-      console.error("AuditLog Error:", err);
+    // Validate on Header
+    this.validateContactNumbers(user.subscriptionTier, header);
+    this.validateDeliveryLocations(user.subscriptionTier, header);
+    this.validateAttachments(user.subscriptionTier, header);
+    this.validatePrivacySettings(user.subscriptionTier, header);
+    this.validateDirectPurchase(user.subscriptionTier, header);
+    this.validateWrittenNumbers(header);
+    
+    if (!items || items.length === 0) {
+      throw new AppError("يجب توفير بند واحد على الأقل في المناقصة.", 400);
     }
 
-    return request;
+    console.log("[Service] ✅ All validators passed, calling PurchaseRequest.create in Transaction...");
+
+    const transaction = await sequelize.transaction();
+    try {
+      const request = await PurchaseRequest.create({
+        userId: buyerId,
+        title: header.title,
+        sectorId: header.sectorId || null,
+        description: header.description,
+        deliveryLocations: header.deliveryLocations || [],
+        deliveryDates: header.deliveryDates,
+        requiresDelivery: header.requiresDelivery !== false,
+        requiresInstallation: header.requiresInstallation || false,
+        contactNumbers: header.contactNumbers || [],
+        images: header.images || [],
+        pdfAttachments: header.pdfAttachments || [],
+        hideOffers: header.hideOffers || false,
+        hidePersonalInfo: header.hidePersonalInfo || false,
+        directPurchase: header.directPurchase || false,
+        status: "draft",
+        post_type: header.post_type || "standard",
+        auction_type: header.auction_type || "public",
+        delivery_city: header.delivery_city,
+        delivery_date: header.delivery_date,
+        contact_number: header.contact_number,
+        attachments: header.attachments || [],
+        expiresAt: header.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        advanced_options: header.advanced_options || {},
+        is_active: true,
+        deviceFingerprint: header.deviceFingerprint,
+        organization_id: header.organization_id || user.organization_id,
+        version: 1
+      }, { transaction });
+
+      // Create Items
+      let lineNumber = 1;
+      const itemsToCreate = items.map(item => ({
+        purchaseRequestId: request.id,
+        lineNumber: lineNumber++,
+        productDNAId: item.productDNAId || null,
+        categoryId: item.categoryId || null,
+        freeTextDescription: item.freeTextDescription || null,
+        attributes: item.attributes || {},
+        quantity: item.quantity,
+        unit: item.unit,
+        status: "pending"
+      }));
+      await PurchaseRequestItem.bulkCreate(itemsToCreate, { transaction });
+
+      // Create Invitations
+      if (invitations && invitations.length > 0) {
+        const invsToCreate = invitations.map(sellerOrgId => ({
+          purchaseRequestId: request.id,
+          sellerOrganizationId: sellerOrgId,
+          status: "pending"
+        }));
+        await PurchaseRequestInvitation.bulkCreate(invsToCreate, { transaction });
+      }
+
+      await transaction.commit();
+      console.log("[Service] ✅ PurchaseRequest.create succeeded, id:", request.id);
+
+      await SubscriptionService.incrementPostCount(buyerId);
+
+      try {
+        const { AuditLog } = require("../sequelize_setup");
+        await AuditLog.create({
+          user_id: buyerId,
+          organization_id: request.organization_id || null,
+          action: "CREATE_REQUEST",
+          entity_type: "PurchaseRequest",
+          entity_id: request.id,
+          new_data: { header, items, invitations },
+        });
+      } catch (err) {
+        console.error("AuditLog Error:", err);
+      }
+
+      return request;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   // =========================
   // EDIT REQUEST
   // =========================
-  static async editRequest(requestId, buyerId, updates) {
+  static async editRequest(requestId, buyerId, commandData) {
+    const { PurchaseRequestItem, PurchaseRequestInvitation, Quotation, sequelize } = require("../sequelize_setup");
     const request = await PurchaseRequest.findByPk(requestId);
     if (!request) throw new AppError("Request not found", 404);
 
     if (request.userId !== buyerId) {
-      throw new AppError(
-        "Unauthorized: You can only edit your own requests",
-        403,
-      );
+      throw new AppError("Unauthorized: You can only edit your own requests", 403);
     }
 
     const user = await User.findByPk(buyerId);
     const currentStatus = request.status;
-    const isPremiumBuyer =
-      user.subscriptionTier === "plan_a" || user.subscriptionTier === "plan_b";
 
-    // Premium users can edit published/negotiating requests
-    if (currentStatus === "published" || currentStatus === "negotiating") {
-      if (!isPremiumBuyer) {
-        throw new AppError(
-          `❌ FORBIDDEN: Cannot edit request in status "${currentStatus}". ` +
-            `This requires Plan A or Plan B subscription.`,
-          403,
-        );
-      }
-    } else if (currentStatus !== "draft") {
-      // If not draft, check quotes (even for premium in other statuses like accepted)
-      const quoteCount = await PriceQuote.count({
-        where: { purchaseRequestId: requestId },
-      });
+    // Check if quotes exist
+    const quoteCount = await Quotation.count({ where: { purchaseRequestId: requestId } });
+    const hasQuotes = quoteCount > 0;
 
-      if (quoteCount > 0) {
-        throw new AppError(
-          "Cannot edit request after receiving quotes. Request modification requires admin intervention.",
-          400,
-        );
+    const { header, items, invitations } = commandData;
+
+    const transaction = await sequelize.transaction();
+    try {
+      // 1. Update Header
+      if (header) {
+        const allowedHeaderFields = ["title", "description", "delivery_city", "expiresAt", "notes"];
+        const updateData = {};
+        allowedHeaderFields.forEach(field => {
+          if (header[field] !== undefined) updateData[field] = header[field];
+        });
+
+        if (commandData.version !== undefined && commandData.version !== null) {
+          if (parseInt(commandData.version, 10) !== request.version) {
+             throw new AppError("Conflict: The request has been modified by another user. Please refresh and try again.", 409);
+          }
+        }
+        
+        // Bump version if changes happen after published
+        if (currentStatus !== "draft") {
+          updateData.version = request.version + 1;
+        }
+
+        // Apply update with optimistic locking (manual where clause if needed, but we already threw 409 above if version didn't match. To be safe on DB level:)
+        const whereClause = { id: requestId };
+        if (commandData.version !== undefined && commandData.version !== null) {
+            whereClause.version = parseInt(commandData.version, 10);
+        }
+
+        const [affectedRows] = await PurchaseRequest.update(updateData, { where: whereClause, transaction });
+        if (affectedRows === 0 && Object.keys(updateData).length > 0) {
+             throw new AppError("Conflict: The request has been modified. Please refresh and try again.", 409);
+        }
       }
+
+      // 2. Update Items & Invitations ONLY IF no quotes exist
+      if (hasQuotes) {
+        if (items !== undefined || invitations !== undefined) {
+          throw new AppError("لا يمكن تعديل بنود المناقصة أو الدعوات بعد استلام عروض. يرجى إنشاء نسخة جديدة (Clone).", 400);
+        }
+      } else {
+        // Edit items
+        if (items) {
+          await PurchaseRequestItem.destroy({ where: { purchaseRequestId: requestId }, transaction, force: true });
+          let lineNumber = 1;
+          const itemsToCreate = items.map(item => ({
+            purchaseRequestId: request.id,
+            lineNumber: lineNumber++,
+            productDNAId: item.productDNAId || null,
+            categoryId: item.categoryId || null,
+            freeTextDescription: item.freeTextDescription || null,
+            attributes: item.attributes || {},
+            quantity: item.quantity,
+            unit: item.unit,
+            status: "pending"
+          }));
+          await PurchaseRequestItem.bulkCreate(itemsToCreate, { transaction });
+        }
+
+        // Edit Invitations
+        if (invitations) {
+          await PurchaseRequestInvitation.destroy({ where: { purchaseRequestId: requestId }, transaction, force: true });
+          if (invitations.length > 0) {
+            const invsToCreate = invitations.map(sellerOrgId => ({
+              purchaseRequestId: request.id,
+              sellerOrganizationId: sellerOrgId,
+              status: "pending"
+            }));
+            await PurchaseRequestInvitation.bulkCreate(invsToCreate, { transaction });
+          }
+        }
+      }
+
+      await transaction.commit();
+      return request;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-
-    if (updates.images || updates.pdfAttachments) {
-      this.validateAttachments(user.subscriptionTier, {
-        images: updates.images || request.images,
-        pdfAttachments: updates.pdfAttachments || request.pdfAttachments,
-      });
-    }
-
-    const allowedFields = [
-      "title",
-      "description",
-      "quantity",
-      "unit",
-      "deliveryLocations",
-      "deliveryDates",
-      "requiresDelivery",
-      "requiresInstallation",
-      "contactNumbers",
-      "images",
-      "pdfAttachments",
-      "hideOffers",
-      "hidePersonalInfo",
-      "fixed_price",
-    ];
-
-    const updateData = {};
-    allowedFields.forEach((field) => {
-      if (updates[field] !== undefined) {
-        updateData[field] = updates[field];
-      }
-    });
-
-    updateData.lastModifiedAt = new Date();
-    await request.update(updateData);
-    return request;
   }
 
   // =========================
@@ -615,29 +673,29 @@ class RequestService {
   // GET REQUEST DETAILS
   // =========================
   static async getRequestDetails(requestId, userId) {
-    // Sensitive telemetry removed as per Sovereign Policy
+    const { PurchaseRequestItem, PurchaseRequestInvitation, Quotation, QuotationItem } = require("../sequelize_setup");
     try {
-      // إعداد الـ includes الأساسية
       const includes = [
         {
           model: User,
           as: "user",
-          attributes: [
-            "id",
-            "name",
-            "subscriptionTier",
-            "rank",
-            "businessName",
-          ],
+          attributes: ["id", "name", "subscriptionTier", "rank", "businessName"],
         },
         {
           model: Category,
           as: "category",
           attributes: ["id", "name_ar", "name_en"],
         },
+        {
+          model: PurchaseRequestItem,
+          as: "items",
+        },
+        {
+          model: PurchaseRequestInvitation,
+          as: "invitations",
+        }
       ];
 
-      // جلب الطلب الأساسي بدون quotes أولاً
       const request = await PurchaseRequest.findByPk(requestId, {
         include: includes,
       });
@@ -647,107 +705,46 @@ class RequestService {
       }
 
       const plainReq = request.get({ plain: true });
-      console.log(`Request found: ${plainReq.id}, Status: ${plainReq.status}`);
 
-      // تحديد صلاحيات المستخدم
-      console.log("REQ USER ID PASSED TO SERVICE =", userId);
       const user = userId ? await User.findByPk(userId) : null;
       const isOwner = user && user.id === plainReq.userId;
-      const isAdmin =
-        user && (user.role === "admin" || user.role === "super_admin");
+      const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
       const isSeller = user && user.role === "seller";
 
-      // جلب الـ quotes بناءً على الصلاحيات
-      let quotes = [];
+      // 1. Fetch Quotations (New RFQ Architecture)
+      let quotations = [];
       const quoteWhere = { purchaseRequestId: requestId };
 
-      console.log("USER ROLE =", user?.role);
-      console.log("IS SELLER =", isSeller);
-      console.log("REQUEST ID =", requestId);
-      console.log("QUOTE WHERE =", quoteWhere);
-
-      if (isOwner || isAdmin) {
-        // المالك أو الأدمن: يرون جميع الـ quotes
-        console.log("USER ID", userId);
-        console.log("IS SELLER", isSeller);
-        console.log("QUOTE WHERE", quoteWhere);
-
-        console.log("FINAL QUOTE WHERE", JSON.stringify(quoteWhere, null, 2));
-
-        quotes = await PriceQuote.findAll({
-          where: quoteWhere,
-          include: [
-            {
-              model: User,
-              as: "seller",
-              attributes: ["id", "name", "businessName", "rank"],
-            },
-          ],
-          order: [["createdAt", "DESC"]],
-          logging: console.log,
-        });
-        console.log("QUOTES FOUND", quotes.length);
-      } else if (isSeller) {
-        // البائع: يرون فقط الـ quotes الخاصة بهم في المزاد السري
-        if (plainReq.auction_type === "secret") {
-          quoteWhere.sellerId = userId;
-        }
-
-        console.log("USER ROLE =", user?.role);
-        console.log("USER ID =", userId);
-        console.log("REQUEST ID =", requestId);
-        console.log("QUOTE WHERE =", JSON.stringify(quoteWhere));
-
-        const directCount = await PriceQuote.count({
-          where: { purchaseRequestId: requestId }
-        });
-        console.log("DIRECT COUNT =", directCount);
-
-        const rawQuotes = await PriceQuote.findAll({
-          where: { purchaseRequestId: requestId },
-          raw: true,
-        });
-        console.log("RAW QUOTES LENGTH =", rawQuotes.length);
-
-        quotes = await PriceQuote.findAll({
-          where: quoteWhere,
-          include: [
-            {
-              model: User,
-              as: "seller",
-              attributes: ["id", "name", "businessName", "rank"],
-            },
-          ],
-          order: [["createdAt", "DESC"]],
-          logging: console.log,
-        });
-        console.log("NORMAL QUOTES LENGTH =", quotes.length);
-
-        // في المزاد العام، إخفاء معلومات البائعين الآخرين
-        if (plainReq.auction_type === "public" && quotes.length > 0) {
-          quotes = quotes.map((quote) => {
-            const quoteData = quote.get({ plain: true });
-            if (quoteData.sellerId !== userId) {
-              // إخفاء معلومات البائع الآخر
-              quoteData.seller = {
-                id: null,
-                name: "بائع آخر",
-                businessName: "---",
-                rank: null,
-              };
-              quoteData.amount = null;
-              quoteData.notes = "عرض مخفي";
-            }
-            return quoteData;
-          });
-        }
+      if (isSeller && plainReq.auction_type === "secret") {
+        quoteWhere.sellerOrganizationId = user.organization_id;
       }
 
-      // إضافة الـ quotes للطلب
-      plainReq.quotes = quotes;
-      plainReq.quoteCount = quotes.length;
+      // We still fetch PriceQuote for legacy bridging if needed, but primary is Quotation
+      // Let's focus on the new Quotation models for the Summary
+      quotations = await Quotation.findAll({
+        where: quoteWhere,
+        include: [
+          { model: QuotationItem, as: "items" },
+          { model: require("../sequelize_setup").Organization, as: "seller", attributes: ["id", "name"] }
+        ],
+        order: [["createdAt", "DESC"]],
+      });
 
-      // إخفاء معلومات الاتصال إذا لم يكن مالك أو أدمن
+      let parsedQuotes = quotations.map(q => q.get({ plain: true }));
+
+      // Public auction logic: hide competitor details
+      if (isSeller && plainReq.auction_type === "public" && parsedQuotes.length > 0) {
+        parsedQuotes = parsedQuotes.map((quote) => {
+          if (quote.sellerOrganizationId !== user.organization_id) {
+            quote.seller = { id: null, name: "بائع آخر" };
+            quote.totalAmount = null;
+            quote.items = []; // hide item details
+          }
+          return quote;
+        });
+      }
+
+      // Hide contact details if not owner/admin
       if (!isOwner && !isAdmin) {
         if (plainReq.contactNumbers) plainReq.contactNumbers = [];
         if (plainReq.contact_number) plainReq.contact_number = null;
@@ -756,14 +753,96 @@ class RequestService {
         }
       }
 
-      console.log(`Returning request with ${plainReq.quotes.length} quotes`);
-      return plainReq;
+      // 2. Build Read Model Statistics
+      const itemsCount = (plainReq.items || []).length;
+      const invitationsCount = (plainReq.invitations || []).length;
+      const totalQuotationCount = parsedQuotes.length;
+
+      const quotedItemIds = new Set();
+      parsedQuotes.forEach(q => {
+        (q.items || []).forEach(qi => quotedItemIds.add(qi.purchaseRequestItemId));
+      });
+      const quotedItems = quotedItemIds.size;
+      const pendingItems = Math.max(0, itemsCount - quotedItems);
+      const completionPercentage = itemsCount > 0 ? (quotedItems / itemsCount) * 100 : 0;
+
+      const respondedSuppliersSet = new Set(parsedQuotes.map(q => q.sellerOrganizationId));
+      const respondedSuppliers = respondedSuppliersSet.size;
+      const respondedPercentage = invitationsCount > 0 ? (respondedSuppliers / invitationsCount) * 100 : (respondedSuppliers > 0 ? 100 : 0);
+
+      const validBids = parsedQuotes.filter(q => q.grandTotal > 0).map(q => parseFloat(q.grandTotal));
+      const lowestBid = validBids.length > 0 ? Math.min(...validBids) : 0;
+      const highestBid = validBids.length > 0 ? Math.max(...validBids) : 0;
+      const averageBid = validBids.length > 0 ? (validBids.reduce((a, b) => a + b, 0) / validBids.length) : 0;
+
+      // 3. Build Audit Timeline (Semantic Events)
+      let events = [];
+      events.push({ event: "RFQ_CREATED", timestamp: plainReq.createdAt });
+      (plainReq.items || []).forEach(item => {
+         events.push({ event: "ITEM_ADDED", details: item.freeTextDescription, timestamp: item.createdAt });
+      });
+      (plainReq.invitations || []).forEach(inv => {
+         events.push({ event: "INVITATION_SENT", details: inv.sellerOrganizationId, timestamp: inv.createdAt });
+      });
+      parsedQuotes.forEach(q => {
+         events.push({ event: "QUOTE_RECEIVED", details: q.id, timestamp: q.submittedAt || q.createdAt });
+      });
+      (plainReq.statusHistory || []).forEach(sh => {
+         let eventName = "STATUS_CHANGED";
+         if (sh.status === "published" || sh.status === "rfq_published") eventName = "RFQ_PUBLISHED";
+         if (sh.status === "partially_awarded") eventName = "PARTIAL_AWARD";
+         if (sh.status === "accepted" || sh.status === "deal_in_progress") eventName = "AWARDED";
+         if (sh.status === "cancelled" || sh.status === "expired") eventName = "CLOSED";
+         events.push({ event: eventName, details: sh.status, timestamp: sh.timestamp });
+      });
+      
+      events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      // Build structured DTO
+      const responseDto = {
+        id: plainReq.id,
+        status: plainReq.status,
+        version: plainReq.version,
+        header: {
+          title: plainReq.title,
+          description: plainReq.description,
+          delivery_city: plainReq.delivery_city,
+          post_type: plainReq.post_type,
+          auction_type: plainReq.auction_type,
+          expiresAt: plainReq.expiresAt,
+          buyer: plainReq.user,
+          contactNumbers: plainReq.contactNumbers,
+          deliveryLocations: plainReq.deliveryLocations,
+          images: plainReq.images,
+          pdfAttachments: plainReq.pdfAttachments,
+          createdAt: plainReq.createdAt,
+          updatedAt: plainReq.updatedAt
+        },
+        items: plainReq.items || [],
+        invitations: plainReq.invitations || [],
+        quotationSummary: parsedQuotes,
+        statistics: {
+          itemsCount,
+          quotedItems,
+          pendingItems,
+          invitedSuppliers: invitationsCount,
+          respondedSuppliers,
+          totalQuotationCount,
+          completionPercentage,
+          lowestBid,
+          highestBid,
+          averageBid,
+          respondedPercentage,
+          viewCount: plainReq.viewCount
+        },
+        timeline: events
+      };
+
+      return responseDto;
     } catch (error) {
+      console.error("GET REQUEST DETAILS ERROR:", error);
       if (error instanceof AppError) throw error;
-      throw new AppError(
-        "An internal error occurred while fetching request details.",
-        500,
-      );
+      throw new AppError("An internal error occurred while fetching request details.", 500);
     }
   }
 

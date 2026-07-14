@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      version: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+      },
       deviceFingerprint: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -37,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
           "quoting",
           "awaiting_decision",
           "accepted",
+          "partially_awarded",
           "deal_in_progress",
           "completed",
           "cancelled",
@@ -86,7 +91,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       sectorId: {
         type: DataTypes.INTEGER,
-        allowNull: false, // Mandated by Sovereign Policy
+        allowNull: true, // Legacy field
         references: {
           model: "Categories",
           key: "id",

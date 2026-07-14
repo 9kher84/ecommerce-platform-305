@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
+      productDNAId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
       name: {
         type: DataTypes.JSON, // Changed to JSON for I18n { ar: String, en: String }
         allowNull: false,
@@ -59,6 +63,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      status: {
+        type: DataTypes.ENUM("active", "archived"),
+        defaultValue: "active"
+      },
       unit: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -70,6 +78,14 @@ module.exports = (sequelize, DataTypes) => {
       lowStockThreshold: {
         type: DataTypes.INTEGER,
         defaultValue: 10,
+      },
+      sellerId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
       // AI Negotiation Fields (Tier A/B only)
       autoNegotiationEnabled: {

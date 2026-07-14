@@ -77,5 +77,31 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    // --- Epic 5: Inventory Integration (Ledger) ---
+    availableQuantity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Stock physically present and not allocated/reserved"
+    },
+    reservedQuantity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Stock reserved because a PO was accepted"
+    },
+    allocatedQuantity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Stock allocated to an active shipment (preparing)"
+    },
+    inTransitQuantity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Stock currently shipped but not yet received"
+    },
+    quarantineQuantity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Stock returned, rejected, or damaged needing inspection"
+    },
   });
 };

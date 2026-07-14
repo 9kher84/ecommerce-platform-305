@@ -24,6 +24,9 @@ exports.submitQuote = asyncHandler(async (req, res) => {
     });
   } catch (e) {}
 
+  const emailService = require("../services/emailService");
+  await emailService.notifyBuyerForQuote(quote);
+
   res.status(201).json({
     success: true,
     message: "Price quote submitted successfully",
@@ -160,6 +163,10 @@ exports.acceptQuote = asyncHandler(async (req, res) => {
       new_data: deal.toJSON ? deal.toJSON() : deal,
     });
   } catch (e) {}
+
+  const emailService = require("../services/emailService");
+  await emailService.notifySellerForAcceptance(quoteId);
+  await emailService.notifyPartiesForDeal(deal.id);
 
   res.status(201).json({
     success: true,

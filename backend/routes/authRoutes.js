@@ -36,8 +36,8 @@ router.get("/me", protect, authController.getMe);
 router.post("/logout", protect, authController.logout);
 
 // === 3. استعادة كلمة المرور (تضاف لاحقاً إذا لزم الأمر) ===
-// router.post('/forgot-password', authController.forgotPassword);
-// router.put('/reset-password/:token', authController.resetPassword);
+router.post('/forgot-password', authController.forgotPassword);
+router.put('/reset-password/:token', authController.resetPassword);
 
 // 🛡️ SECURITY POLICY: Impersonation is FORBIDDEN
 // router.post('/impersonate', ...); -> REMOVED

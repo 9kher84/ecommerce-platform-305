@@ -1,0 +1,8 @@
+const express = require("express");
+const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
+const { getCatalogMetrics } = require("../controllers/systemController");
+
+router.get("/catalog-metrics", protect, getCatalogMetrics);
+
+module.exports = router;

@@ -45,6 +45,14 @@ exports.updateRequestStatus = async (req, res) => {
       });
     } catch (e) {}
 
+    // إشعار الموردين إذا تم نشر الطلب
+    if (status === "published") {
+      const emailService = require("../services/emailService");
+      // Fire-and-forget is FORBIDDEN by Rule 2, so we await it
+      // The service catches errors and returns a status, so it won't crash
+      await emailService.notifySellersForRFQ(request);
+    }
+
     res.status(200).json({
       success: true,
       message: `Request status updated to ${status}`,

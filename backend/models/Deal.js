@@ -1,4 +1,8 @@
 // backend/models/Deal.js
+/**
+ * @deprecated Legacy Only. Scheduled for Retirement (Blocker #19).
+ * Use Award and AwardLine instead for new multi-line B2B flows.
+ */
 module.exports = (sequelize, DataTypes) => {
   const Deal = sequelize.define(
     "Deal",

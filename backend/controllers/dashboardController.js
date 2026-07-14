@@ -26,7 +26,8 @@ exports.getBuyerStats = asyncHandler(async (req, res) => {
   const buyerId = req.user.id;
 
   // 1. متوسط الأسعار للعروض المستلمة
-  const avgQuotePrice = await PriceQuote.findOne({
+  // Fix: amount is encrypted text, cannot use SQL AVG
+  const allQuotes = await PriceQuote.findAll({
     include: [
       {
         model: PurchaseRequest,
@@ -35,9 +36,19 @@ exports.getBuyerStats = asyncHandler(async (req, res) => {
         attributes: [],
       },
     ],
-    attributes: [[sequelize.fn("AVG", sequelize.col("amount")), "avgPrice"]],
-    raw: true,
+    attributes: ["amount"],
   });
+  
+  let totalAmount = 0;
+  let validQuotesCount = 0;
+  for (const q of allQuotes) {
+    const val = parseFloat(q.amount);
+    if (!isNaN(val)) {
+      totalAmount += val;
+      validQuotesCount++;
+    }
+  }
+  const avgQuotePrice = validQuotesCount > 0 ? { avgPrice: totalAmount / validQuotesCount } : { avgPrice: 0 };
 
   // 2. أكثر التصنيفات طلباً
   const topCategories = await PurchaseRequest.findAll({
@@ -392,3 +403,43 @@ exports.getSellerInvoices = asyncHandler(async (req, res) => {
     invoices,
   });
 });
+// adminStats addition
+exports.getAdminStats = asyncHandler(async (req, res) => {
+  const [
+    totalUsers,
+    activeUsers,
+    totalBuyers,
+    totalSellers,
+    publishedRFQs,
+    draftRFQs,
+    totalQuotes,
+    activeDeals,
+    closedDeals
+  ] = await Promise.all([
+    User.count({ where: { role: { [Op.in]: ['buyer', 'seller'] } } }),
+    User.count({ where: { isActive: true, role: { [Op.in]: ['buyer', 'seller'] } } }), // Adjusting to exclude admins if wanted, but fine to just include all active users.
+    User.count({ where: { role: 'buyer' } }),
+    User.count({ where: { role: 'seller' } }),
+    PurchaseRequest.count({ where: { status: 'published' } }),
+    PurchaseRequest.count({ where: { status: 'draft' } }),
+    PriceQuote.count(),
+    Deal.count({ where: { status: { [Op.in]: ['processing'] } } }),
+    Deal.count({ where: { status: { [Op.in]: ['paid', 'delivered'] } } })
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      totalUsers,
+      activeUsers,
+      totalBuyers,
+      totalSellers,
+      publishedRFQs,
+      draftRFQs,
+      totalQuotes,
+      activeDeals,
+      closedDeals
+    }
+  });
+});
+

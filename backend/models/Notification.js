@@ -25,6 +25,9 @@ module.exports = (sequelize, DataTypes) => {
           "rating",
           "system",
           "payment",
+          "order",
+          "shipment",
+          "receipt"
         ),
         allowNull: true,
       },

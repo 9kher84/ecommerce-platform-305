@@ -69,6 +69,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      resetPasswordExpire: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       completedDealsCount: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
@@ -265,6 +273,23 @@ module.exports = (sequelize, DataTypes) => {
     if (this.subscriptionTier === "free") return true;
     if (!this.subscriptionExpiresAt) return true;
     return new Date(this.subscriptionExpiresAt) > new Date();
+  };
+
+  User.prototype.getResetPasswordToken = function () {
+    const crypto = require('crypto');
+    // Generate token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    this.resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Set expire
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    return resetToken;
   };
 
   return User;
