@@ -1,9 +1,9 @@
-const { eventBus } = require("../../utils/EventBus");
+const { subscribe } = require("../../utils/EventBus");
 const { SLARecord } = require("../../sequelize_setup");
 
 class SLAConsumer {
   static initialize() {
-    eventBus.on("PO_ACCEPTED", async (event) => {
+    subscribe("PO_ACCEPTED", async (event) => {
       try {
         // Create an SLA for shipment dispatch (e.g. 48 hours from PO_ACCEPTED)
         const deadline = new Date(event.occurredAt.getTime() + 48 * 60 * 60 * 1000);
@@ -19,7 +19,7 @@ class SLAConsumer {
       }
     });
 
-    eventBus.on("SHIPMENT_DISPATCHED", async (event) => {
+    subscribe("SHIPMENT_DISPATCHED", async (event) => {
       try {
         // Complete the SLA for the associated PO
         // Note: In reality, we'd look up the PO ID from the shipment, but for MVP we might just update based on Shipment if we passed it in payload.

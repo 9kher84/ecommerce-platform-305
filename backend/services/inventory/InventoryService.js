@@ -84,57 +84,83 @@ class InventoryService {
   }
 
   static initialize() {
-    eventBus.on("PO_ACCEPTED", async (event) => {
+    const { subscribe } = require("../../utils/EventBus");
+    
+    // --- PurchaseOrder Accepted -> Reserve Stock ---
+    subscribe("PO_ACCEPTED", async (event) => {
       try {
-        const po = await PurchaseOrder.findByPk(event.aggregateId, { include: "lines" });
+        const poId = event.aggregateId;
+        const { PurchaseOrderLine, PurchaseOrder } = require("../../sequelize_setup");
+        const po = await PurchaseOrder.findByPk(poId, { include: "lines" });
         if (!po) return;
-        
+
         for (const line of po.lines) {
-          const productId = await this.getProductIdByDNA(line.productDNAId, po.sellerOrganizationId);
-          if (productId) {
-            await this.applyTransaction(productId, po.sellerOrganizationId, "NONE", "RESERVE", parseFloat(line.quantity), "PurchaseOrder", po.id);
-          }
+          await this.applyTransaction(
+            line.productDNAId,
+            po.organizationId,
+            "NONE", // Moving from available -> reserved
+            "RESERVE",
+            line.quantity,
+            "PurchaseOrder",
+            po.id
+          );
         }
       } catch (err) {
         console.error("[InventoryService] Error on PO_ACCEPTED", err);
       }
     });
 
-    eventBus.on("PO_PREPARATION_STARTED", async (event) => {
+    // --- Preparation Started -> Allocate Stock ---
+    subscribe("PO_PREPARATION_STARTED", async (event) => {
       try {
-        const po = await PurchaseOrder.findByPk(event.aggregateId, { include: "lines" });
+        const poId = event.aggregateId;
+        const { PurchaseOrderLine, PurchaseOrder } = require("../../sequelize_setup");
+        const po = await PurchaseOrder.findByPk(poId, { include: "lines" });
         if (!po) return;
 
         for (const line of po.lines) {
-          const productId = await this.getProductIdByDNA(line.productDNAId, po.sellerOrganizationId);
-          if (productId) {
-            await this.applyTransaction(productId, po.sellerOrganizationId, "NONE", "ALLOCATE", parseFloat(line.quantity), "PurchaseOrder", po.id);
-          }
+          await this.applyTransaction(
+            line.productDNAId,
+            po.organizationId,
+            "NONE", // Moving from reserved -> allocated
+            "ALLOCATE",
+            line.quantity,
+            "PurchaseOrder",
+            po.id
+          );
         }
       } catch (err) {
         console.error("[InventoryService] Error on PO_PREPARATION_STARTED", err);
       }
     });
 
-    eventBus.on("SHIPMENT_DISPATCHED", async (event) => {
+    // --- Shipment Dispatched -> In-Transit ---
+    subscribe("SHIPMENT_DISPATCHED", async (event) => {
       try {
-        const shipment = await Shipment.findByPk(event.aggregateId, { 
-          include: [{ model: ShipmentLine, as: "lines", include: ["purchaseOrderLine"] }] 
-        });
+        const shipmentId = event.aggregateId;
+        const { Shipment, ShipmentLine, PurchaseOrderLine } = require("../../sequelize_setup");
+        const shipment = await Shipment.findByPk(shipmentId, { include: "lines" });
         if (!shipment) return;
 
-        for (const line of shipment.lines) {
-          const productId = await this.getProductIdByDNA(line.purchaseOrderLine.productDNAId, shipment.sellerOrganizationId);
-          if (productId) {
-            await this.applyTransaction(productId, shipment.sellerOrganizationId, "OUT", "SHIP", parseFloat(line.quantityShipped), "Shipment", shipment.id);
-          }
+        for (const sLine of shipment.lines) {
+          const poLine = await PurchaseOrderLine.findByPk(sLine.purchaseOrderLineId);
+          await this.applyTransaction(
+            poLine.productDNAId,
+            shipment.sellerId,
+            "OUT", // Leaving the physical warehouse
+            "SHIP",
+            sLine.quantityShipped,
+            "Shipment",
+            shipment.id
+          );
         }
       } catch (err) {
         console.error("[InventoryService] Error on SHIPMENT_DISPATCHED", err);
       }
     });
 
-    eventBus.on("RECEIPT_ACCEPTED", async (event) => {
+    // --- Receipt Accepted -> Deduct In-Transit & Handle Damages ---
+    subscribe("RECEIPT_ACCEPTED", async (event) => {
       try {
         const receipt = await Receipt.findByPk(event.aggregateId, { 
           include: [{ model: ReceiptLine, as: "lines", include: ["purchaseOrderLine"] }, "purchaseOrder"] 

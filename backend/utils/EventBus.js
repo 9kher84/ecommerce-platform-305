@@ -47,7 +47,24 @@ const emitOperationalEvent = (eventType, aggregateType, aggregateId, actorType, 
   eventBus.emit("*", event); // Catch-all listener
 };
 
+/**
+ * Queue-ready Interface for Event Pub/Sub
+ * This abstraction allows swapping EventEmitter with Kafka/RabbitMQ in the future without changing consumers.
+ */
+const publish = emitOperationalEvent;
+
+const subscribe = (eventType, handler) => {
+  eventBus.on(eventType, handler);
+};
+
+const subscribeAll = (handler) => {
+  eventBus.on("*", handler);
+};
+
 module.exports = {
-  eventBus,
+  publish,
+  subscribe,
+  subscribeAll,
+  // Maintaining emitOperationalEvent for backward compatibility across the app temporarily
   emitOperationalEvent
 };

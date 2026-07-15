@@ -1,44 +1,48 @@
-const { eventBus } = require("../../utils/EventBus");
-const NotificationService = require("../NotificationService");
+const { subscribe } = require("../../utils/EventBus");
+const NotificationService = require("../notificationService");
+const { User, PurchaseOrder, PurchaseOrderLine, Shipment, Receipt } = require("../../sequelize_setup");
 
 class NotificationConsumer {
   static initialize() {
-    eventBus.on("PO_ACCEPTED", async (event) => {
+    subscribe("PO_ACCEPTED", async (event) => {
       try {
-        await NotificationService.sendToUser(event.actor.id, "system", {
-          title: "Order Accepted",
-          message: `Purchase Order ${event.aggregateId} has been accepted.`,
-          entityType: "order",
-          entityId: event.aggregateId
-        });
+        const poId = event.aggregateId;
+        const po = await PurchaseOrder.findByPk(poId);
+        if (po) {
+          await NotificationService.sendToUser(po.userId, "order", po.id, `Your Purchase Order #${po.poNumber} has been accepted.`);
+        }
       } catch (err) {
-        console.error("[NotificationConsumer] Failed on PO_ACCEPTED:", err);
+        console.error("[NotificationConsumer] Error on PO_ACCEPTED", err);
       }
     });
 
-    eventBus.on("SHIPMENT_DISPATCHED", async (event) => {
+    subscribe("SHIPMENT_DISPATCHED", async (event) => {
       try {
-        await NotificationService.sendToUser(event.actor.id, "system", {
-          title: "Shipment Dispatched",
-          message: `Shipment for order has been dispatched.`,
-          entityType: "shipment",
-          entityId: event.aggregateId
-        });
+        const shipmentId = event.aggregateId;
+        const shipment = await Shipment.findByPk(shipmentId);
+        if (shipment) {
+          const po = await PurchaseOrder.findByPk(shipment.purchaseOrderId);
+          if (po) {
+            await NotificationService.sendToUser(po.userId, "shipment", shipment.id, `Shipment ${shipment.trackingNumber} has been dispatched.`);
+          }
+        }
       } catch (err) {
-        console.error("[NotificationConsumer] Failed on SHIPMENT_DISPATCHED:", err);
+        console.error("[NotificationConsumer] Error on SHIPMENT_DISPATCHED", err);
       }
     });
 
-    eventBus.on("RECEIPT_ACCEPTED", async (event) => {
+    subscribe("RECEIPT_ACCEPTED", async (event) => {
       try {
-        await NotificationService.sendToUser(event.actor.id, "system", {
-          title: "Receipt Logged",
-          message: `Receipt has been processed.`,
-          entityType: "receipt",
-          entityId: event.aggregateId
-        });
+        const receiptId = event.aggregateId;
+        const receipt = await Receipt.findByPk(receiptId);
+        if (receipt) {
+          const shipment = await Shipment.findByPk(receipt.shipmentId);
+          if (shipment) {
+            await NotificationService.sendToUser(shipment.sellerId, "receipt", receipt.id, `Receipt for shipment ${shipment.trackingNumber} has been accepted.`);
+          }
+        }
       } catch (err) {
-        console.error("[NotificationConsumer] Failed on RECEIPT_ACCEPTED:", err);
+        console.error("[NotificationConsumer] Error on RECEIPT_ACCEPTED", err);
       }
     });
 

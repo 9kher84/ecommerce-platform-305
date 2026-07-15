@@ -1,9 +1,9 @@
-const { eventBus } = require("../../utils/EventBus");
 const { AuditLog } = require("../../sequelize_setup");
+const { subscribeAll } = require("../../utils/EventBus");
 
 class AuditLogConsumer {
   static initialize() {
-    eventBus.on("*", async (event) => {
+    subscribeAll(async (event) => {
       try {
         await AuditLog.create({
           user_id: event.actor?.id || null,
