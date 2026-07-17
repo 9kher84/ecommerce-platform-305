@@ -26,6 +26,11 @@ export const entityService = {
     return response.data;
   },
 
+  getCategories: async () => {
+    const response = await apiClient.get('/api/categories');
+    return response.data;
+  },
+
   getProducts: async () => {
     // Note: Backend /api/products is a Seller-only route that returns { success, count, products }
     // It does not support pagination, search, or filters natively via query params in the current controller.

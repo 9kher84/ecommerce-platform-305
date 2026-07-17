@@ -26,6 +26,14 @@ export const useRequestDetails = (id) => {
   });
 };
 
+export const useCategories = () => {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: () => entityService.getCategories(),
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
 export const useUpdateRequestStatus = () => {
   const queryClient = useQueryClient();
   
