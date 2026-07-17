@@ -1,5 +1,5 @@
 const ProcurementService = require("../services/procurementService");
-const { catchAsync } = require("../utils/errorHandlers");
+const catchAsync = require("../utils/catchAsync");
 
 // @desc    Generate PO from an Award
 // @route   POST /api/v2/purchase-orders/generate

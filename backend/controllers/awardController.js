@@ -1,5 +1,5 @@
 const AwardService = require("../services/awardService");
-const { catchAsync } = require("../utils/errorHandlers");
+const catchAsync = require("../utils/catchAsync");
 
 exports.submitAward = catchAsync(async (req, res, next) => {
   const { rfqId, awardSelections } = req.body;
