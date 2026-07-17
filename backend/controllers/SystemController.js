@@ -40,3 +40,25 @@ exports.getCatalogMetrics = asyncHandler(async (req, res) => {
     note: "Metrics are stored in-memory and will reset on server restart."
   });
 });
+
+exports.toggleKillSwitch = asyncHandler(async (req, res) => {
+  const { getRedisClient } = require("../config/redis");
+  const redis = getRedisClient();
+
+  const { secret, active } = req.body;
+
+  if (secret !== process.env.KILL_SWITCH_SECRET) {
+    res.status(401);
+    throw new Error("Invalid secret");
+  }
+
+  await redis.set(
+    "maintenance_mode:active",
+    active ? "true" : "false"
+  );
+
+  res.json({
+    success: true,
+    maintenance: active,
+  });
+});
