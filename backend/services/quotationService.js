@@ -1,6 +1,6 @@
 const { Quotation, QuotationItem, PurchaseRequest, PurchaseRequestItem, PurchaseRequestInvitation, sequelize } = require("../sequelize_setup");
 const QuotationDomain = require("../domains/quotationDomain");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 class QuotationService {
   
