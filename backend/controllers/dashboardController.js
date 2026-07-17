@@ -6,6 +6,7 @@ const {
   User,
   Deal,
   Product,
+  AuditLog,
   sequelize,
 } = require("../sequelize_setup");
 const { Op } = require("sequelize");
@@ -131,6 +132,103 @@ exports.getBuyerStats = asyncHandler(async (req, res) => {
       acceptanceRate,
       requestsByCity,
     },
+  });
+});
+
+/**
+ * @desc   Full Buyer KPI Summary — One request, all dashboard data
+ * @route  GET /api/dashboard/buyer/summary
+ * @access Private (Buyer only)
+ */
+exports.getBuyerSummary = asyncHandler(async (req, res) => {
+  const buyerId = req.user.id;
+  const now = new Date();
+  const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const ACTIVE_STATUSES = ['published', 'rfq_published', 'under_review', 'quoting'];
+  const COMPLETED_STATUSES = ['completed', 'accepted', 'partially_awarded'];
+
+  const [
+    activeRFQs,
+    draftRFQs,
+    underReview,
+    completedRFQs,
+    cancelledRFQs,
+    totalRFQs,
+    quotesReceived,
+    quotesNeedingReview,
+    dealsInProgress,
+    dealsCompleted,
+    dealsFailed,
+    upcomingDeadlines,
+  ] = await Promise.all([
+    PurchaseRequest.count({ where: { userId: buyerId, status: { [Op.in]: ACTIVE_STATUSES } } }),
+    PurchaseRequest.count({ where: { userId: buyerId, status: 'draft' } }),
+    PurchaseRequest.count({ where: { userId: buyerId, status: 'under_review' } }),
+    PurchaseRequest.count({ where: { userId: buyerId, status: { [Op.in]: COMPLETED_STATUSES } } }),
+    PurchaseRequest.count({ where: { userId: buyerId, status: 'cancelled' } }),
+    PurchaseRequest.count({ where: { userId: buyerId } }),
+    PriceQuote.count({
+      include: [{ model: PurchaseRequest, as: 'request', where: { userId: buyerId }, required: true }]
+    }),
+    PriceQuote.count({
+      where: { status: 'pending' },
+      include: [{ model: PurchaseRequest, as: 'request', where: { userId: buyerId }, required: true }]
+    }),
+    Deal.count({ where: { buyerId, status: { [Op.in]: ['processing'] } } }),
+    Deal.count({ where: { buyerId, status: { [Op.in]: ['paid', 'delivered', 'completed'] } } }),
+    Deal.count({ where: { buyerId, status: 'cancelled' } }),
+    PurchaseRequest.findAll({
+      where: {
+        userId: buyerId,
+        status: { [Op.in]: ACTIVE_STATUSES },
+        expiresAt: { [Op.between]: [now, weekLater] }
+      },
+      attributes: ['id', 'title', 'expiresAt', 'status', 'quoteCount'],
+      order: [['expiresAt', 'ASC']],
+      limit: 5
+    }),
+  ]);
+
+  // Unique suppliers
+  const uniqueSuppliers = await PriceQuote.count({
+    distinct: true,
+    col: 'sellerId',
+    include: [{ model: PurchaseRequest, as: 'request', where: { userId: buyerId }, required: true }],
+  });
+
+  // Acceptance rate
+  const acceptedQuotes = await PriceQuote.count({
+    where: { status: 'accepted' },
+    include: [{ model: PurchaseRequest, as: 'request', where: { userId: buyerId }, required: true }],
+  });
+  const acceptanceRate = quotesReceived > 0 ? ((acceptedQuotes / quotesReceived) * 100).toFixed(1) : '0';
+
+  res.status(200).json({
+    success: true,
+    summary: {
+      rfq: {
+        active: activeRFQs,
+        drafts: draftRFQs,
+        under_review: underReview,
+        completed: completedRFQs,
+        cancelled: cancelledRFQs,
+        total: totalRFQs,
+      },
+      quotes: {
+        received: quotesReceived,
+        pending_review: quotesNeedingReview,
+        accepted: acceptedQuotes,
+        unique_suppliers: uniqueSuppliers,
+        acceptance_rate: acceptanceRate + '%',
+      },
+      deals: {
+        in_progress: dealsInProgress,
+        completed: dealsCompleted,
+        failed: dealsFailed,
+      },
+      deadlines: upcomingDeadlines,
+    }
   });
 });
 

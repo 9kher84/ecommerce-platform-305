@@ -6,7 +6,11 @@ const Joi = require("joi");
  */
 const validateRequest = (schema) => {
   return (req, res, next) => {
-    const { error } = schema.validate(req.body, { abortEarly: false, allowUnknown: true });
+    // Controller expects { header, items, invitations }
+    // Schema validates only the header content
+    const dataToValidate = req.body.header !== undefined ? req.body.header : req.body;
+
+    const { error } = schema.validate(dataToValidate, { abortEarly: false, allowUnknown: true });
 
     if (error) {
       console.log("VALIDATION ERROR DETAILS:", error.details);
