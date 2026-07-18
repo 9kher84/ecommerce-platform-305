@@ -34,6 +34,18 @@ export const useCategories = () => {
   });
 };
 
+export const useCreateRequest = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data) => entityService.createRequest(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'my-requests'] });
+    },
+  });
+};
+
 export const useUpdateRequestStatus = () => {
   const queryClient = useQueryClient();
   

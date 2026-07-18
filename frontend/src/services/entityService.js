@@ -16,6 +16,11 @@ export const entityService = {
     return response.data;
   },
 
+  createRequest: async (data) => {
+    const response = await apiClient.post('/api/requests', data);
+    return response.data;
+  },
+
   updateRequestStatus: async (id, status) => {
     const response = await apiClient.put(`/api/requests/${id}/status`, { status });
     return response.data;
