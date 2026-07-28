@@ -1,0 +1,162 @@
+{
+  "dbTables": [
+    "Ratings",
+    "Deals",
+    "SequelizeMeta",
+    "Categories",
+    "users",
+    "UserCategories",
+    "organizations",
+    "organization_users",
+    "AssetTypes",
+    "Products",
+    "products",
+    "posts",
+    "offers",
+    "categories",
+    "PriceQuotes",
+    "PurchaseRequests",
+    "Notifications",
+    "Reports",
+    "invoices",
+    "SmartInventories",
+    "inventory",
+    "deals",
+    "ratings",
+    "SmartPricingMatrices",
+    "notifications",
+    "reports",
+    "refresh_tokens",
+    "price_quotes",
+    "purchase_requests",
+    "ActionLogs",
+    "audit_logs",
+    "system_settings",
+    "Messages",
+    "payment_transactions",
+    "inventory_metrics",
+    "auto_replenishment_orders",
+    "payment_methods",
+    "SellerPricingMatrices",
+    "attribute_schemas",
+    "Awards",
+    "AwardLines",
+    "payment_audit_logs",
+    "admin_credentials_backup",
+    "payment_gateway_keys",
+    "withdrawal_logs",
+    "alternative_quotes",
+    "roles",
+    "role_permissions",
+    "permissions",
+    "user_roles",
+    "Users",
+    "regions",
+    "cities",
+    "teams",
+    "user_context",
+    "Delegations",
+    "SellerDecisions",
+    "sanctions",
+    "MarketSilenceEvents",
+    "BuyerDecisionContexts",
+    "SellerInteractionEvents",
+    "buyer_limits",
+    "commission_transactions",
+    "event_logs",
+    "trust_scores",
+    "admin_action_logs",
+    "supervisor_assignments",
+    "supervisor_commission_shares",
+    "product_dna",
+    "product_dna_attributes",
+    "seller_listings",
+    "supervisor_notifications",
+    "region_assignments",
+    "failed_notifications",
+    "PurchaseRequestItems",
+    "PurchaseRequestInvitations",
+    "QuotationItems",
+    "Quotations",
+    "PurchaseOrders",
+    "PurchaseOrderLines",
+    "SLARecords",
+    "Shipments",
+    "ShipmentLines",
+    "Receipts",
+    "ReceiptLines",
+    "InventoryTransactions"
+  ],
+  "duplicateAnalysis": {
+    "ratings": {
+      "forms": [
+        "Ratings",
+        "ratings"
+      ],
+      "counts": {
+        "Ratings": 0,
+        "ratings": 0
+      }
+    },
+    "deals": {
+      "forms": [
+        "Deals",
+        "deals"
+      ],
+      "counts": {
+        "Deals": 0,
+        "deals": 5
+      }
+    },
+    "categories": {
+      "forms": [
+        "Categories",
+        "categories"
+      ],
+      "counts": {
+        "Categories": 5,
+        "categories": 14
+      }
+    },
+    "users": {
+      "forms": [
+        "users",
+        "Users"
+      ],
+      "counts": {
+        "users": 4154,
+        "Users": 1
+      }
+    },
+    "products": {
+      "forms": [
+        "Products",
+        "products"
+      ],
+      "counts": {
+        "Products": 15,
+        "products": 0
+      }
+    },
+    "notifications": {
+      "forms": [
+        "Notifications",
+        "notifications"
+      ],
+      "counts": {
+        "Notifications": 79,
+        "notifications": 106
+      }
+    },
+    "reports": {
+      "forms": [
+        "Reports",
+        "reports"
+      ],
+      "counts": {
+        "Reports": 0,
+        "reports": 0
+      }
+    }
+  }
+}

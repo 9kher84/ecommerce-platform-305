@@ -1,0 +1,359 @@
+{
+  "usages": {
+    "User": [
+      "\\controllers\\adminController.js",
+      "\\controllers\\authController.js",
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\ownerController.js",
+      "\\services\\emailService.js",
+      "\\services\\requestService.js",
+      "\\services\\SupplierQualificationService.js",
+      "\\services\\userService.js",
+      "\\routes\\agentRoutes.js",
+      "\\routes\\ownerRoutes.js"
+    ],
+    "Category": [
+      "\\controllers\\authController.js",
+      "\\controllers\\categoryController.js",
+      "\\controllers\\requestController.js",
+      "\\services\\requestService.js"
+    ],
+    "UserCategory": [],
+    "Organization": [
+      "\\controllers\\authController.js"
+    ],
+    "OrganizationUser": [
+      "\\controllers\\authController.js"
+    ],
+    "AssetType": [],
+    "Product": [
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\productController.js",
+      "\\services\\CatalogWriteFacade.js",
+      "\\services\\inventory\\InventoryService.js",
+      "\\services\\inventoryEngine.js",
+      "\\routes\\agentRoutes.js",
+      "\\jobs\\CatalogMigrationWorker.js"
+    ],
+    "PurchaseRequest": [
+      "\\controllers\\commandDashboardController.js",
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\ownerController.js",
+      "\\services\\dashboardService.js",
+      "\\services\\limitService.js",
+      "\\services\\marketMonitoringService.js",
+      "\\services\\notificationPolicyService.js",
+      "\\services\\requestService.js",
+      "\\services\\trustScoreService.js",
+      "\\services\\userService.js"
+    ],
+    "PurchaseRequestItem": [
+      "\\services\\awardService.js",
+      "\\services\\quotationService.js",
+      "\\services\\requestService.js"
+    ],
+    "PurchaseRequestInvitation": [
+      "\\services\\requestService.js"
+    ],
+    "Quotation": [
+      "\\services\\awardService.js",
+      "\\services\\quotationService.js",
+      "\\services\\requestService.js"
+    ],
+    "QuotationItem": [
+      "\\services\\quotationService.js"
+    ],
+    "Award": [
+      "\\services\\awardService.js"
+    ],
+    "AwardLine": [
+      "\\services\\awardService.js"
+    ],
+    "PurchaseOrder": [
+      "\\services\\procurementService.js"
+    ],
+    "PurchaseOrderLine": [
+      "\\services\\procurementService.js"
+    ],
+    "Shipment": [
+      "\\services\\fulfillment\\ShipmentModule.js",
+      "\\services\\fulfillment\\StateProjectionModule.js"
+    ],
+    "ShipmentLine": [
+      "\\services\\fulfillment\\ShipmentModule.js"
+    ],
+    "Receipt": [
+      "\\services\\fulfillment\\ReceiptModule.js",
+      "\\services\\fulfillment\\StateProjectionModule.js"
+    ],
+    "ReceiptLine": [
+      "\\services\\fulfillment\\ReceiptModule.js"
+    ],
+    "PriceQuote": [
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\ownerController.js",
+      "\\services\\AutoNegotiationService.js",
+      "\\services\\AutoReplenishmentService.js",
+      "\\services\\dashboardService.js",
+      "\\services\\priceRadarService.js",
+      "\\services\\pricingEngine.js",
+      "\\services\\quoteService.js",
+      "\\services\\requestService.js",
+      "\\services\\SupplierQualificationService.js",
+      "\\services\\userService.js",
+      "\\routes\\chatRoutes.js",
+      "\\middleware\\attachmentProtection.js"
+    ],
+    "Deal": [
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\dealController.js",
+      "\\controllers\\offerController.js",
+      "\\services\\dashboardService.js",
+      "\\services\\dealService.js",
+      "\\services\\paymentService.js",
+      "\\services\\quoteService.js",
+      "\\services\\trustScoreService.js"
+    ],
+    "Rating": [
+      "\\controllers\\ratingController.js"
+    ],
+    "Notification": [
+      "\\controllers\\notificationController.js",
+      "\\controllers\\offerController.js",
+      "\\controllers\\ratingController.js",
+      "\\services\\notificationPolicyService.js",
+      "\\services\\notificationService.js",
+      "\\routes\\notificationRoutes.js"
+    ],
+    "SLARecord": [
+      "\\services\\events\\SLAConsumer.js"
+    ],
+    "Report": [
+      "\\controllers\\reportController.js"
+    ],
+    "ProductDNA": [
+      "\\services\\CatalogWriteFacade.js",
+      "\\jobs\\CatalogMigrationWorker.js"
+    ],
+    "AttributeSchema": [
+      "\\services\\CatalogQueryService.js"
+    ],
+    "ProductDNAAttribute": [
+      "\\services\\CatalogQueryService.js"
+    ],
+    "SellerListing": [
+      "\\services\\CatalogWriteFacade.js",
+      "\\services\\SellerListingService.js",
+      "\\jobs\\CatalogMigrationWorker.js"
+    ],
+    "SmartPricingMatrix": [
+      "\\controllers\\commandDashboardController.js",
+      "\\services\\smartPricingService.js"
+    ],
+    "SmartInventory": [
+      "\\controllers\\productController.js",
+      "\\services\\inventory\\InventoryService.js",
+      "\\services\\MatchService.js",
+      "\\services\\WarehouseAccessService.js"
+    ],
+    "InventoryTransaction": [
+      "\\services\\inventory\\InventoryService.js"
+    ],
+    "RefreshToken": [
+      "\\controllers\\authController.js"
+    ],
+    "AuditLog": [
+      "\\controllers\\authController.js",
+      "\\controllers\\commandDashboardController.js",
+      "\\controllers\\dashboardController.js",
+      "\\controllers\\ownerController.js",
+      "\\controllers\\quoteController.js",
+      "\\controllers\\requestStatusController.js",
+      "\\controllers\\userController.js",
+      "\\services\\auditService.js",
+      "\\services\\awardService.js",
+      "\\services\\dataRetentionService.js",
+      "\\services\\events\\AuditLogConsumer.js",
+      "\\services\\quotationService.js",
+      "\\services\\requestService.js",
+      "\\middleware\\auditMiddleware.js"
+    ],
+    "ActionLog": [
+      "\\controllers\\EditController.js",
+      "\\services\\requestService.js",
+      "\\middleware\\rateLimitMiddleware.js"
+    ],
+    "SystemSetting": [
+      "\\controllers\\aiController.js",
+      "\\controllers\\paymentController.js"
+    ],
+    "InventoryMetrics": [
+      "\\services\\InventoryAlertService.js"
+    ],
+    "AutoReplenishmentOrder": [
+      "\\services\\AutoReplenishmentService.js"
+    ],
+    "PaymentTransaction": [
+      "\\services\\paymentService.js",
+      "\\routes\\paymentRoutes.js"
+    ],
+    "PaymentMethod": [
+      "\\services\\paymentService.js"
+    ],
+    "PaymentAuditLog": [],
+    "WithdrawalLog": [
+      "\\services\\quoteService.js",
+      "\\services\\subscriptionService.js"
+    ],
+    "AlternativeQuote": [],
+    "Permission": [],
+    "Role": [
+      "\\controllers\\ownerController.js"
+    ],
+    "RolePermission": [],
+    "UserRole": [],
+    "Region": [],
+    "City": [],
+    "Team": [],
+    "UserContext": [],
+    "Delegation": [
+      "\\controllers\\ownerController.js",
+      "\\middleware\\authorize.js"
+    ],
+    "SellerDecision": [
+      "\\services\\decisionLogger.js"
+    ],
+    "BuyerDecisionContext": [],
+    "MarketSilenceEvent": [
+      "\\services\\marketMonitoringService.js"
+    ],
+    "SellerInteractionEvent": [
+      "\\services\\marketMonitoringService.js",
+      "\\services\\requestService.js"
+    ],
+    "BuyerLimit": [
+      "\\services\\limitService.js"
+    ],
+    "CommissionTransaction": [
+      "\\services\\confirmationService.js",
+      "\\services\\dealService.js"
+    ],
+    "EventLog": [
+      "\\services\\eventLogService.js",
+      "\\services\\supervisorService.js"
+    ],
+    "TrustScore": [
+      "\\services\\trustScoreService.js"
+    ],
+    "Sanction": [
+      "\\services\\sanctionService.js"
+    ],
+    "AdminActionLog": [
+      "\\services\\adminActionLogService.js"
+    ],
+    "Invoice": [
+      "\\services\\invoiceService.js",
+      "\\routes\\invoiceRoutes.js",
+      "\\jobs\\invoiceCron.js"
+    ],
+    "SupervisorAssignment": [
+      "\\services\\supervisorService.js"
+    ],
+    "SupervisorCommissionShare": [
+      "\\services\\invoiceService.js",
+      "\\services\\supervisorService.js",
+      "\\routes\\ownerRoutes.js"
+    ],
+    "SupervisorNotification": [
+      "\\services\\supervisorService.js",
+      "\\routes\\supervisorRoutes.js"
+    ],
+    "RegionAssignment": [
+      "\\services\\supervisorService.js"
+    ],
+    "FailedNotification": [
+      "\\services\\invoiceService.js",
+      "\\jobs\\invoiceCron.js"
+    ]
+  },
+  "rawQueries": [
+    "\\services\\requestService.js",
+    "\\routes\\authRoutes.js"
+  ],
+  "migrationsData": [
+    {
+      "file": "20260123120000-upgrade-category-to-taxonomy.js",
+      "created": [
+        "UserCategories"
+      ],
+      "dropped": [
+        "UserCategories"
+      ],
+      "renamed": []
+    },
+    {
+      "file": "20260328000000-add-commission-and-limits.js",
+      "created": [
+        "commission_transactions",
+        "buyer_limits"
+      ],
+      "dropped": [
+        "buyer_limits",
+        "commission_transactions"
+      ],
+      "renamed": []
+    },
+    {
+      "file": "20260509000000-add-sovereign-tables.js",
+      "created": [
+        "event_logs",
+        "trust_scores",
+        "sanctions",
+        "admin_action_logs"
+      ],
+      "dropped": [
+        "admin_action_logs",
+        "sanctions",
+        "trust_scores",
+        "event_logs"
+      ],
+      "renamed": []
+    },
+    {
+      "file": "20260509000001-create-invoices-system.js",
+      "created": [
+        "invoices"
+      ],
+      "dropped": [
+        "invoices"
+      ],
+      "renamed": []
+    },
+    {
+      "file": "20260509000002-add-supervisor-management-system.js",
+      "created": [
+        "supervisor_assignments",
+        "supervisor_commission_shares",
+        "supervisor_notifications",
+        "region_assignments"
+      ],
+      "dropped": [
+        "region_assignments",
+        "supervisor_notifications",
+        "supervisor_commission_shares",
+        "supervisor_assignments"
+      ],
+      "renamed": []
+    },
+    {
+      "file": "20260711082700-add-asset-type-and-ownership.js",
+      "created": [
+        "AssetTypes"
+      ],
+      "dropped": [
+        "AssetTypes"
+      ],
+      "renamed": []
+    }
+  ]
+}

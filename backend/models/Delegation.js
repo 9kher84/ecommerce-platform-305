@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Delegation = sequelize.define(
+  return sequelize.define(
     "Delegation",
     {
       id: {
@@ -9,49 +9,41 @@ module.exports = (sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      fromUserId: {
+      fromMembershipId: {
         type: DataTypes.UUID,
         allowNull: false,
-        comment: " The Principal (User who owns the right)",
+        references: { model: "OrganizationMemberships", key: "id" },
       },
-      toUserId: {
+      toMembershipId: {
         type: DataTypes.UUID,
         allowNull: false,
-        comment: "The Delegate (User acting on behalf)",
+        references: { model: "OrganizationMemberships", key: "id" },
       },
-      permissionKey: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        comment: 'Specific permission key or "*" for all',
-      },
-      scopeType: {
-        type: DataTypes.ENUM("global", "city", "team", "resource"),
-        defaultValue: "global",
-      },
-      scopeId: {
-        type: DataTypes.STRING, // Can be UUID or special identifier
-        allowNull: true,
-      },
-      expiresAt: {
+      validFrom: {
         type: DataTypes.DATE,
-        allowNull: true,
+        allowNull: false,
       },
-      isActive: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
+      validUntil: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      scope: {
+        type: DataTypes.JSONB,
+        defaultValue: {},
+      },
+      status: {
+        type: DataTypes.STRING,
+        defaultValue: "ACTIVE", // 'ACTIVE' | 'EXPIRED' | 'REVOKED'
       },
     },
     {
+      tableName: "Delegations",
+      timestamps: true,
       indexes: [
-        {
-          fields: ["fromUserId", "toUserId", "isActive"],
-        },
-        {
-          fields: ["toUserId", "expiresAt"],
-        },
-      ],
-    },
+        { fields: ["fromMembershipId"] },
+        { fields: ["toMembershipId"] },
+        { fields: ["status"] }
+      ]
+    }
   );
-
-  return Delegation;
 };

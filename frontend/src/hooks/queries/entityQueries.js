@@ -71,3 +71,16 @@ export const useUpdateRequest = () => {
     },
   });
 };
+
+export const usePublishRequest = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => entityService.publishRequest(id),
+    onSuccess: (data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'my-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'detail', id] });
+    },
+  });
+};

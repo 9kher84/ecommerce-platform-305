@@ -64,6 +64,14 @@ const config = {
       ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     ].filter(Boolean),
   },
+  outbox: {
+    batchSize: parseInt(process.env.OUTBOX_BATCH_SIZE || '50', 10),
+    pollIntervalMs: parseInt(process.env.OUTBOX_POLL_INTERVAL_MS || '2000', 10),
+    maxRetries: parseInt(process.env.OUTBOX_MAX_RETRIES || '5', 10),
+    baseBackoffMs: parseInt(process.env.OUTBOX_BASE_BACKOFF_MS || '1000', 10),
+    maxBackoffMs: parseInt(process.env.OUTBOX_MAX_BACKOFF_MS || '60000', 10),
+    nodeName: process.env.OUTBOX_NODE_NAME || require('os').hostname()
+  }
 };
 
 // Basic Validation for critical variables

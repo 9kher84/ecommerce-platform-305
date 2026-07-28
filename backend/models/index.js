@@ -7,10 +7,9 @@ const models = {};
 fs.readdirSync(__dirname)
   .filter(file => file !== 'index.js' && file.endsWith('.js'))
   .forEach(file => {
-    const model = require(path.join(__dirname, file));
-    if (model && model.name) {
-      models[model.name] = model;
-    }
+    const modelDefiner = require(path.join(__dirname, file));
+    const model = modelDefiner(sequelize, require('sequelize').DataTypes);
+    models[model.name] = model;
   });
 
 models.sequelize = sequelize;

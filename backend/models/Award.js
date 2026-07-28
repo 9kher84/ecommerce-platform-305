@@ -11,17 +11,31 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false,
       },
+      quotationId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        unique: true,
+      },
+      buyerOrganizationId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
       sellerOrganizationId: {
         type: DataTypes.UUID,
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM("accepted", "converted", "cancelled"),
+        type: DataTypes.ENUM("accepted", "confirmed", "completed", "cancelled"),
         defaultValue: "accepted",
       },
       totalAmount: {
         type: DataTypes.DECIMAL(15, 2),
-        defaultValue: 0.00,
+        defaultValue: 0,
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
       },
       notes: {
         type: DataTypes.TEXT,

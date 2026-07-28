@@ -21,6 +21,19 @@ const Category = require("./models/Category")(sequelize, DataTypes);
 const UserCategory = require("./models/UserCategory")(sequelize, DataTypes);
 const Organization = require("./models/Organization")(sequelize);
 const OrganizationUser = require("./models/OrganizationUser")(sequelize);
+const OrganizationMembership = require("./models/OrganizationMembership")(sequelize);
+const MembershipTeam = require("./models/MembershipTeam")(sequelize);
+const OrganizationPolicy = require("./models/OrganizationPolicy")(sequelize);
+const MembershipPermission = require("./models/MembershipPermission")(sequelize);
+const PermissionGroup = require("./models/PermissionGroup")(sequelize);
+const PermissionGroupPermission = require("./models/PermissionGroupPermission")(sequelize);
+const ProjectScope = require("./models/ProjectScope")(sequelize);
+const BranchScope = require("./models/BranchScope")(sequelize);
+const DepartmentScope = require("./models/DepartmentScope")(sequelize);
+const TemporaryGrant = require("./models/TemporaryGrant")(sequelize);
+const Invitation = require("./models/Invitation")(sequelize);
+const SeparationOfDutiesRule = require("./models/SeparationOfDutiesRule")(sequelize);
+const Actor = require("./models/Actor")(sequelize);
 
 const AssetType = require("./models/AssetType")(sequelize, DataTypes);
 const Product = require("./models/Product")(sequelize, DataTypes);
@@ -44,6 +57,10 @@ const QuotationItem = require("./models/QuotationItem")(
   sequelize,
   DataTypes,
 );
+const WorkPackage = require("./models/WorkPackage")(sequelize, DataTypes);
+const CommercialProcess = require("./models/CommercialProcess")(sequelize, DataTypes);
+const ProcessParty = require("./models/ProcessParty")(sequelize, DataTypes);
+const NegotiationSheet = require("./models/NegotiationSheet")(sequelize, DataTypes);
 const Award = require("./models/Award")(sequelize, DataTypes);
 const AwardLine = require("./models/AwardLine")(sequelize, DataTypes);
 const PurchaseOrder = require("./models/PurchaseOrder")(sequelize, DataTypes);
@@ -158,6 +175,8 @@ const FailedNotification = require("./models/FailedNotification")(
   sequelize,
   Sequelize.DataTypes,
 );
+const OutboxEvent = require("./models/OutboxEvent")(sequelize, DataTypes);
+const InboxEvent = require("./models/InboxEvent")(sequelize, DataTypes);
 
 // ============================================================
 // 🔥 AUTHORIZATION & CONTEXT
@@ -370,6 +389,24 @@ PurchaseRequest.belongsTo(Category, {
 });
 PurchaseRequest.belongsTo(AssetType, { foreignKey: "assetTypeId", as: "assetType" });
 AssetType.hasMany(PurchaseRequest, { foreignKey: "assetTypeId", as: "requests" });
+
+// Wave 2: Commercial Process Engine
+PurchaseRequest.hasMany(WorkPackage, { foreignKey: "purchaseRequestId", as: "workPackages" });
+WorkPackage.belongsTo(PurchaseRequest, { foreignKey: "purchaseRequestId", as: "purchaseRequest" });
+
+WorkPackage.hasMany(CommercialProcess, { foreignKey: "workPackageId", as: "commercialProcesses" });
+CommercialProcess.belongsTo(WorkPackage, { foreignKey: "workPackageId", as: "workPackage" });
+
+CommercialProcess.hasMany(ProcessParty, { foreignKey: "commercialProcessId", as: "parties" });
+ProcessParty.belongsTo(CommercialProcess, { foreignKey: "commercialProcessId", as: "commercialProcess" });
+
+CommercialProcess.hasMany(NegotiationSheet, { foreignKey: "commercialProcessId", as: "negotiationSheets" });
+NegotiationSheet.belongsTo(CommercialProcess, { foreignKey: "commercialProcessId", as: "commercialProcess" });
+
+ProcessParty.belongsTo(User, { foreignKey: "userId", as: "user" });
+ProcessParty.belongsTo(Organization, { foreignKey: "organizationId", as: "organization" });
+
+NegotiationSheet.belongsTo(ProcessParty, { foreignKey: "initiatorPartyId", as: "initiator" });
 
 PurchaseRequest.hasMany(PriceQuote, {
   foreignKey: "purchaseRequestId",
@@ -675,6 +712,10 @@ module.exports = {
   PurchaseRequestInvitation,
   Quotation,
   QuotationItem,
+  WorkPackage,
+  CommercialProcess,
+  ProcessParty,
+  NegotiationSheet,
   Award,
   AwardLine,
   PurchaseOrder,
@@ -736,9 +777,25 @@ module.exports = {
   RegionAssignment,
   Organization,
   OrganizationUser,
+  OrganizationMembership,
+  MembershipTeam,
+  OrganizationPolicy,
+  MembershipPermission,
+  PermissionGroup,
+  PermissionGroupPermission,
+  ProjectScope,
+  BranchScope,
+  DepartmentScope,
+  Delegation,
+  TemporaryGrant,
+  Invitation,
+  SeparationOfDutiesRule,
+  Actor,
   FailedNotification,
   ProductDNA,
   AttributeSchema,
   ProductDNAAttribute,
   SellerListing,
+  OutboxEvent,
+  InboxEvent,
 };

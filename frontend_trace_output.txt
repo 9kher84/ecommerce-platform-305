@@ -1,0 +1,764 @@
+﻿
+################################################################
+#  FRONTEND INTEGRATION TRACE                                   #
+#  2026-07-16T16:01:18.916Z                            #
+################################################################
+
+ظûê STEP 1: Login as test@test.com
+
+================================================================================
+>>> POST https://ecommerce-platform-305.onrender.com/api/auth/login
+>>> TIMESTAMP: 2026-07-16T16:01:18.917Z
+>>> HEADERS:
+>>>   Content-Type: application/json
+>>>   Content-Length: 50
+>>> BODY: {"email":"test@test.com","password":"password123"}
+--------------------------------------------------------------------------------
+<<< STATUS: 200 OK
+<<< BODY (754 bytes):
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTBjMWI0LTY1NTEtNDQ5Yi1iMGRkLTI5NGFkZjY0ZWZkNCIsInJvbGUiOiJidXllciIsImp0aSI6IjYyNzg3ZGM4LTA0MjItNGM4Yi05YWU1LWVhYjY1MjNhODVjZSIsImlhdCI6MTc4NDIxNzY4MCwiZXhwIjoxNzg0ODIyNDgwfQ.3mZnGZKPXKLWwtY_EG8cfQ3WUb_4EaJgt1poLIwvDX0",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTBjMWI0LTY1NTEtNDQ5Yi1iMGRkLTI5NGFkZjY0ZWZkNCIsInJvbGUiOiJidXllciIsImp0aSI6ImNkMDRjMjEwLWQ4NjctNDJlYy05ZTNiLWZkNWIyMDMwYWM5MyIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzg0MjE3NjgwLCJleHAiOjE3ODQ4MjI0ODB9.rcKfCCvUOJ5PtlYfjtHn3CSDEcRLEoeEdmG0tpOHF_k",
+  "user": {
+    "id": "eae0c1b4-6551-449b-b0dd-294adf64efd4",
+    "name": "Test User",
+    "email": "test@test.com",
+    "role": "buyer",
+    "subscriptionTier": "free",
+    "isActive": true
+  }
+}
+================================================================================
+
+Token obtained: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...
+
+
+ظûê STEP 2: GET /api/requests/my-requests (BuyerDrafts component)
+
+This is the exact call the frontend makes via:
+  BuyerDrafts ظْ useMyRequests({}) ظْ entityService.getMyRequests({})
+  ظْ apiClient.get("/api/requests/my-requests", { params: {} })
+
+================================================================================
+>>> GET https://ecommerce-platform-305.onrender.com/api/requests/my-requests
+>>> TIMESTAMP: 2026-07-16T16:01:20.543Z
+>>> HEADERS:
+>>>   Content-Type: application/json
+>>>   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTBj...
+--------------------------------------------------------------------------------
+<<< STATUS: 200 OK
+<<< BODY (2971 bytes):
+{
+  "success": true,
+  "data": [
+    {
+      "fixed_price": "undefined",
+      "contact_number": null,
+      "id": "ae400161-e8a4-4e4b-9961-e3af9b07fc36",
+      "title": "Live Validation Test Request",
+      "deviceFingerprint": "[REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL]|unknown-ua",
+      "description": "Automated live validation - proving system works",
+      "quantity": "10.00",
+      "unit": "piece",
+      "status": "draft",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 0,
+      "expiresAt": "2026-07-23T15:51:08.891Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-16T15:51:08.894Z",
+      "updatedAt": "2026-07-16T15:51:08.894Z",
+      "deletedAt": null,
+      "userId": "eae0c1b4-6551-449b-b0dd-294adf64efd4",
+      "categoryId": 1,
+      "user": {
+        "id": "eae0c1b4-6551-449b-b0dd-294adf64efd4",
+        "name": "Test User",
+        "subscriptionTier": "free"
+      },
+      "category": {
+        "id": 1,
+        "name_ar": "╪ز┘é┘┘è╪ر",
+        "name_en": "Technology"
+      }
+    },
+    {
+      "fixed_price": "undefined",
+      "contact_number": null,
+      "id": "221af3d0-1051-48b5-8526-18989a8451f7",
+      "title": "Test request",
+      "deviceFingerprint": "[REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL]|axios/1.13.2",
+      "description": "Test purchase request for verification proof",
+      "quantity": "1.00",
+      "unit": "piece",
+      "status": "draft",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 0,
+      "expiresAt": "2026-07-11T21:28:24.156Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-04T21:28:24.157Z",
+      "updatedAt": "2026-07-04T21:28:24.157Z",
+      "deletedAt": null,
+      "userId": "eae0c1b4-6551-449b-b0dd-294adf64efd4",
+      "categoryId": 1,
+      "user": {
+        "id": "eae0c1b4-6551-449b-b0dd-294adf64efd4",
+        "name": "Test User",
+        "subscriptionTier": "free"
+      },
+      "category": {
+        "id": 1,
+        "name_ar": "╪ز┘é┘┘è╪ر",
+        "name_en": "Technology"
+      }
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "pageSize": 20,
+    "totalCount": 2,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  },
+  "count": 2
+}
+================================================================================
+
+ظûê STEP 3: ANALYSIS
+
+Response success: true
+Total records returned: 2
+Pagination: page 1 of 1
+Total count in DB: 2
+
+ظ£à TARGET REQUEST FOUND in API response!
+   id: ae400161-e8a4-4e4b-9961-e3af9b07fc36
+   title: Live Validation Test Request
+   status: draft
+   createdAt: 2026-07-16T15:51:08.894Z
+
+ظûê STEP 4: BuyerDrafts FILTER (status === "draft")
+
+BuyerDrafts.jsx line 14:
+  const drafts = response?.data?.filter(req => req.status === "draft") || [];
+
+Drafts after filter: 2
+ظ£à TARGET REQUEST PASSES the draft filter ظْ VISIBLE in BuyerDrafts
+
+ظûê STEP 5: GET /api/requests (RequestsList page - all requests)
+
+================================================================================
+>>> GET https://ecommerce-platform-305.onrender.com/api/requests
+>>> TIMESTAMP: 2026-07-16T16:01:21.221Z
+>>> HEADERS:
+>>>   Content-Type: application/json
+>>>   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImVhZTBj...
+--------------------------------------------------------------------------------
+<<< STATUS: 200 OK
+<<< BODY (12513 bytes):
+{
+  "success": true,
+  "data": [
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "1b38600e-4b90-4a02-8415-c7bc8ea17051",
+      "title": "50 ╪╖┘ ╪ص╪»┘è╪» ╪ز╪│┘┘è╪ص",
+      "deviceFingerprint": null,
+      "description": "",
+      "quantity": "50.00",
+      "unit": "╪╖┘",
+      "status": "published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 0,
+      "expiresAt": null,
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-13T09:03:51.243Z",
+      "updatedAt": "2026-07-13T12:18:39.584Z",
+      "deletedAt": null,
+      "userId": "201520ad-00fa-4604-adbf-d10fe39f58c6",
+      "categoryId": null,
+      "user": {
+        "id": "201520ad-00fa-4604-adbf-d10fe39f58c6",
+        "name": "UI Buyer",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": null
+    },
+    {
+      "fixed_price": "undefined",
+      "contact_number": null,
+      "id": "c74c8f2e-bd6e-4d05-a3da-fa004953239d",
+      "title": "Reinforced Steel Bars 50 Tons",
+      "deviceFingerprint": "[REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL]|unknown-ua",
+      "description": "I need 50 tons of reinforced steel bars for a construction project in Riyadh.",
+      "quantity": "50.00",
+      "unit": "Tons",
+      "status": "published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 0,
+      "expiresAt": "2026-07-20T06:14:24.964Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": "41bbb9ae-ef86-4f79-bb59-e405c9fdfbad",
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-13T06:14:24.965Z",
+      "updatedAt": "2026-07-13T06:14:24.965Z",
+      "deletedAt": null,
+      "userId": "caf86130-5b7b-4a69-8833-d32fb5e9004a",
+      "categoryId": null,
+      "user": {
+        "id": "caf86130-5b7b-4a69-8833-d32fb5e9004a",
+        "name": "Real Buyer",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": null
+    },
+    {
+      "fixed_price": "undefined",
+      "contact_number": null,
+      "id": "2a3af23d-914d-48c9-b7cd-bc5a87b7ea76",
+      "title": "Reinforced Steel Bars 50 Tons",
+      "deviceFingerprint": "[REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL]|unknown-ua",
+      "description": "I need 50 tons of reinforced steel bars for a construction project in Riyadh.",
+      "quantity": "50.00",
+      "unit": "Tons",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T05:50:23.640Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": "6adcc18b-6aeb-471d-b6e4-7efd942221cb",
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-13T05:50:23.641Z",
+      "updatedAt": "2026-07-13T05:50:31.552Z",
+      "deletedAt": null,
+      "userId": "b6a8b5d0-2d99-4bf6-b86d-b86b8924dc71",
+      "categoryId": null,
+      "user": {
+        "id": "b6a8b5d0-2d99-4bf6-b86d-b86b8924dc71",
+        "name": "Real Buyer",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": null
+    },
+    {
+      "fixed_price": "undefined",
+      "contact_number": null,
+      "id": "a2dbdf87-bc5f-487b-b7e9-881dce8bb925",
+      "title": "Reinforced Steel Bars 50 Tons",
+      "deviceFingerprint": "[REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL], [REDACTED_BY_SOVEREIGN_PROTOCOL]|unknown-ua",
+      "description": "I need 50 tons of reinforced steel bars for a construction project in Riyadh.",
+      "quantity": "50.00",
+      "unit": "Tons",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T05:49:37.481Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": "1e079b89-1499-43cf-8ec5-0ce7727483f1",
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-07-13T05:49:37.482Z",
+      "updatedAt": "2026-07-13T05:49:45.432Z",
+      "deletedAt": null,
+      "userId": "68de2b5e-fa35-4605-bbd2-7c6ba8a753fb",
+      "categoryId": null,
+      "user": {
+        "id": "68de2b5e-fa35-4605-bbd2-7c6ba8a753fb",
+        "name": "Real Buyer",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": null
+    },
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "cccc0005-0000-0000-0000-000000000005",
+      "title": "┘à╪╖┘┘ê╪ذ ╪ذ╪▒╪د┘à╪ش ┘à╪ص╪د╪│╪ذ╪ر",
+      "deviceFingerprint": null,
+      "description": "┘╪╕╪د┘à ┘à╪ص╪د╪│╪ذ╪ر ┘à╪ز┘â╪د┘à┘ ┘à╪╣ ╪»╪╣┘à ┘┘┘è",
+      "quantity": "1.00",
+      "unit": "╪▒╪«╪╡╪ر",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T15:05:26.870Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-06-20T15:05:26.870Z",
+      "updatedAt": "2026-06-20T15:20:11.956Z",
+      "deletedAt": null,
+      "userId": "aaaa0002-0000-0000-0000-000000000002",
+      "categoryId": 1,
+      "user": {
+        "id": "aaaa0002-0000-0000-0000-000000000002",
+        "name": "╪│╪د╪▒╪ر ╪د┘┘à╪┤╪ز╪▒┘è╪ر",
+        "subscriptionTier": "plan_a",
+        "rank": "Bronze"
+      },
+      "category": {
+        "id": 1,
+        "name_ar": "╪ز┘é┘┘è╪ر",
+        "name_en": "Technology"
+      }
+    },
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "cccc0001-0000-0000-0000-000000000001",
+      "title": "┘à╪╖┘┘ê╪ذ ╪ص╪»┘è╪» ╪ز╪│┘┘è╪ص 500 ╪╖┘",
+      "deviceFingerprint": null,
+      "description": "┘à╪╖┘┘ê╪ذ ╪ص╪»┘è╪» ╪ز╪│┘┘è╪ص ┘à┘é╪د╪│ 16mm ┘┘┘à╪┤╪▒┘ê╪╣",
+      "quantity": "500.00",
+      "unit": "╪╖┘",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 3,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T15:05:26.870Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-06-20T15:05:26.870Z",
+      "updatedAt": "2026-06-20T15:12:27.861Z",
+      "deletedAt": null,
+      "userId": "aaaa0001-0000-0000-0000-000000000001",
+      "categoryId": 3,
+      "user": {
+        "id": "aaaa0001-0000-0000-0000-000000000001",
+        "name": "╪ث╪ص┘à╪» ╪د┘┘à╪┤╪ز╪▒┘è",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": {
+        "id": 3,
+        "name_ar": "╪ذ┘╪د╪ة",
+        "name_en": "Construction"
+      }
+    },
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "cccc0002-0000-0000-0000-000000000002",
+      "title": "┘à╪╖┘┘ê╪ذ ╪ث╪ش┘ç╪▓╪ر ┘â┘à╪ذ┘è┘ê╪ز╪▒ 50 ╪ش┘ç╪د╪▓",
+      "deviceFingerprint": null,
+      "description": "╪ث╪ش┘ç╪▓╪ر Dell Core i7 ┘┘┘à┘â╪د╪ز╪ذ",
+      "quantity": "50.00",
+      "unit": "╪ش┘ç╪د╪▓",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 1,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T15:05:26.870Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-06-20T15:05:26.870Z",
+      "updatedAt": "2026-06-20T15:12:30.956Z",
+      "deletedAt": null,
+      "userId": "aaaa0002-0000-0000-0000-000000000002",
+      "categoryId": 1,
+      "user": {
+        "id": "aaaa0002-0000-0000-0000-000000000002",
+        "name": "╪│╪د╪▒╪ر ╪د┘┘à╪┤╪ز╪▒┘è╪ر",
+        "subscriptionTier": "plan_a",
+        "rank": "Bronze"
+      },
+      "category": {
+        "id": 1,
+        "name_ar": "╪ز┘é┘┘è╪ر",
+        "name_en": "Technology"
+      }
+    },
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "cccc0003-0000-0000-0000-000000000003",
+      "title": "┘à╪╖┘┘ê╪ذ ╪«╪»┘à╪ر ╪ز╪│┘ê┘è┘é ╪▒┘é┘à┘è",
+      "deviceFingerprint": null,
+      "description": "╪ص┘à┘╪ر ╪ز╪│┘ê┘è┘é┘è╪ر ┘┘à╪»╪ر 3 ╪ث╪┤┘ç╪▒",
+      "quantity": "1.00",
+      "unit": "╪«╪»┘à╪ر",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 2,
+      "viewCount": 0,
+      "quoteCount": 2,
+      "expiresAt": "2026-07-20T15:05:26.870Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-06-20T15:05:26.870Z",
+      "updatedAt": "2026-06-20T15:12:37.620Z",
+      "deletedAt": null,
+      "userId": "aaaa0003-0000-0000-0000-000000000003",
+      "categoryId": 2,
+      "user": {
+        "id": "aaaa0003-0000-0000-0000-000000000003",
+        "name": "╪«╪د┘╪» ╪د┘┘à╪┤╪ز╪▒┘è",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": {
+        "id": 2,
+        "name_ar": "╪ز╪│┘ê┘è┘é",
+        "name_en": "Marketing"
+      }
+    },
+    {
+      "fixed_price": null,
+      "contact_number": null,
+      "id": "cccc0004-0000-0000-0000-000000000004",
+      "title": "┘à╪╖┘┘ê╪ذ ┘à┘ê╪د╪» ╪ذ┘╪د╪ة ┘à╪ز┘┘ê╪╣╪ر",
+      "deviceFingerprint": null,
+      "description": "╪د╪│┘à┘╪ز ┘ê╪▒┘à┘ ┘ê╪ص╪╡┘ë ┘┘┘à╪┤╪▒┘ê╪╣ ╪د┘╪│┘â┘┘è",
+      "quantity": "200.00",
+      "unit": "╪╖┘",
+      "status": "rfq_published",
+      "post_type": "standard",
+      "auction_type": "public",
+      "delivery_city": null,
+      "pdfAttachments": [],
+      "targetSellerId": null,
+      "sectorId": 3,
+      "viewCount": 0,
+      "quoteCount": 1,
+      "expiresAt": "2026-07-20T15:05:26.870Z",
+      "modificationRequested": false,
+      "modificationReason": null,
+      "lastModifiedAt": null,
+      "deliveryLocations": [],
+      "deliveryDates": null,
+      "requiresDelivery": true,
+      "requiresInstallation": false,
+      "contactNumbers": [],
+      "images": [],
+      "hideOffers": false,
+      "hidePersonalInfo": false,
+      "directPurchase": false,
+      "delivery_date": null,
+      "attachments": [],
+      "price_range_min": null,
+      "price_range_max": null,
+      "advanced_options": {},
+      "is_active": true,
+      "rfqStatus": "draft",
+      "organization_id": null,
+      "assetTypeId": null,
+      "approval_status": "none",
+      "approved_by": null,
+      "approved_at": null,
+      "createdAt": "2026-06-20T15:05:26.870Z",
+      "updatedAt": "2026-06-20T15:12:41.038Z",
+      "deletedAt": null,
+      "userId": "aaaa0001-0000-0000-0000-000000000001",
+      "categoryId": 3,
+      "user": {
+        "id": "aaaa0001-0000-0000-0000-000000000001",
+        "name": "╪ث╪ص┘à╪» ╪د┘┘à╪┤╪ز╪▒┘è",
+        "subscriptionTier": "free",
+        "rank": "Bronze"
+      },
+      "category": {
+        "id": 3,
+        "name_ar": "╪ذ┘╪د╪ة",
+        "name_en": "Construction"
+      }
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "pageSize": 20,
+    "totalCount": 9,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  },
+  "count": 9
+}
+================================================================================
+
+Total in /api/requests: 9
+ظإî TARGET NOT found in /api/requests
+
+################################################################
+#  TRACE COMPLETE                                               #
+################################################################
+

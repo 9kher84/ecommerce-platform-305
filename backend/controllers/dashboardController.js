@@ -7,6 +7,10 @@ const {
   Deal,
   Product,
   AuditLog,
+  WorkPackage,
+  CommercialProcess,
+  NegotiationSheet,
+  ProcessParty,
   sequelize,
 } = require("../sequelize_setup");
 const { Op } = require("sequelize");
@@ -26,93 +30,54 @@ const DecisionLogger = require("../services/decisionLogger");
 exports.getBuyerStats = asyncHandler(async (req, res) => {
   const buyerId = req.user.id;
 
-  // 1. متوسط الأسعار للعروض المستلمة
-  // Fix: amount is encrypted text, cannot use SQL AVG
-  const allQuotes = await PriceQuote.findAll({
+  // 1. Get all active processes for this buyer via their purchase requests & work packages
+  const prs = await PurchaseRequest.findAll({ where: { userId: buyerId } });
+  const prIds = prs.map(p => p.id);
+
+  const wps = await WorkPackage.findAll({ where: { purchaseRequestId: { [Op.in]: prIds } } });
+  const wpIds = wps.map(w => w.id);
+
+  const processes = await CommercialProcess.findAll({
+    where: { workPackageId: { [Op.in]: wpIds }, processType: 'NEGOTIATION' },
     include: [
-      {
-        model: PurchaseRequest,
-        as: "request",
-        where: { userId: buyerId },
-        attributes: [],
-      },
-    ],
-    attributes: ["amount"],
+      { model: NegotiationSheet, as: 'negotiationSheets' }
+    ]
   });
-  
+
+  // Calculate average price of the latest revision for each active process
   let totalAmount = 0;
   let validQuotesCount = 0;
-  for (const q of allQuotes) {
-    const val = parseFloat(q.amount);
-    if (!isNaN(val)) {
-      totalAmount += val;
-      validQuotesCount++;
+  for (const proc of processes) {
+    const sheets = proc.negotiationSheets || [];
+    if (sheets.length > 0) {
+      // Find the latest version
+      const latestSheet = sheets.reduce((prev, current) => (prev.version > current.version) ? prev : current);
+      const price = latestSheet.terms?.price || parseFloat(latestSheet.terms);
+      if (price && !isNaN(price)) {
+        totalAmount += price;
+        validQuotesCount++;
+      }
     }
   }
-  const avgQuotePrice = validQuotesCount > 0 ? { avgPrice: totalAmount / validQuotesCount } : { avgPrice: 0 };
+  const avgQuotePrice = validQuotesCount > 0 ? (totalAmount / validQuotesCount).toFixed(2) : "0.00";
 
-  // 2. أكثر التصنيفات طلباً
-  const topCategories = await PurchaseRequest.findAll({
-    where: { userId: buyerId },
-    attributes: [
-      "categoryId",
-      [sequelize.fn("COUNT", sequelize.col("categoryId")), "count"],
-    ],
-    include: [
-      { model: Category, as: "category", attributes: ["name_ar", "name_en"] },
-    ],
-    group: [
-      "categoryId",
-      "category.id",
-      "category.name_ar",
-      "category.name_en",
-    ],
-    order: [[sequelize.literal("count"), "DESC"]],
-    limit: 5,
-  });
-
-  // 3. عدد الموردين الذين قدموا عروض
-  const uniqueSuppliers = await PriceQuote.count({
+  // Calculate unique suppliers
+  const processIds = processes.map(p => p.id);
+  const uniqueSuppliers = await ProcessParty.count({
     distinct: true,
-    col: "sellerId",
-    include: [
-      {
-        model: PurchaseRequest,
-        as: "request",
-        where: { userId: buyerId },
-        required: true,
-      },
-    ],
+    col: 'userId',
+    where: {
+      commercialProcessId: { [Op.in]: processIds },
+      partyRole: 'SELLER'
+    }
   });
 
-  // 4. نسبة قبول العروض
-  const totalQuotes = await PriceQuote.count({
-    include: [
-      {
-        model: PurchaseRequest,
-        as: "request",
-        where: { userId: buyerId },
-        required: true,
-      },
-    ],
-  });
+  // Calculate acceptance rate
+  const totalProcesses = processes.length;
+  const acceptedProcesses = processes.filter(p => ['pending_award', 'awarded'].includes(p.status)).length;
+  const acceptanceRate = totalProcesses > 0 ? ((acceptedProcesses / totalProcesses) * 100).toFixed(2) + '%' : '0%';
 
-  const acceptedQuotes = await PriceQuote.count({
-    where: { status: "accepted" },
-    include: [
-      {
-        model: PurchaseRequest,
-        as: "request",
-        where: { userId: buyerId },
-        required: true,
-      },
-    ],
-  });
-
-  const acceptanceRate =
-    totalQuotes > 0 ? ((acceptedQuotes / totalQuotes) * 100).toFixed(2) : 0;
-
-  // 5. رسم بياني للطلبات حسب المدينة
+  // Legacy/V1 groups (mocked or built from actual data)
   const requestsByCity = await PurchaseRequest.findAll({
     where: { userId: buyerId },
     attributes: [
@@ -126,8 +91,7 @@ exports.getBuyerStats = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     stats: {
-      avgQuotePrice: parseFloat(avgQuotePrice?.avgPrice || 0).toFixed(2),
-      topCategories,
+      avgQuotePrice,
       uniqueSuppliers,
       acceptanceRate,
       requestsByCity,
@@ -288,13 +252,19 @@ exports.getSellerStats = asyncHandler(async (req, res) => {
   const user = req.user;
   const sellerId = user.id;
 
-  // 1. Basic Stats (Available for all)
-  const totalQuotes = await PriceQuote.count({ where: { sellerId } });
-  const acceptedQuotes = await PriceQuote.count({
-    where: { sellerId, status: "accepted" },
+  // Find all processes where this seller is participating
+  const parties = await ProcessParty.findAll({
+    where: { userId: sellerId, partyRole: 'SELLER' }
   });
-  const winRate =
-    totalQuotes > 0 ? ((acceptedQuotes / totalQuotes) * 100).toFixed(2) : 0;
+  const processIds = parties.map(p => p.commercialProcessId);
+
+  const processes = await CommercialProcess.findAll({
+    where: { id: { [Op.in]: processIds }, processType: 'NEGOTIATION' }
+  });
+
+  const totalQuotes = processes.length;
+  const acceptedQuotes = processes.filter(p => ['pending_award', 'awarded'].includes(p.status)).length;
+  const winRate = totalQuotes > 0 ? ((acceptedQuotes / totalQuotes) * 100).toFixed(2) + '%' : '0%';
 
   const basicStats = {
     totalQuotes,
@@ -318,11 +288,7 @@ exports.getSellerStats = asyncHandler(async (req, res) => {
     });
   }
 
-  // --- PLAN A & B (ENHANCED ANALYTICS) ---
-
   // Calculate Average Profit Margin (from Products)
-  // Note: purchasePrice is encrypted in real usage, for dash we might need decrypted or just simple DECIMAL if allowed.
-  // Assuming simple calculation for demo/current state.
   const products = await Product.findAll({ where: { sellerId } });
   const avgProfit =
     products.length > 0
@@ -381,7 +347,7 @@ exports.getSellerStats = asyncHandler(async (req, res) => {
     });
   }
 
-  // --- PLAN B (PREMIUM WAREHOUSE & FORECASTING) ---
+  // --- PLAN B ---
   const planBStats = {
     ...planAStats,
     warehouseCapacity: "85%",

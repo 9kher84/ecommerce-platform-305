@@ -693,6 +693,18 @@ class RequestService {
         {
           model: PurchaseRequestInvitation,
           as: "invitations",
+        },
+        {
+          model: require("../sequelize_setup").WorkPackage,
+          as: "workPackages",
+          include: [
+            {
+              model: require("../sequelize_setup").CommercialProcess,
+              as: "commercialProcesses",
+              where: { processType: 'NEGOTIATION' },
+              required: false
+            }
+          ]
         }
       ];
 
@@ -820,6 +832,7 @@ class RequestService {
         },
         items: plainReq.items || [],
         invitations: plainReq.invitations || [],
+        workPackages: plainReq.workPackages || [],
         quotationSummary: parsedQuotes,
         statistics: {
           itemsCount,

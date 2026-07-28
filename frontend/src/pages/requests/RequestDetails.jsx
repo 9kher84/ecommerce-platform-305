@@ -1,21 +1,19 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRequestDetails, useUpdateRequestStatus } from '../../hooks/queries/entityQueries';
-import { useSubmitQuote, useQuotesForRequest } from '../../hooks/queries/quoteQueries';
-import { Button } from '../../components/common/Button';
-import { QuoteForm } from '../../components/quotes/QuoteForm';
-import { QuoteCard } from '../../components/quotes/QuoteCard';
 import { useAuth } from '../../providers/AuthProvider';
+import { useRequestDetails } from '../../hooks/queries/entityQueries';
+import { SubmitProposalModal } from '../../components/commercial/SubmitProposalModal';
 
 export const RequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: response, isLoading, isError, error } = useRequestDetails(id);
-  const updateStatusMutation = useUpdateRequestStatus();
-  const submitQuoteMutation = useSubmitQuote();
-  const { data: quotesData } = useQuotesForRequest(id);
   
+  const [selectedWorkPackageId, setSelectedWorkPackageId] = React.useState(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  
+  const { data: response, isLoading, isError, error } = useRequestDetails(id);
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-12">
@@ -32,109 +30,118 @@ export const RequestDetails = () => {
     );
   }
 
-  // The runtime audit states get request returns { success: true, data: Request } 
-  // Note: getRequests list returns pagination, but getRequestDetails returns single object in data
-  const request = response?.request || response?.data;
+  const project = response?.request || response?.data;
 
-  if (!request) {
-    return <div className="p-4 text-center text-gray-500">Request not found</div>;
+  if (!project) {
+    return <div className="p-4 text-center text-gray-500">Project not found</div>;
   }
 
-  const handleStatusChange = (newStatus) => {
-    updateStatusMutation.mutate({ id: request.id, status: newStatus });
-  };
+  const workPackages = project.workPackages || [];
+  
+  // Calculate KPIs
+  const packageCount = workPackages.length;
+  const supplierCount = workPackages.reduce((acc, wp) => acc + (wp.commercialProcesses?.length || 0), 0);
+  const awardedCount = workPackages.filter(wp => wp.status === 'awarded').length;
+  // For pending decisions, we'd ideally look at process statuses, but we simplify here
+  const pendingDecisions = workPackages.reduce((acc, wp) => acc + (wp.commercialProcesses?.filter(p => p.status === 'waiting_buyer' || p.status === 'pending_award').length || 0), 0);
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="border-b border-gray-200 bg-gray-50 p-6 flex justify-between items-center">
-        <div>
-          <button onClick={() => navigate(-1)} className="text-sm text-indigo-600 hover:text-indigo-800 mb-2 inline-block">
-            ← Back to Requests
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900">{request.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">ID: {request.id}</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-            {request.status.toUpperCase()}
-          </span>
-          <div className="flex gap-2">
-            {request.status === 'pending' && (
-              <Button size="sm" onClick={() => handleStatusChange('active')} isLoading={updateStatusMutation.isPending}>
-                Approve (Active)
-              </Button>
-            )}
-            {['pending', 'active'].includes(request.status) && (
-              <Button variant="danger" size="sm" onClick={() => handleStatusChange('cancelled')} isLoading={updateStatusMutation.isPending}>
-                Cancel
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
-        <p className="text-gray-700 whitespace-pre-wrap mb-6">{request.description}</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-gray-50 p-4 rounded border border-gray-100">
-            <h4 className="text-sm font-medium text-gray-500 mb-1">Category</h4>
-            <p className="text-gray-900">{request.category || 'N/A'}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded border border-gray-100">
-            <h4 className="text-sm font-medium text-gray-500 mb-1">Target Price</h4>
-            <p className="text-gray-900">{request.targetPrice ? `$${request.targetPrice}` : 'Open to offers'}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded border border-gray-100">
-            <h4 className="text-sm font-medium text-gray-500 mb-1">Created At</h4>
-            <p className="text-gray-900">{new Date(request.createdAt).toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded border border-gray-100">
-            <h4 className="text-sm font-medium text-gray-500 mb-1">Last Updated</h4>
-            <p className="text-gray-900">{new Date(request.updatedAt).toLocaleString()}</p>
-          </div>
-        </div>
-        
-        {request.requirements && request.requirements.length > 0 && (
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* KPI Header */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Specific Requirements</h3>
-            <ul className="list-disc pl-5 space-y-1 text-gray-700">
-              {request.requirements.map((req, idx) => (
-                <li key={idx}>{req}</li>
-              ))}
-            </ul>
+            <button onClick={() => navigate(-1)} className="text-sm text-indigo-600 hover:text-indigo-800 mb-2 inline-block">
+              ← عودة للمشاريع
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">مشروع: {project.title}</h1>
+            <p className="text-gray-500 mt-2">{project.description}</p>
           </div>
-        )}
+          <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold">
+            الحالة: {project.status.toUpperCase()}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-center">
+            <div className="text-3xl font-black text-gray-800">{packageCount}</div>
+            <div className="text-xs text-gray-500 font-medium uppercase mt-1">عدد الحزم</div>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-center">
+            <div className="text-3xl font-black text-gray-800">{supplierCount}</div>
+            <div className="text-xs text-gray-500 font-medium uppercase mt-1">المفاوضات النشطة</div>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 text-center">
+            <div className="text-3xl font-black text-orange-600">{pendingDecisions}</div>
+            <div className="text-xs text-orange-600 font-medium uppercase mt-1">بانتظار قراري</div>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg border border-green-100 text-center">
+            <div className="text-3xl font-black text-green-600">{awardedCount}</div>
+            <div className="text-xs text-green-600 font-medium uppercase mt-1">حزم تمت ترسيتها</div>
+          </div>
+        </div>
       </div>
 
-      {user?.role === 'seller' && ['active', 'published'].includes(request.status) && (
-        <div className="p-6 border-t border-gray-200">
-          <QuoteForm 
-            onSubmit={(data) => {
-              submitQuoteMutation.mutate({
-                purchaseRequestId: request.id,
-                price: data.price,
-                deliveryDate: data.deliveryDate,
-                notes: data.notes
-              }, {
-                onSuccess: () => alert('Quote submitted successfully!')
-              });
-            }}
-            isLoading={submitQuoteMutation.isPending}
-          />
+      {/* Work Packages List */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="border-b border-gray-200 bg-gray-50 p-4">
+          <h2 className="text-lg font-bold text-gray-800">حزم العمل (Work Packages)</h2>
         </div>
-      )}
+        <div className="divide-y divide-gray-200">
+          {workPackages.map((wp) => {
+            const wpSuppliers = wp.commercialProcesses?.length || 0;
+            return (
+              <div 
+                key={wp.id} 
+                className="p-4 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors"
+                onClick={() => navigate(`/requests/${id}/packages/${wp.id}`)}
+              >
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{wp.name}</h3>
+                  <div className="text-sm text-gray-500 flex gap-4 mt-1">
+                    <span>الموردين/المفاوضات: <strong className="text-gray-700">{wpSuppliers}</strong></span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${wp.status === 'awarded' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {wp.status.toUpperCase()}
+                  </span>
+                  
+                  {user?.role === 'seller' && wp.status !== 'awarded' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedWorkPackageId(wp.id);
+                        setIsModalOpen(true);
+                      }}
+                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded hover:bg-indigo-700 transition"
+                    >
+                      تقديم عرض
+                    </button>
+                  )}
 
-      {user?.role === 'buyer' && ['active', 'published', 'quoting'].includes(request.status) && quotesData?.quotes?.length > 0 && (
-        <div className="p-6 border-t border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Received Quotes</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {quotesData.quotes.map(quote => (
-              <QuoteCard key={quote.id} quote={quote} role="buyer" />
-            ))}
-          </div>
+                  {user?.role !== 'seller' && (
+                    <span className="text-gray-400">❯</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {workPackages.length === 0 && (
+            <div className="p-8 text-center text-gray-500">لا توجد حزم عمل لهذا المشروع.</div>
+          )}
         </div>
+      </div>
+
+      {selectedWorkPackageId && (
+        <SubmitProposalModal
+          isOpen={isModalOpen}
+          workPackageId={selectedWorkPackageId}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedWorkPackageId(null);
+          }}
+        />
       )}
     </div>
   );

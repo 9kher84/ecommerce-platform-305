@@ -1,0 +1,2641 @@
+{
+  "User": {
+    "modelName": "User",
+    "physicalTable": "users",
+    "explicitTableName": "users",
+    "associations": [
+      {
+        "name": "roles",
+        "type": "BelongsToMany",
+        "target": "Role",
+        "foreignKey": "userId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "organizations",
+        "type": "BelongsToMany",
+        "target": "Organization",
+        "foreignKey": "user_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "delegationsGiven",
+        "type": "HasMany",
+        "target": "Delegation",
+        "foreignKey": "fromUserId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "delegationsReceived",
+        "type": "HasMany",
+        "target": "Delegation",
+        "foreignKey": "toUserId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "sectors",
+        "type": "BelongsToMany",
+        "target": "Category",
+        "foreignKey": "userId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "requests",
+        "type": "HasMany",
+        "target": "PurchaseRequest",
+        "foreignKey": "userId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "products",
+        "type": "HasMany",
+        "target": "Product",
+        "foreignKey": "sellerId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "notifications",
+        "type": "HasMany",
+        "target": "Notification",
+        "foreignKey": "userId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "buyerInvoices",
+        "type": "HasMany",
+        "target": "Invoice",
+        "foreignKey": "buyer_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "sellerInvoices",
+        "type": "HasMany",
+        "target": "Invoice",
+        "foreignKey": "seller_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "eventLogs",
+        "type": "HasMany",
+        "target": "EventLog",
+        "foreignKey": "actorId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "createdListings",
+        "type": "HasMany",
+        "target": "SellerListing",
+        "foreignKey": "createdByUserId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "decisions",
+        "type": "HasMany",
+        "target": "SellerDecision",
+        "foreignKey": "userId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "buyerDecisions",
+        "type": "HasMany",
+        "target": "BuyerDecisionContext",
+        "foreignKey": "buyerId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "interactions",
+        "type": "HasMany",
+        "target": "SellerInteractionEvent",
+        "foreignKey": "sellerId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "limit",
+        "type": "HasOne",
+        "target": "BuyerLimit",
+        "foreignKey": "buyerId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "assignmentsAsSupervisor",
+        "type": "HasMany",
+        "target": "SupervisorAssignment",
+        "foreignKey": "supervisor_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "supervisorNotifications",
+        "type": "HasMany",
+        "target": "SupervisorNotification",
+        "foreignKey": "supervisor_id",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "userId",
+      "user_id",
+      "fromUserId",
+      "toUserId",
+      "userId",
+      "userId",
+      "sellerId",
+      "userId",
+      "buyer_id",
+      "seller_id",
+      "actorId",
+      "createdByUserId",
+      "userId",
+      "buyerId",
+      "sellerId",
+      "buyerId",
+      "supervisor_id",
+      "supervisor_id"
+    ],
+    "indexes": [],
+    "hooks": [
+      "beforeUpdate",
+      "beforeCreate",
+      "beforeSave"
+    ],
+    "scopes": []
+  },
+  "Category": {
+    "modelName": "Category",
+    "physicalTable": "Categories",
+    "explicitTableName": "Categories",
+    "associations": [
+      {
+        "name": "subCategories",
+        "type": "HasMany",
+        "target": "Category",
+        "foreignKey": "parentId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "parent",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "parentId"
+      },
+      {
+        "name": "users",
+        "type": "BelongsToMany",
+        "target": "User",
+        "foreignKey": "categoryId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "productDnas",
+        "type": "HasMany",
+        "target": "ProductDNA",
+        "foreignKey": "categoryId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "products",
+        "type": "HasMany",
+        "target": "Product",
+        "foreignKey": "categoryId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "requests",
+        "type": "HasMany",
+        "target": "PurchaseRequest",
+        "foreignKey": "categoryId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "parentId",
+      "parentId",
+      "categoryId",
+      "categoryId",
+      "categoryId",
+      "categoryId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "UserCategory": {
+    "modelName": "UserCategory",
+    "physicalTable": "UserCategories",
+    "explicitTableName": "UserCategories",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "unique": true,
+        "fields": [
+          "userId",
+          "categoryId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "user_categories_user_id_category_id"
+      }
+    ],
+    "hooks": [
+      "beforeCreate"
+    ],
+    "scopes": []
+  },
+  "Organization": {
+    "modelName": "Organization",
+    "physicalTable": "organizations",
+    "explicitTableName": "organizations",
+    "associations": [
+      {
+        "name": "users",
+        "type": "BelongsToMany",
+        "target": "User",
+        "foreignKey": "organization_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "purchaseRequests",
+        "type": "HasMany",
+        "target": "PurchaseRequest",
+        "foreignKey": "organization_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "priceQuotes",
+        "type": "HasMany",
+        "target": "PriceQuote",
+        "foreignKey": "organization_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "deals",
+        "type": "HasMany",
+        "target": "Deal",
+        "foreignKey": "organization_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "auditLogs",
+        "type": "HasMany",
+        "target": "AuditLog",
+        "foreignKey": "organization_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "listings",
+        "type": "HasMany",
+        "target": "SellerListing",
+        "foreignKey": "organizationId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "awards",
+        "type": "HasMany",
+        "target": "Award",
+        "foreignKey": "sellerOrganizationId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "organization_id",
+      "organization_id",
+      "organization_id",
+      "organization_id",
+      "organization_id",
+      "organizationId",
+      "sellerOrganizationId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "OrganizationUser": {
+    "modelName": "OrganizationUser",
+    "physicalTable": "organization_users",
+    "explicitTableName": "organization_users",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "AssetType": {
+    "modelName": "AssetType",
+    "physicalTable": "AssetTypes",
+    "associations": [
+      {
+        "name": "products",
+        "type": "HasMany",
+        "target": "Product",
+        "foreignKey": "assetTypeId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "requests",
+        "type": "HasMany",
+        "target": "PurchaseRequest",
+        "foreignKey": "assetTypeId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "assetTypeId",
+      "assetTypeId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "code"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "asset_types_code"
+      },
+      {
+        "fields": [
+          "isActive"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "asset_types_is_active"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "Product": {
+    "modelName": "Product",
+    "physicalTable": "Products",
+    "associations": [
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "ownerOrganization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "ownerOrganizationId"
+      },
+      {
+        "name": "category",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "categoryId"
+      },
+      {
+        "name": "assetType",
+        "type": "BelongsTo",
+        "target": "AssetType",
+        "foreignKey": "assetTypeId"
+      },
+      {
+        "name": "smartInventory",
+        "type": "HasOne",
+        "target": "SmartInventory",
+        "foreignKey": "productId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "sellerId",
+      "ownerOrganizationId",
+      "categoryId",
+      "assetTypeId",
+      "productId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "productTier"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "products_product_tier"
+      },
+      {
+        "fields": [
+          "stockLevel"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "products_stock_level"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "PurchaseRequest": {
+    "modelName": "PurchaseRequest",
+    "physicalTable": "PurchaseRequests",
+    "associations": [
+      {
+        "name": "organization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "organization_id"
+      },
+      {
+        "name": "user",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "userId"
+      },
+      {
+        "name": "category",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "categoryId"
+      },
+      {
+        "name": "assetType",
+        "type": "BelongsTo",
+        "target": "AssetType",
+        "foreignKey": "assetTypeId"
+      },
+      {
+        "name": "quotes",
+        "type": "HasMany",
+        "target": "PriceQuote",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "deal",
+        "type": "HasOne",
+        "target": "Deal",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "items",
+        "type": "HasMany",
+        "target": "PurchaseRequestItem",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "invitations",
+        "type": "HasMany",
+        "target": "PurchaseRequestInvitation",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "quotations",
+        "type": "HasMany",
+        "target": "Quotation",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "awards",
+        "type": "HasMany",
+        "target": "Award",
+        "foreignKey": "purchaseRequestId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "organization_id",
+      "userId",
+      "categoryId",
+      "assetTypeId",
+      "purchaseRequestId",
+      "purchaseRequestId",
+      "purchaseRequestId",
+      "purchaseRequestId",
+      "purchaseRequestId",
+      "purchaseRequestId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "PurchaseRequestItem": {
+    "modelName": "PurchaseRequestItem",
+    "physicalTable": "PurchaseRequestItems",
+    "associations": [
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "productDNA",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "productDNAId"
+      },
+      {
+        "name": "category",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "categoryId"
+      },
+      {
+        "name": "awardLines",
+        "type": "HasMany",
+        "target": "AwardLine",
+        "foreignKey": "purchaseRequestItemId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseRequestId",
+      "productDNAId",
+      "categoryId",
+      "purchaseRequestItemId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "PurchaseRequestInvitation": {
+    "modelName": "PurchaseRequestInvitation",
+    "physicalTable": "PurchaseRequestInvitations",
+    "associations": [
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseRequestId",
+      "sellerOrganizationId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Quotation": {
+    "modelName": "Quotation",
+    "physicalTable": "Quotations",
+    "associations": [
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      },
+      {
+        "name": "invitation",
+        "type": "BelongsTo",
+        "target": "PurchaseRequestInvitation",
+        "foreignKey": "invitationId"
+      },
+      {
+        "name": "items",
+        "type": "HasMany",
+        "target": "QuotationItem",
+        "foreignKey": "quotationId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseRequestId",
+      "sellerOrganizationId",
+      "invitationId",
+      "quotationId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "QuotationItem": {
+    "modelName": "QuotationItem",
+    "physicalTable": "QuotationItems",
+    "associations": [
+      {
+        "name": "quotation",
+        "type": "BelongsTo",
+        "target": "Quotation",
+        "foreignKey": "quotationId"
+      },
+      {
+        "name": "requestItem",
+        "type": "BelongsTo",
+        "target": "PurchaseRequestItem",
+        "foreignKey": "purchaseRequestItemId"
+      },
+      {
+        "name": "productDNA",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "productDNAId"
+      },
+      {
+        "name": "awardLines",
+        "type": "HasMany",
+        "target": "AwardLine",
+        "foreignKey": "quotationItemId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "quotationId",
+      "purchaseRequestItemId",
+      "productDNAId",
+      "quotationItemId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Award": {
+    "modelName": "Award",
+    "physicalTable": "Awards",
+    "associations": [
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      },
+      {
+        "name": "lines",
+        "type": "HasMany",
+        "target": "AwardLine",
+        "foreignKey": "awardId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "purchaseOrder",
+        "type": "HasOne",
+        "target": "PurchaseOrder",
+        "foreignKey": "awardId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseRequestId",
+      "sellerOrganizationId",
+      "awardId",
+      "awardId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseRequestId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "awards_purchase_request_id"
+      },
+      {
+        "fields": [
+          "sellerOrganizationId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "awards_seller_organization_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "awards_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "AwardLine": {
+    "modelName": "AwardLine",
+    "physicalTable": "AwardLines",
+    "associations": [
+      {
+        "name": "award",
+        "type": "BelongsTo",
+        "target": "Award",
+        "foreignKey": "awardId"
+      },
+      {
+        "name": "requestItem",
+        "type": "BelongsTo",
+        "target": "PurchaseRequestItem",
+        "foreignKey": "purchaseRequestItemId"
+      },
+      {
+        "name": "quotationItem",
+        "type": "BelongsTo",
+        "target": "QuotationItem",
+        "foreignKey": "quotationItemId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      },
+      {
+        "name": "productDNA",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "productDNAId"
+      },
+      {
+        "name": "purchaseOrderLine",
+        "type": "HasOne",
+        "target": "PurchaseOrderLine",
+        "foreignKey": "awardLineId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "awardId",
+      "purchaseRequestItemId",
+      "quotationItemId",
+      "sellerOrganizationId",
+      "productDNAId",
+      "awardLineId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "awardId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "award_lines_award_id"
+      },
+      {
+        "fields": [
+          "purchaseRequestItemId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "award_lines_purchase_request_item_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "PurchaseOrder": {
+    "modelName": "PurchaseOrder",
+    "physicalTable": "PurchaseOrders",
+    "associations": [
+      {
+        "name": "award",
+        "type": "BelongsTo",
+        "target": "Award",
+        "foreignKey": "awardId"
+      },
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      },
+      {
+        "name": "lines",
+        "type": "HasMany",
+        "target": "PurchaseOrderLine",
+        "foreignKey": "purchaseOrderId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "shipments",
+        "type": "HasMany",
+        "target": "Shipment",
+        "foreignKey": "purchaseOrderId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "receipts",
+        "type": "HasMany",
+        "target": "Receipt",
+        "foreignKey": "purchaseOrderId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "awardId",
+      "buyerId",
+      "sellerOrganizationId",
+      "purchaseOrderId",
+      "purchaseOrderId",
+      "purchaseOrderId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseOrderNumber"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_purchase_order_number"
+      },
+      {
+        "fields": [
+          "awardId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_award_id"
+      },
+      {
+        "fields": [
+          "buyerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_buyer_id"
+      },
+      {
+        "fields": [
+          "sellerOrganizationId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_seller_organization_id"
+      },
+      {
+        "fields": [
+          "businessStatus"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_business_status"
+      },
+      {
+        "fields": [
+          "fulfillmentStatus"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_orders_fulfillment_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "PurchaseOrderLine": {
+    "modelName": "PurchaseOrderLine",
+    "physicalTable": "PurchaseOrderLines",
+    "associations": [
+      {
+        "name": "purchaseOrder",
+        "type": "BelongsTo",
+        "target": "PurchaseOrder",
+        "foreignKey": "purchaseOrderId"
+      },
+      {
+        "name": "awardLine",
+        "type": "BelongsTo",
+        "target": "AwardLine",
+        "foreignKey": "awardLineId"
+      },
+      {
+        "name": "productDNA",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "productDNAId"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseOrderId",
+      "awardLineId",
+      "productDNAId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseOrderId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_order_lines_purchase_order_id"
+      },
+      {
+        "fields": [
+          "awardLineId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "purchase_order_lines_award_line_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "Shipment": {
+    "modelName": "Shipment",
+    "physicalTable": "Shipments",
+    "associations": [
+      {
+        "name": "purchaseOrder",
+        "type": "BelongsTo",
+        "target": "PurchaseOrder",
+        "foreignKey": "purchaseOrderId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "sellerOrganizationId"
+      },
+      {
+        "name": "lines",
+        "type": "HasMany",
+        "target": "ShipmentLine",
+        "foreignKey": "shipmentId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "receipts",
+        "type": "HasMany",
+        "target": "Receipt",
+        "foreignKey": "shipmentId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseOrderId",
+      "sellerOrganizationId",
+      "shipmentId",
+      "shipmentId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseOrderId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "shipments_purchase_order_id"
+      },
+      {
+        "fields": [
+          "sellerOrganizationId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "shipments_seller_organization_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "shipments_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "ShipmentLine": {
+    "modelName": "ShipmentLine",
+    "physicalTable": "ShipmentLines",
+    "associations": [
+      {
+        "name": "shipment",
+        "type": "BelongsTo",
+        "target": "Shipment",
+        "foreignKey": "shipmentId"
+      },
+      {
+        "name": "purchaseOrderLine",
+        "type": "BelongsTo",
+        "target": "PurchaseOrderLine",
+        "foreignKey": "purchaseOrderLineId"
+      }
+    ],
+    "foreignKeys": [
+      "shipmentId",
+      "purchaseOrderLineId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "shipmentId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "shipment_lines_shipment_id"
+      },
+      {
+        "fields": [
+          "purchaseOrderLineId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "shipment_lines_purchase_order_line_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "Receipt": {
+    "modelName": "Receipt",
+    "physicalTable": "Receipts",
+    "associations": [
+      {
+        "name": "purchaseOrder",
+        "type": "BelongsTo",
+        "target": "PurchaseOrder",
+        "foreignKey": "purchaseOrderId"
+      },
+      {
+        "name": "shipment",
+        "type": "BelongsTo",
+        "target": "Shipment",
+        "foreignKey": "shipmentId"
+      },
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      },
+      {
+        "name": "lines",
+        "type": "HasMany",
+        "target": "ReceiptLine",
+        "foreignKey": "receiptId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "purchaseOrderId",
+      "shipmentId",
+      "buyerId",
+      "receiptId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseOrderId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipts_purchase_order_id"
+      },
+      {
+        "fields": [
+          "shipmentId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipts_shipment_id"
+      },
+      {
+        "fields": [
+          "buyerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipts_buyer_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipts_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "ReceiptLine": {
+    "modelName": "ReceiptLine",
+    "physicalTable": "ReceiptLines",
+    "associations": [
+      {
+        "name": "receipt",
+        "type": "BelongsTo",
+        "target": "Receipt",
+        "foreignKey": "receiptId"
+      },
+      {
+        "name": "purchaseOrderLine",
+        "type": "BelongsTo",
+        "target": "PurchaseOrderLine",
+        "foreignKey": "purchaseOrderLineId"
+      }
+    ],
+    "foreignKeys": [
+      "receiptId",
+      "purchaseOrderLineId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "receiptId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipt_lines_receipt_id"
+      },
+      {
+        "fields": [
+          "purchaseOrderLineId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "receipt_lines_purchase_order_line_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "PriceQuote": {
+    "modelName": "PriceQuote",
+    "physicalTable": "PriceQuotes",
+    "associations": [
+      {
+        "name": "organization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "organization_id"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "deal",
+        "type": "HasOne",
+        "target": "Deal",
+        "foreignKey": "priceQuoteId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "organization_id",
+      "sellerId",
+      "purchaseRequestId",
+      "priceQuoteId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Deal": {
+    "modelName": "Deal",
+    "physicalTable": "deals",
+    "explicitTableName": "deals",
+    "associations": [
+      {
+        "name": "organization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "organization_id"
+      },
+      {
+        "name": "dealInvoice",
+        "type": "BelongsTo",
+        "target": "Invoice",
+        "foreignKey": "invoice_id"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      },
+      {
+        "name": "purchaseRequest",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "purchaseRequestId"
+      },
+      {
+        "name": "commission",
+        "type": "HasOne",
+        "target": "CommissionTransaction",
+        "foreignKey": "dealId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "supervisorAssignments",
+        "type": "HasMany",
+        "target": "SupervisorAssignment",
+        "foreignKey": "deal_id",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "organization_id",
+      "invoice_id",
+      "sellerId",
+      "buyerId",
+      "purchaseRequestId",
+      "dealId",
+      "deal_id"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseRequestId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "deals_purchase_request_id"
+      },
+      {
+        "fields": [
+          "sellerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "deals_seller_id"
+      },
+      {
+        "fields": [
+          "buyerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "deals_buyer_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "deals_status"
+      }
+    ],
+    "hooks": [
+      "beforeUpdate"
+    ],
+    "scopes": []
+  },
+  "Rating": {
+    "modelName": "Rating",
+    "physicalTable": "ratings",
+    "explicitTableName": "ratings",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "dealId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "ratings_deal_id"
+      },
+      {
+        "fields": [
+          "raterId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "ratings_rater_id"
+      },
+      {
+        "fields": [
+          "ratedUserId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "ratings_rated_user_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "Notification": {
+    "modelName": "Notification",
+    "physicalTable": "notifications",
+    "explicitTableName": "notifications",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "notifications_created_at"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "SLARecord": {
+    "modelName": "SLARecord",
+    "physicalTable": "SLARecords",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "referenceType",
+          "referenceId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "s_l_a_records_reference_type_reference_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "s_l_a_records_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "Report": {
+    "modelName": "Report",
+    "physicalTable": "reports",
+    "explicitTableName": "reports",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "ProductDNA": {
+    "modelName": "ProductDNA",
+    "physicalTable": "product_dna",
+    "explicitTableName": "product_dna",
+    "associations": [
+      {
+        "name": "category",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "categoryId"
+      },
+      {
+        "name": "attributes",
+        "type": "BelongsToMany",
+        "target": "AttributeSchema",
+        "foreignKey": "dnaId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "dnaAttributes",
+        "type": "HasMany",
+        "target": "ProductDNAAttribute",
+        "foreignKey": "dnaId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "sellerListings",
+        "type": "HasMany",
+        "target": "SellerListing",
+        "foreignKey": "dnaId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "categoryId",
+      "dnaId",
+      "dnaId",
+      "dnaId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "AttributeSchema": {
+    "modelName": "AttributeSchema",
+    "physicalTable": "attribute_schemas",
+    "explicitTableName": "attribute_schemas",
+    "associations": [
+      {
+        "name": "productDnas",
+        "type": "BelongsToMany",
+        "target": "ProductDNA",
+        "foreignKey": "attributeId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "schemaAttributes",
+        "type": "HasMany",
+        "target": "ProductDNAAttribute",
+        "foreignKey": "attributeId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "attributeId",
+      "attributeId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "ProductDNAAttribute": {
+    "modelName": "ProductDNAAttribute",
+    "physicalTable": "product_dna_attributes",
+    "explicitTableName": "product_dna_attributes",
+    "associations": [
+      {
+        "name": "productDna",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "dnaId"
+      },
+      {
+        "name": "attributeSchema",
+        "type": "BelongsTo",
+        "target": "AttributeSchema",
+        "foreignKey": "attributeId"
+      }
+    ],
+    "foreignKeys": [
+      "dnaId",
+      "attributeId"
+    ],
+    "indexes": [
+      {
+        "unique": true,
+        "fields": [
+          "dnaId",
+          "attributeId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "product_dna_attributes_dna_id_attribute_id"
+      },
+      {
+        "fields": [
+          "attributeId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "product_dna_attributes_attribute_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "SellerListing": {
+    "modelName": "SellerListing",
+    "physicalTable": "seller_listings",
+    "explicitTableName": "seller_listings",
+    "associations": [
+      {
+        "name": "productDna",
+        "type": "BelongsTo",
+        "target": "ProductDNA",
+        "foreignKey": "dnaId"
+      },
+      {
+        "name": "organization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "organizationId"
+      },
+      {
+        "name": "creator",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "createdByUserId"
+      }
+    ],
+    "foreignKeys": [
+      "dnaId",
+      "organizationId",
+      "createdByUserId"
+    ],
+    "indexes": [
+      {
+        "unique": true,
+        "fields": [
+          "dnaId",
+          "organizationId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_listings_dna_id_organization_id"
+      },
+      {
+        "unique": true,
+        "fields": [
+          "organizationId",
+          "sellerSku"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_listings_organization_id_seller_sku"
+      },
+      {
+        "fields": [
+          "price"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_listings_price"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_listings_status"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "SmartPricingMatrix": {
+    "modelName": "SmartPricingMatrix",
+    "physicalTable": "SmartPricingMatrices",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "SmartInventory": {
+    "modelName": "SmartInventory",
+    "physicalTable": "SmartInventories",
+    "associations": [
+      {
+        "name": "product",
+        "type": "BelongsTo",
+        "target": "Product",
+        "foreignKey": "productId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "metrics",
+        "type": "HasOne",
+        "target": "InventoryMetrics",
+        "foreignKey": "inventoryId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "replenishmentOrders",
+        "type": "HasMany",
+        "target": "AutoReplenishmentOrder",
+        "foreignKey": "inventoryId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "productId",
+      "sellerId",
+      "inventoryId",
+      "inventoryId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "InventoryTransaction": {
+    "modelName": "InventoryTransaction",
+    "physicalTable": "InventoryTransactions",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "productId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "inventory_transactions_product_id"
+      },
+      {
+        "fields": [
+          "organizationId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "inventory_transactions_organization_id"
+      },
+      {
+        "fields": [
+          "referenceId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "inventory_transactions_reference_id"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "RefreshToken": {
+    "modelName": "RefreshToken",
+    "physicalTable": "refresh_tokens",
+    "explicitTableName": "refresh_tokens",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "AuditLog": {
+    "modelName": "AuditLog",
+    "physicalTable": "audit_logs",
+    "explicitTableName": "audit_logs",
+    "associations": [
+      {
+        "name": "organization",
+        "type": "BelongsTo",
+        "target": "Organization",
+        "foreignKey": "organization_id"
+      }
+    ],
+    "foreignKeys": [
+      "organization_id"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "ActionLog": {
+    "modelName": "ActionLog",
+    "physicalTable": "ActionLogs",
+    "explicitTableName": "ActionLogs",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [
+      "beforeUpdate",
+      "beforeDestroy"
+    ],
+    "scopes": []
+  },
+  "SystemSetting": {
+    "modelName": "SystemSetting",
+    "physicalTable": "system_settings",
+    "explicitTableName": "system_settings",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "InventoryMetrics": {
+    "modelName": "InventoryMetrics",
+    "physicalTable": "inventory_metrics",
+    "explicitTableName": "inventory_metrics",
+    "associations": [
+      {
+        "name": "inventory",
+        "type": "BelongsTo",
+        "target": "SmartInventory",
+        "foreignKey": "inventoryId"
+      }
+    ],
+    "foreignKeys": [
+      "inventoryId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "AutoReplenishmentOrder": {
+    "modelName": "AutoReplenishmentOrder",
+    "physicalTable": "auto_replenishment_orders",
+    "explicitTableName": "auto_replenishment_orders",
+    "associations": [
+      {
+        "name": "inventory",
+        "type": "BelongsTo",
+        "target": "SmartInventory",
+        "foreignKey": "inventoryId"
+      }
+    ],
+    "foreignKeys": [
+      "inventoryId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "PaymentTransaction": {
+    "modelName": "PaymentTransaction",
+    "physicalTable": "payment_transactions",
+    "explicitTableName": "payment_transactions",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "transactionId"
+        ],
+        "unique": true,
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_transaction_id"
+      },
+      {
+        "fields": [
+          "dealId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_deal_id"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_user_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_status"
+      },
+      {
+        "fields": [
+          "paymentGateway"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_payment_gateway"
+      },
+      {
+        "fields": [
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_created_at"
+      },
+      {
+        "fields": [
+          "status",
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_transactions_status_created_at"
+      }
+    ],
+    "hooks": [
+      "beforeUpdate"
+    ],
+    "scopes": []
+  },
+  "PaymentMethod": {
+    "modelName": "PaymentMethod",
+    "physicalTable": "payment_methods",
+    "explicitTableName": "payment_methods",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_methods_user_id"
+      },
+      {
+        "fields": [
+          "token"
+        ],
+        "unique": true,
+        "type": "",
+        "parser": null,
+        "name": "payment_methods_token"
+      },
+      {
+        "fields": [
+          "userId",
+          "isDefault"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_methods_user_id_is_default"
+      },
+      {
+        "fields": [
+          "isActive"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_methods_is_active"
+      }
+    ],
+    "hooks": [
+      "beforeUpdate",
+      "beforeCreate",
+      "beforeSave"
+    ],
+    "scopes": []
+  },
+  "PaymentAuditLog": {
+    "modelName": "PaymentAuditLog",
+    "physicalTable": "payment_audit_logs",
+    "explicitTableName": "payment_audit_logs",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "paymentTransactionId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_payment_transaction_id"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_user_id"
+      },
+      {
+        "fields": [
+          "action"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_action"
+      },
+      {
+        "fields": [
+          "severity"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_severity"
+      },
+      {
+        "fields": [
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_created_at"
+      },
+      {
+        "fields": [
+          "action",
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "payment_audit_logs_action_created_at"
+      }
+    ],
+    "hooks": [
+      "beforeUpdate",
+      "beforeDestroy"
+    ],
+    "scopes": []
+  },
+  "WithdrawalLog": {
+    "modelName": "WithdrawalLog",
+    "physicalTable": "withdrawal_logs",
+    "explicitTableName": "withdrawal_logs",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "withdrawal_logs_user_id"
+      },
+      {
+        "fields": [
+          "userRole"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "withdrawal_logs_user_role"
+      },
+      {
+        "fields": [
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "withdrawal_logs_created_at"
+      },
+      {
+        "fields": [
+          "userId",
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "withdrawal_logs_user_id_created_at"
+      },
+      {
+        "fields": [
+          "periodStart",
+          "periodEnd"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "withdrawal_logs_period_start_period_end"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "AlternativeQuote": {
+    "modelName": "AlternativeQuote",
+    "physicalTable": "alternative_quotes",
+    "explicitTableName": "alternative_quotes",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "fields": [
+          "purchaseRequestId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "alternative_quotes_purchase_request_id"
+      },
+      {
+        "fields": [
+          "buyerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "alternative_quotes_buyer_id"
+      },
+      {
+        "fields": [
+          "alternativeSellerId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "alternative_quotes_alternative_seller_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "alternative_quotes_status"
+      }
+    ],
+    "hooks": [
+      "beforeCreate"
+    ],
+    "scopes": []
+  },
+  "Permission": {
+    "modelName": "Permission",
+    "physicalTable": "permissions",
+    "explicitTableName": "permissions",
+    "associations": [
+      {
+        "name": "roles",
+        "type": "BelongsToMany",
+        "target": "Role",
+        "foreignKey": "permissionId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "permissionId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Role": {
+    "modelName": "Role",
+    "physicalTable": "roles",
+    "explicitTableName": "roles",
+    "associations": [
+      {
+        "name": "permissions",
+        "type": "BelongsToMany",
+        "target": "Permission",
+        "foreignKey": "roleId",
+        "sourceKey": "id"
+      },
+      {
+        "name": "users",
+        "type": "BelongsToMany",
+        "target": "User",
+        "foreignKey": "roleId",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "roleId",
+      "roleId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "RolePermission": {
+    "modelName": "RolePermission",
+    "physicalTable": "role_permissions",
+    "explicitTableName": "role_permissions",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "UserRole": {
+    "modelName": "UserRole",
+    "physicalTable": "user_roles",
+    "explicitTableName": "user_roles",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Region": {
+    "modelName": "Region",
+    "physicalTable": "regions",
+    "explicitTableName": "regions",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "City": {
+    "modelName": "City",
+    "physicalTable": "cities",
+    "explicitTableName": "cities",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Team": {
+    "modelName": "Team",
+    "physicalTable": "teams",
+    "explicitTableName": "teams",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "UserContext": {
+    "modelName": "UserContext",
+    "physicalTable": "user_context",
+    "explicitTableName": "user_context",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Delegation": {
+    "modelName": "Delegation",
+    "physicalTable": "Delegations",
+    "associations": [
+      {
+        "name": "principalUser",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "fromUserId"
+      },
+      {
+        "name": "delegateUser",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "toUserId"
+      }
+    ],
+    "foreignKeys": [
+      "fromUserId",
+      "toUserId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "fromUserId",
+          "toUserId",
+          "isActive"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "delegations_from_user_id_to_user_id_is_active"
+      },
+      {
+        "fields": [
+          "toUserId",
+          "expiresAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "delegations_to_user_id_expires_at"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "SellerDecision": {
+    "modelName": "SellerDecision",
+    "physicalTable": "SellerDecisions",
+    "explicitTableName": "SellerDecisions",
+    "associations": [
+      {
+        "name": "user",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "userId"
+      },
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "requestId"
+      }
+    ],
+    "foreignKeys": [
+      "userId",
+      "requestId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "BuyerDecisionContext": {
+    "modelName": "BuyerDecisionContext",
+    "physicalTable": "BuyerDecisionContexts",
+    "explicitTableName": "BuyerDecisionContexts",
+    "associations": [
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      },
+      {
+        "name": "quote",
+        "type": "BelongsTo",
+        "target": "PriceQuote",
+        "foreignKey": "quoteId"
+      },
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "requestId"
+      }
+    ],
+    "foreignKeys": [
+      "buyerId",
+      "quoteId",
+      "requestId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "MarketSilenceEvent": {
+    "modelName": "MarketSilenceEvent",
+    "physicalTable": "MarketSilenceEvents",
+    "explicitTableName": "MarketSilenceEvents",
+    "associations": [
+      {
+        "name": "sector",
+        "type": "BelongsTo",
+        "target": "Category",
+        "foreignKey": "sectorId"
+      },
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "requestId"
+      }
+    ],
+    "foreignKeys": [
+      "sectorId",
+      "requestId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "sectorId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "market_silence_events_sector_id"
+      },
+      {
+        "fields": [
+          "status"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "market_silence_events_status"
+      },
+      {
+        "fields": [
+          "createdAt"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "market_silence_events_created_at"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "SellerInteractionEvent": {
+    "modelName": "SellerInteractionEvent",
+    "physicalTable": "SellerInteractionEvents",
+    "explicitTableName": "SellerInteractionEvents",
+    "associations": [
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "request",
+        "type": "BelongsTo",
+        "target": "PurchaseRequest",
+        "foreignKey": "requestId"
+      }
+    ],
+    "foreignKeys": [
+      "sellerId",
+      "requestId"
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "sellerId",
+          "requestId"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_interaction_events_seller_id_request_id"
+      },
+      {
+        "fields": [
+          "interactionType"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_interaction_events_interaction_type"
+      },
+      {
+        "fields": [
+          "timestamp"
+        ],
+        "type": "",
+        "parser": null,
+        "name": "seller_interaction_events_timestamp"
+      }
+    ],
+    "hooks": [],
+    "scopes": []
+  },
+  "BuyerLimit": {
+    "modelName": "BuyerLimit",
+    "physicalTable": "buyer_limits",
+    "explicitTableName": "buyer_limits",
+    "associations": [
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      }
+    ],
+    "foreignKeys": [
+      "buyerId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "CommissionTransaction": {
+    "modelName": "CommissionTransaction",
+    "physicalTable": "commission_transactions",
+    "explicitTableName": "commission_transactions",
+    "associations": [
+      {
+        "name": "invoice",
+        "type": "BelongsTo",
+        "target": "Invoice",
+        "foreignKey": "invoice_id"
+      },
+      {
+        "name": "deal",
+        "type": "BelongsTo",
+        "target": "Deal",
+        "foreignKey": "dealId"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "sellerId"
+      },
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyerId"
+      }
+    ],
+    "foreignKeys": [
+      "invoice_id",
+      "dealId",
+      "sellerId",
+      "buyerId"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "EventLog": {
+    "modelName": "EventLog",
+    "physicalTable": "event_logs",
+    "explicitTableName": "event_logs",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "TrustScore": {
+    "modelName": "TrustScore",
+    "physicalTable": "trust_scores",
+    "explicitTableName": "trust_scores",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Sanction": {
+    "modelName": "Sanction",
+    "physicalTable": "sanctions",
+    "explicitTableName": "sanctions",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "AdminActionLog": {
+    "modelName": "AdminActionLog",
+    "physicalTable": "admin_action_logs",
+    "explicitTableName": "admin_action_logs",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "Invoice": {
+    "modelName": "Invoice",
+    "physicalTable": "invoices",
+    "explicitTableName": "invoices",
+    "associations": [
+      {
+        "name": "buyer",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "buyer_id"
+      },
+      {
+        "name": "seller",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "seller_id"
+      },
+      {
+        "name": "deal",
+        "type": "HasOne",
+        "target": "Deal",
+        "foreignKey": "invoice_id",
+        "sourceKey": "id"
+      },
+      {
+        "name": "commissions",
+        "type": "HasMany",
+        "target": "CommissionTransaction",
+        "foreignKey": "invoice_id",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "buyer_id",
+      "seller_id",
+      "invoice_id",
+      "invoice_id"
+    ],
+    "indexes": [],
+    "hooks": [
+      "beforeValidate",
+      "beforeUpdate"
+    ],
+    "scopes": []
+  },
+  "SupervisorAssignment": {
+    "modelName": "SupervisorAssignment",
+    "physicalTable": "supervisor_assignments",
+    "explicitTableName": "supervisor_assignments",
+    "associations": [
+      {
+        "name": "deal",
+        "type": "BelongsTo",
+        "target": "Deal",
+        "foreignKey": "deal_id"
+      },
+      {
+        "name": "supervisor",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "supervisor_id"
+      },
+      {
+        "name": "assigner",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "assigned_by"
+      },
+      {
+        "name": "commissionShares",
+        "type": "HasMany",
+        "target": "SupervisorCommissionShare",
+        "foreignKey": "assignment_id",
+        "sourceKey": "id"
+      }
+    ],
+    "foreignKeys": [
+      "deal_id",
+      "supervisor_id",
+      "assigned_by",
+      "assignment_id"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "SupervisorCommissionShare": {
+    "modelName": "SupervisorCommissionShare",
+    "physicalTable": "supervisor_commission_shares",
+    "explicitTableName": "supervisor_commission_shares",
+    "associations": [
+      {
+        "name": "assignment",
+        "type": "BelongsTo",
+        "target": "SupervisorAssignment",
+        "foreignKey": "assignment_id"
+      },
+      {
+        "name": "supervisor",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "supervisor_id"
+      },
+      {
+        "name": "deal",
+        "type": "BelongsTo",
+        "target": "Deal",
+        "foreignKey": "deal_id"
+      }
+    ],
+    "foreignKeys": [
+      "assignment_id",
+      "supervisor_id",
+      "deal_id"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "SupervisorNotification": {
+    "modelName": "SupervisorNotification",
+    "physicalTable": "supervisor_notifications",
+    "explicitTableName": "supervisor_notifications",
+    "associations": [
+      {
+        "name": "supervisor",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "supervisor_id"
+      },
+      {
+        "name": "deal",
+        "type": "BelongsTo",
+        "target": "Deal",
+        "foreignKey": "deal_id"
+      }
+    ],
+    "foreignKeys": [
+      "supervisor_id",
+      "deal_id"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "RegionAssignment": {
+    "modelName": "RegionAssignment",
+    "physicalTable": "region_assignments",
+    "explicitTableName": "region_assignments",
+    "associations": [
+      {
+        "name": "supervisor",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "supervisor_id"
+      },
+      {
+        "name": "assigner",
+        "type": "BelongsTo",
+        "target": "User",
+        "foreignKey": "assigned_by"
+      }
+    ],
+    "foreignKeys": [
+      "supervisor_id",
+      "assigned_by"
+    ],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  },
+  "FailedNotification": {
+    "modelName": "FailedNotification",
+    "physicalTable": "failed_notifications",
+    "explicitTableName": "failed_notifications",
+    "associations": [],
+    "foreignKeys": [],
+    "indexes": [],
+    "hooks": [],
+    "scopes": []
+  }
+}

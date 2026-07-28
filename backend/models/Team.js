@@ -9,17 +9,29 @@ module.exports = (sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
+      organizationId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: "organizations",
+          key: "id",
+        },
+      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
       },
-      cityId: {
-        type: DataTypes.UUID,
-        references: {
-          model: "cities",
-          key: "id",
-        },
+      teamType: {
+        type: DataTypes.STRING,
+        defaultValue: "PROCUREMENT", // 'PROCUREMENT' | 'FINANCE' | 'PROJECT' | 'WAREHOUSE' | 'LEGAL' | 'EXECUTIVE'
+      },
+      description: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      status: {
+        type: DataTypes.STRING,
+        defaultValue: "ACTIVE", // 'ACTIVE' | 'ARCHIVED'
       },
     },
     {

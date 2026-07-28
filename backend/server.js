@@ -448,6 +448,7 @@ const startServer = async (startListening = true) => {
     app.use("/api/quotes", quoteRoutes); // Legacy PriceQuote
     app.use("/api/v2/quotations", require("./routes/quotationRoutes")); // New Quotation Engine
     app.use("/api/v2/awards", require("./routes/awardRoutes")); // New Award Engine
+    app.use("/api/v2/negotiations", require("./routes/v2/negotiationRoutes")); // Wave 2 Commercial Process Engine
     app.use("/api/v2/purchase-orders", require("./routes/purchaseOrderRoutes")); // Procurement & Acceptance
     app.use("/api/users", userRoutes);
     app.use("/api/admin", adminRoutes);
@@ -503,6 +504,15 @@ const startServer = async (startListening = true) => {
       },
       ownerRoutes,
     );
+
+    const gatewayRoutes = require("./routes/gatewayRoutes");
+    app.use("/api/gateway", gatewayRoutes);
+
+    const agentGatewayRoutes = require("./routes/agentGatewayRoutes");
+    app.use("/api/agent", agentGatewayRoutes);
+
+    const organizationRoutes = require("./routes/organizationRoutes");
+    app.use("/api/organization", organizationRoutes);
 
     const supervisorRoutes = require("./routes/supervisorRoutes");
     app.use("/api/supervisor", supervisorRoutes);

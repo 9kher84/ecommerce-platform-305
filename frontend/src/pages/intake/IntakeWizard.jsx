@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCreateRequest } from '../../hooks/queries/entityQueries';
+import { useCreateRequest, usePublishRequest } from '../../hooks/queries/entityQueries';
 import { RequestForm } from '../../components/requests/RequestForm';
 import { toast } from 'react-hot-toast';
 
 export const IntakeWizard = () => {
   const navigate = useNavigate();
   const createRequestMutation = useCreateRequest();
+  const publishRequestMutation = usePublishRequest();
   
   const [method, setMethod] = useState('manual'); // manual, ai, attachments
   const [step, setStep] = useState(1); // 1: Input, 2: Preview
@@ -82,11 +83,16 @@ export const IntakeWizard = () => {
       const response = await createRequestMutation.mutateAsync(payload);
 
       if (response.success) {
-        toast.success(targetStatus === 'draft' ? 'تم حفظ كمسودة بنجاح' : 'تم إنشاء الطلب بنجاح');
+        if (targetStatus === 'published') {
+          await publishRequestMutation.mutateAsync(response.data.id);
+          toast.success('تم إنشاء ونشر الطلب بنجاح');
+        } else {
+          toast.success('تم حفظ كمسودة بنجاح');
+        }
         navigate(`/requests/${response.data.id}`);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'فشل إنشاء الطلب');
+      toast.error(error.response?.data?.message || 'فشل معالجة الطلب');
     } finally {
       setIsSubmitting(false);
     }

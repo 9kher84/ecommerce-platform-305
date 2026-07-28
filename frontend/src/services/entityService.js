@@ -41,5 +41,10 @@ export const entityService = {
     // It does not support pagination, search, or filters natively via query params in the current controller.
     const response = await apiClient.get('/api/products');
     return response.data; 
+  },
+
+  publishRequest: async (id) => {
+    const response = await apiClient.post(`/api/requests/${id}/publish`);
+    return response.data;
   }
 };

@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Permission = sequelize.define(
+  return sequelize.define(
     "Permission",
     {
       id: {
@@ -10,21 +10,42 @@ module.exports = (sequelize) => {
         primaryKey: true,
       },
       key: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
-        comment: "Unique key for the permission (e.g., MANAGE_USERS)",
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       description: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING,
         allowNull: true,
+      },
+      module: {
+        type: DataTypes.STRING,
+        defaultValue: "PROCUREMENT", // 'PROCUREMENT' | 'FINANCE' | 'GOVERNANCE' | 'SYSTEM'
+      },
+      riskLevel: {
+        type: DataTypes.STRING,
+        defaultValue: "LOW", // 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      },
+      isDelegatable: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+      requiresSOD: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      requiresApproval: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
     },
     {
       tableName: "permissions",
       timestamps: true,
-    },
+    }
   );
-
-  return Permission;
 };

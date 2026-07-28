@@ -13,6 +13,8 @@ const { PurchaseRequest } = require("../sequelize_setup");
 // PURCHASE REQUEST ROUTES
 // ============================================================
 
+const requestControllerV2 = require("../src/modules/procurement/infrastructure/api/RequestControllerV2");
+
 /**
  * @swagger
  * /api/requests:
@@ -43,7 +45,7 @@ router.post(
   protect,
   authorize("CREATE_REQUEST"), // Permission check only
   validateRequest(createRequestSchema),
-  requestController.createRequest,
+  requestControllerV2.createRequest,
 );
 
 /**
@@ -304,7 +306,7 @@ router.post(
   protect,
   loadResource(PurchaseRequest),
   authorize(null, "Request", "publish"),
-  requestController.publishRequest,
+  requestControllerV2.publishRequest,
 );
 
 /**
