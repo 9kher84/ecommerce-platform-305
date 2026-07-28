@@ -10,7 +10,24 @@ import { MatchRadar } from './pages/dashboard/MatchRadar';
 import { IntakeWizard } from './pages/intake/IntakeWizard';
 import { RequestsList } from './pages/requests/RequestsList';
 import { RequestDetails } from './pages/requests/RequestDetails';
+import { ProcurementWorkspace } from './pages/workspace/ProcurementWorkspace';
+import { OrganizationConsole } from './pages/organization/OrganizationConsole';
+import { EnterpriseKnowledgeGraph } from './pages/organization/EnterpriseKnowledgeGraph';
+import { AgentInbox } from './pages/agent/AgentInbox';
+import { AgentWorkspace } from './pages/agent/AgentWorkspace';
+import { AgentMarketplace } from './pages/agent/AgentMarketplace';
+import { HumanAiWorkspace } from './pages/agent/HumanAiWorkspace';
+import { DigitalEmployeesConsole } from './pages/agent/DigitalEmployeesConsole';
+import { SellerPlatformConsole } from './pages/seller/SellerPlatformConsole';
+import { B2bLandingPage } from './pages/public/B2bLandingPage';
+import { NegotiationWorkspacePage } from './pages/workspace/NegotiationWorkspacePage';
+import { CommercialExecutionWorkspacePage } from './pages/workspace/CommercialExecutionWorkspacePage';
+import { MerchantPassportPage } from './pages/workspace/MerchantPassportPage';
 import { EditDraft } from './pages/requests/EditDraft';
+import { WorkPackageDetails } from './pages/requests/WorkPackageDetails';
+import { ComparisonWorkspace } from './pages/requests/ComparisonWorkspace';
+import { CommercialProcessPage } from './pages/requests/CommercialProcessPage';
+import { CommercialInbox } from './pages/inbox/CommercialInbox';
 import { ProductsList } from './pages/products/ProductsList';
 import { QuotesList } from './pages/quotes/QuotesList';
 import { QuoteDetails } from './pages/quotes/QuoteDetails';
@@ -22,6 +39,8 @@ import { NotificationBell } from './components/notifications/NotificationBell';
 import { useAuth } from './providers/AuthProvider';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsersList } from './pages/admin/AdminUsersList';
+import { AiPlatformConsole } from './pages/admin/AiPlatformConsole';
+import { SovereignOperationalConsole } from './pages/admin/SovereignOperationalConsole';
 
 // A simple protected route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -35,6 +54,11 @@ const ProtectedRoute = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
           <div className="font-bold text-xl text-indigo-600 flex items-center gap-6">
             <Link to="/dashboard">MarketHub</Link>
+            <div className="flex gap-4 text-sm font-medium text-gray-600">
+              <Link to="/requests" className="hover:text-indigo-600">📋 طلبات الشراء</Link>
+              <Link to="/seller/platform" className="hover:text-indigo-600">🏬 منصة البائع</Link>
+              <Link to="/merchant/passport" className="hover:text-indigo-600">🛡️ الجواز التجاري</Link>
+            </div>
             {user?.isAdmin && (
               <div className="flex gap-4 text-sm font-medium text-gray-600">
                 <Link to="/admin" className="hover:text-indigo-600">لوحة الإدارة</Link>
@@ -75,6 +99,123 @@ export const App = () => {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Route>
       
+      <Route 
+        path="/admin/sovereign-op" 
+        element={
+          <ProtectedRoute>
+            <SovereignOperationalConsole />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/admin/ai-platform" 
+        element={
+          <ProtectedRoute>
+            <AiPlatformConsole />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/workspace/negotiation" 
+        element={
+          <ProtectedRoute>
+            <NegotiationWorkspacePage />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/workspace/execution" 
+        element={
+          <ProtectedRoute>
+            <CommercialExecutionWorkspacePage />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/merchant/passport" 
+        element={
+          <ProtectedRoute>
+            <MerchantPassportPage />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/seller/platform" 
+        element={
+          <ProtectedRoute>
+            <SellerPlatformConsole />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/agent/employees" 
+        element={
+          <ProtectedRoute>
+            <DigitalEmployeesConsole />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/agent/marketplace" 
+        element={
+          <ProtectedRoute>
+            <AgentMarketplace />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/agent/collab" 
+        element={
+          <ProtectedRoute>
+            <HumanAiWorkspace />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/agent/workspace" 
+        element={
+          <ProtectedRoute>
+            <AgentWorkspace />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/agent/inbox" 
+        element={
+          <ProtectedRoute>
+            <AgentInbox />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/organization/graph" 
+        element={
+          <ProtectedRoute>
+            <EnterpriseKnowledgeGraph />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/organization" 
+        element={
+          <ProtectedRoute>
+            <OrganizationConsole />
+          </ProtectedRoute>
+        } 
+      />
+
       <Route 
         path="/dashboard" 
         element={
@@ -125,6 +266,59 @@ export const App = () => {
           <ProtectedRoute>
             <div className="p-8">
               <RequestDetails />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/workspace/:id" 
+        element={
+          <ProtectedRoute>
+            <ProcurementWorkspace />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/requests/:id/packages/:packageId" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <WorkPackageDetails />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/requests/:id/packages/:packageId/compare" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <ComparisonWorkspace />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/requests/:id/packages/:packageId/processes/:processId" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <CommercialProcessPage />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/inbox" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <CommercialInbox />
             </div>
           </ProtectedRoute>
         } 
@@ -240,7 +434,7 @@ export const App = () => {
         } 
       />
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<B2bLandingPage />} />
     </Routes>
   );
 };
