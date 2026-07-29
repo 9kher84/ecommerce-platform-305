@@ -194,7 +194,7 @@ const authorize = (permissionKey, resourceType = null, action = "view") => {
 
       // 2. RBAC Check (On Principal)
       if (permissionKey) {
-        if (permissionKey === "CREATE_REQUEST" && (user.role === "buyer" || user.role === "admin" || user.role === "super_admin")) {
+        if ((permissionKey === "CREATE_REQUEST" || permissionKey === "VIEW_REQUESTS") && (user.role === "buyer" || user.role === "admin" || user.role === "super_admin")) {
           return next();
         }
         console.log(`[Authorize] Checking permission '${permissionKey}' for user ${user.id} (role: ${user.role})`);
