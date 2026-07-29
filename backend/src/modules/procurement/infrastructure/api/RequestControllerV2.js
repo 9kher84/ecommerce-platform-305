@@ -34,7 +34,7 @@ class RequestControllerV2 {
 
   createRequest = asyncHandler(async (req, res) => {
     const dto = {
-      header: req.body.header,
+      header: req.body.header || { title: req.body.title, sectorId: req.body.sectorId || "construction" },
       items: req.body.items,
       invitations: req.body.invitations,
       actorId: req.user.id,

@@ -6,6 +6,7 @@ const createRequestSchema = Joi.object({
     "any.required": "Title is required",
   }),
   description: Joi.string().allow("", null),
+  header: Joi.object().allow(null),
   quantity: Joi.number().positive().allow(null),
   unit: Joi.string().allow("", null),
   categoryId: Joi.number().integer().allow(null),
