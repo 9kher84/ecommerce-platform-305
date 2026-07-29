@@ -72,10 +72,12 @@ module.exports = (sequelize, DataTypes) => {
       resetPasswordToken: {
         type: DataTypes.STRING,
         allowNull: true,
+        field: 'resetPasswordToken',
       },
       resetPasswordExpire: {
         type: DataTypes.DATE,
         allowNull: true,
+        field: 'resetPasswordExpire',
       },
       completedDealsCount: {
         type: DataTypes.INTEGER,
