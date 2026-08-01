@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
 import { useRequestDetails } from '../../hooks/queries/entityQueries';
 import { SubmitProposalModal } from '../../components/commercial/SubmitProposalModal';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 export const RequestDetails = () => {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export const RequestDetails = () => {
   if (isError) {
     return (
       <div className="bg-red-50 text-red-700 p-4 rounded-md">
-        Error loading details: {error?.message}
+        Error loading details: {getErrorMessage(error)}
       </div>
     );
   }

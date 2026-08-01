@@ -4,6 +4,7 @@ import { RequestCard } from '../../components/requests/RequestCard';
 import { RequestFilters } from '../../components/requests/RequestFilters';
 import { Button } from '../../components/common/Button';
 import apiClient from '../../services/apiClient';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 export const RequestsList = () => {
   const [params, setParams] = useState({ page: 1, limit: 10, search: '', status: '' });
@@ -64,7 +65,7 @@ export const RequestsList = () => {
         </div>
       ) : isError ? (
         <div className="bg-red-50 text-red-700 p-4 rounded-md">
-          خطأ في تحميل الطلبات: {error?.message}
+          خطأ في تحميل الطلبات: {getErrorMessage(error)}
         </div>
       ) : (
         <>

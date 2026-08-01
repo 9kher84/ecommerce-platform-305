@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../providers/AuthProvider';
 
 export const B2bLandingPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col dir-rtl">
@@ -27,16 +29,34 @@ export const B2bLandingPage = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/login')}
-            className="text-xs font-bold text-slate-300 hover:text-white px-4 py-2 rounded-xl transition">
-            تسجيل الدخول
-          </button>
-          <button 
-            onClick={() => navigate('/register')}
-            className="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition">
-            انضم كتاجر / مشتري
-          </button>
+          {isAuthenticated ? (
+            <>
+              <span className="text-xs text-slate-300">مرحباً، {user?.name}</span>
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition">
+                لوحة التحكم
+              </button>
+              <button 
+                onClick={logout}
+                className="text-xs font-bold text-red-400 hover:text-red-300 px-4 py-2 rounded-xl transition">
+                تسجيل الخروج
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => navigate('/login')}
+                className="text-xs font-bold text-slate-300 hover:text-white px-4 py-2 rounded-xl transition">
+                تسجيل الدخول
+              </button>
+              <button 
+                onClick={() => navigate('/register')}
+                className="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition">
+                انضم كتاجر / مشتري
+              </button>
+            </>
+          )}
         </div>
       </header>
 
