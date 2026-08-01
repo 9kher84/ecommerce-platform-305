@@ -42,12 +42,17 @@ import { AdminUsersList } from './pages/admin/AdminUsersList';
 import { AiPlatformConsole } from './pages/admin/AiPlatformConsole';
 import { SovereignOperationalConsole } from './pages/admin/SovereignOperationalConsole';
 
+import { usePolicy } from './providers/PolicyEngineProvider';
+
 // A simple protected route wrapper
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const policy = usePolicy();
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -55,11 +60,11 @@ const ProtectedRoute = ({ children }) => {
           <div className="font-bold text-xl text-indigo-600 flex items-center gap-6">
             <Link to="/dashboard">MarketHub</Link>
             <div className="flex gap-4 text-sm font-medium text-gray-600">
-              <Link to="/requests" className="hover:text-indigo-600">📋 طلبات الشراء</Link>
-              <Link to="/seller/platform" className="hover:text-indigo-600">🏬 منصة البائع</Link>
+              {policy.can('BUYER_PROCUREMENT') && <Link to="/requests" className="hover:text-indigo-600">📋 طلبات الشراء</Link>}
+              {policy.can('SELLER_PLATFORM') && <Link to="/seller/platform" className="hover:text-indigo-600">🏬 منصة البائع</Link>}
               <Link to="/merchant/passport" className="hover:text-indigo-600">🛡️ الجواز التجاري</Link>
             </div>
-            {user?.isAdmin && (
+            {policy.can('MANAGE_SYSTEM') && (
               <div className="flex gap-4 text-sm font-medium text-gray-600">
                 <Link to="/admin" className="hover:text-indigo-600">لوحة الإدارة</Link>
                 <Link to="/admin/users" className="hover:text-indigo-600">المستخدمين</Link>
@@ -76,6 +81,31 @@ const ProtectedRoute = ({ children }) => {
       </main>
     </div>
   );
+};
+
+const RequireCapability = ({ children, capability }) => {
+  const policy = usePolicy();
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const isAllowed = policy.can(capability);
+  if (!isAllowed) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center space-y-4">
+          <div className="text-red-500 text-5xl">🛑</div>
+          <h2 className="text-xl font-bold text-gray-900">غير مصرح بالدخول</h2>
+          <p className="text-gray-500 text-sm">حسابك لا يملك الصلاحيات الكافية للوصول إلى هذه المنصة.</p>
+          <Navigate to="/dashboard" replace />
+        </div>
+      </div>
+    );
+  }
+
+  return <ProtectedRoute>{children}</ProtectedRoute>;
 };
 
 const AdminRoute = ({ children }) => {
@@ -147,9 +177,9 @@ export const App = () => {
       <Route 
         path="/seller/platform" 
         element={
-          <ProtectedRoute>
+          <RequireCapability capability="SELLER_PLATFORM">
             <SellerPlatformConsole />
-          </ProtectedRoute>
+          </RequireCapability>
         } 
       />
 

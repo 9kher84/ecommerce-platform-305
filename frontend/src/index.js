@@ -6,6 +6,8 @@ import App from './App';
 import { QueryProvider } from './providers/QueryProvider';
 import { AuthProvider } from './providers/AuthProvider';
 
+import { PolicyEngineProvider } from './providers/PolicyEngineProvider';
+
 const container = document.getElementById('root');
 const root = createRoot(container);
 
@@ -14,7 +16,9 @@ root.render(
     <BrowserRouter>
       <QueryProvider>
         <AuthProvider>
-          <App />
+          <PolicyEngineProvider>
+            <App />
+          </PolicyEngineProvider>
         </AuthProvider>
       </QueryProvider>
     </BrowserRouter>
