@@ -20,7 +20,7 @@ export const Login = () => {
     setAuthError('');
     loginMutation.mutate(data, {
       onSuccess: (res) => {
-        login(res.data?.user || res.data); // Depend on API response structure
+        login(res.user || res.data?.user || res.data); // Support both direct and axios wrapped schemas
         navigate(from);
       },
       onError: (error) => {

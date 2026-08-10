@@ -285,22 +285,22 @@ export const App = () => {
       <Route 
         path="/requests" 
         element={
-          <ProtectedRoute>
+          <RequireCapability capability="BUYER_PROCUREMENT">
             <div className="p-8">
               <RequestsList />
             </div>
-          </ProtectedRoute>
+          </RequireCapability>
         } 
       />
 
       <Route 
         path="/requests/:id" 
         element={
-          <ProtectedRoute>
+          <RequireCapability capability="BUYER_PROCUREMENT">
             <div className="p-8">
               <RequestDetails />
             </div>
-          </ProtectedRoute>
+          </RequireCapability>
         } 
       />
 

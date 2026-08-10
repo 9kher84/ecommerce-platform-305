@@ -5,8 +5,20 @@ import { useQueryClient } from '@tanstack/react-query';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('token');
+  });
+  const [user, setUser] = useState(() => {
+    const cached = localStorage.getItem('user');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
@@ -21,7 +33,9 @@ export const AuthProvider = ({ children }) => {
       try {
         // Try to fetch profile to validate token
         const response = await authService.getProfile();
-        setUser(response.data); // backend wraps user in response.data
+        const freshUser = response.data;
+        setUser(freshUser);
+        localStorage.setItem('user', JSON.stringify(freshUser));
         setIsAuthenticated(true);
       } catch (error) {
         authService.logout();

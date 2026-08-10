@@ -22,6 +22,7 @@ export const useLogin = () => {
       // data contains { success, token, user }
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      queryClient.clear(); // Complete cache wipeout
       queryClient.invalidateQueries({ queryKey: ['auth', 'profile'] });
     },
   });
