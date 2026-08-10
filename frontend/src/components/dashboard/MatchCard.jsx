@@ -19,7 +19,7 @@ export const MatchCard = ({ matchData }) => {
             <li key={idx} className="flex flex-col bg-gray-50 p-3 rounded-md border border-gray-100">
               <div className="flex justify-between">
                 <span className="font-medium text-gray-800">Match Score</span>
-                <span className="text-green-600 font-bold">{Math.round(item.score * 100)}%</span>
+                <span className="text-green-600 font-bold">{Math.round(item.matchScore || item.score || 0)}%</span>
               </div>
               {item.opportunity && (
                 <div className="text-sm text-gray-600 mt-1">
