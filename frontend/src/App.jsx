@@ -49,7 +49,9 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const policy = usePolicy();
 
-  if (!isAuthenticated) {
+  const token = localStorage.getItem('token');
+
+  if (!isAuthenticated || !token) {
     return <Navigate to="/login" replace />;
   }
 
@@ -58,7 +60,7 @@ const ProtectedRoute = ({ children }) => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
           <div className="font-bold text-xl text-indigo-600 flex items-center gap-6">
-            <Link to="/dashboard">MarketHub</Link>
+            <Link to="/" className="hover:opacity-80">MarketHub</Link>
             <div className="flex gap-4 text-sm font-medium text-gray-600">
               {policy.can('BUYER_PROCUREMENT') && <Link to="/requests" className="hover:text-indigo-600">📋 طلبات الشراء</Link>}
               {policy.can('SELLER_PLATFORM') && <Link to="/seller/platform" className="hover:text-indigo-600">🏬 منصة البائع</Link>}
@@ -110,7 +112,8 @@ const RequireCapability = ({ children, capability }) => {
 
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
-  if (!isAuthenticated) {
+  const token = localStorage.getItem('token');
+  if (!isAuthenticated || !token) {
     return <Navigate to="/login" replace />;
   }
   if (!user?.isAdmin) {

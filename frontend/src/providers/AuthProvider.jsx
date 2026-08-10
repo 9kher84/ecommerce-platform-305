@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (userData) => {
+    queryClient.clear(); // Wipe previous session's stale cache entirely
     setIsAuthenticated(true);
     setUser(userData);
   };

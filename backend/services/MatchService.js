@@ -25,20 +25,23 @@ class MatchService {
 
     // 2. HIGH PERFORMANCE QUERY
     // No ILIKE, No Decryption. Just Indexed Equality.
+    const whereClause = {};
+    if (request.sectorId) {
+      whereClause.categoryId = request.sectorId;
+    }
+
     const matches = await SmartInventory.findAll({
       where: {
         [Op.or]: [
           { specsBlindIndex: specsHash },
-          { sellerId: request.targetSellerId }, // Direct match support
+          ...(request.targetSellerId ? [{ sellerId: request.targetSellerId }] : []),
         ],
       },
       include: [
         {
           model: Product,
           as: "product",
-          where: {
-            categoryId: request.sectorId,
-          },
+          where: whereClause,
         },
       ],
       limit: 10,

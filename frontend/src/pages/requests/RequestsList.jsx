@@ -5,8 +5,10 @@ import { RequestFilters } from '../../components/requests/RequestFilters';
 import { Button } from '../../components/common/Button';
 import apiClient from '../../services/apiClient';
 import { getErrorMessage } from '../../utils/errorUtils';
+import { usePolicy } from '../../providers/PolicyEngineProvider';
 
 export const RequestsList = () => {
+  const policy = usePolicy();
   const [params, setParams] = useState({ page: 1, limit: 10, search: '', status: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -50,11 +52,13 @@ export const RequestsList = () => {
           <h1 className="text-2xl font-black text-gray-900">طلبات الشراء والمنافسات (Purchase Requests)</h1>
           <p className="text-xs text-gray-500 mt-1">تصفح الطلبات الحالية أو قم بنشر منافسة جديدة للبائعين.</p>
         </div>
-        <Button 
-          onClick={() => setIsModalOpen(true)} 
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-lg shadow-indigo-600/20">
-          + إنشاء طلب شراء جديد
-        </Button>
+        {policy.can('BUYER_PROCUREMENT') && (
+          <Button 
+            onClick={() => setIsModalOpen(true)} 
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-lg shadow-indigo-600/20">
+            + إنشاء طلب شراء جديد
+          </Button>
+        )}
       </div>
 
       <RequestFilters onFilterChange={(newFilters) => setParams(prev => ({ ...prev, ...newFilters, page: 1 }))} />
