@@ -71,6 +71,7 @@ class PurchaseRequest extends AggregateRoot {
       requiresDelivery: data.requiresDelivery !== false,
       contactNumbers: data.contactNumbers || [],
       images: data.images || [],
+      auction_type: data.auction_type || "public",
       items: items.map(i => ({ ...i, id: uuidv4() })),
       invitations: invitations || [],
       statusHistory: [{

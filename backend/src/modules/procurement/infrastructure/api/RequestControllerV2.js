@@ -33,8 +33,17 @@ class RequestControllerV2 {
   }
 
   createRequest = asyncHandler(async (req, res) => {
+    const headerData = req.body.header || { title: req.body.title, sectorId: req.body.sectorId || "construction" };
+    
+    // Map tender_type (PUBLIC/PRIVATE) to auction_type (public/secret)
+    if (headerData.tender_type === "PRIVATE") {
+      headerData.auction_type = "secret";
+    } else {
+      headerData.auction_type = "public";
+    }
+
     const dto = {
-      header: req.body.header || { title: req.body.title, sectorId: req.body.sectorId || "construction" },
+      header: headerData,
       items: req.body.items,
       invitations: req.body.invitations,
       actorId: req.user.id,
