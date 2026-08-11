@@ -78,7 +78,12 @@ class PurchaseRequestRepository extends PurchaseRequestRepositoryPort {
       contactNumbers: persistenceData.contactNumbers,
       images: persistenceData.images,
       auction_type: persistenceData.auction_type,
-      expiresAt: persistenceData.expiresAt
+      expiresAt: persistenceData.expiresAt,
+      delivery_date: persistenceData.delivery_date,
+      delivery_city: persistenceData.delivery_city,
+      fixed_price: persistenceData.fixed_price,
+      pricing_method: persistenceData.pricing_method,
+      tender_type: persistenceData.tender_type
     };
     
     const [affectedRows] = await PurchaseRequest.update(updateData, { 

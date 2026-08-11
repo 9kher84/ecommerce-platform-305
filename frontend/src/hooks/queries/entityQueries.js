@@ -84,3 +84,15 @@ export const usePublishRequest = () => {
     },
   });
 };
+
+export const useDeleteDraft = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => entityService.deleteDraft(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'my-requests'] });
+    },
+  });
+};

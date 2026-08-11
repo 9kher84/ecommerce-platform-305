@@ -28,6 +28,13 @@ class PurchaseRequest extends AggregateRoot {
     this.requiresDelivery = data.requiresDelivery;
     this.contactNumbers = data.contactNumbers || [];
     this.images = data.images || [];
+    
+    // Additional RFQ persistence mapping
+    this.delivery_date = data.delivery_date;
+    this.delivery_city = data.delivery_city;
+    this.fixed_price = data.fixed_price;
+    this.pricing_method = data.pricing_method;
+    this.tender_type = data.tender_type;
   }
 
   static STATUS_TRANSITIONS = {
@@ -72,6 +79,12 @@ class PurchaseRequest extends AggregateRoot {
       contactNumbers: data.contactNumbers || [],
       images: data.images || [],
       auction_type: data.auction_type || "public",
+      expiresAt: data.expiresAt || null,
+      delivery_date: data.delivery_date || null,
+      delivery_city: data.delivery_city || null,
+      fixed_price: data.fixed_price || null,
+      pricing_method: data.pricing_method || 'OPEN',
+      tender_type: data.tender_type || 'PUBLIC',
       items: items.map(i => ({ ...i, id: uuidv4() })),
       invitations: invitations || [],
       statusHistory: [{

@@ -46,5 +46,10 @@ export const entityService = {
   publishRequest: async (id) => {
     const response = await apiClient.post(`/api/requests/${id}/publish`);
     return response.data;
+  },
+  
+  deleteDraft: async (id) => {
+    const response = await apiClient.delete(`/api/requests/${id}/draft`);
+    return response.data;
   }
 };

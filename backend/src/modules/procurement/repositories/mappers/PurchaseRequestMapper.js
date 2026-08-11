@@ -30,6 +30,11 @@ class PurchaseRequestMapper {
       requiresDelivery: sequelizeModel.requiresDelivery,
       contactNumbers: sequelizeModel.contactNumbers || [],
       images: sequelizeModel.images || [],
+      delivery_date: sequelizeModel.delivery_date,
+      delivery_city: sequelizeModel.delivery_city,
+      fixed_price: sequelizeModel.fixed_price,
+      pricing_method: sequelizeModel.pricing_method,
+      tender_type: sequelizeModel.tender_type,
     });
   }
 
@@ -54,7 +59,12 @@ class PurchaseRequestMapper {
       contactNumbers: aggregate.contactNumbers,
       images: aggregate.images,
       auction_type: aggregate.auction_type,
-      expiresAt: aggregate.expiresAt
+      expiresAt: aggregate.expiresAt,
+      delivery_date: aggregate.delivery_date,
+      delivery_city: aggregate.delivery_city,
+      fixed_price: aggregate.fixed_price,
+      pricing_method: aggregate.pricing_method,
+      tender_type: aggregate.tender_type,
     };
   }
 }

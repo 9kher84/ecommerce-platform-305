@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCreateRequest, usePublishRequest } from '../../hooks/queries/entityQueries';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useCreateRequest, usePublishRequest, useRequestDetails, useUpdateRequest } from '../../hooks/queries/entityQueries';
 import { RequestForm } from '../../components/requests/RequestForm';
 import { toast } from 'react-hot-toast';
 
 export const IntakeWizard = () => {
   const navigate = useNavigate();
+  const { id: routeId } = useParams();
+  const [draftId, setDraftId] = useState(routeId || null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState('');
+  
   const createRequestMutation = useCreateRequest();
   const publishRequestMutation = usePublishRequest();
-  
+  const updateRequestMutation = useUpdateRequest();
+  const { data: requestDetails } = useRequestDetails(draftId);
+
   const [method, setMethod] = useState('manual'); // manual, ai, attachments
   const [step, setStep] = useState(1); // 1: Input, 2: Preview
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +30,92 @@ export const IntakeWizard = () => {
     delivery_date: '',
     expiresAt: '',
     pricing_method: 'OPEN',
+    fixed_price: '',
   });
+
+  // Load existing draft if ID is present
+  useEffect(() => {
+    if (requestDetails?.request) {
+      const req = requestDetails.request;
+      setFormData({
+        tender_type: req.tender_type || 'PUBLIC',
+        title: req.title || '',
+        sectorId: req.sectorId ? String(req.sectorId) : '',
+        description: req.description || '',
+        quantity: req.quantity ? String(req.quantity) : '',
+        unit: req.unit || '',
+        project_address: req.deliveryLocations?.[0]?.address || req.delivery_city || '',
+        delivery_date: req.delivery_date ? new Date(req.delivery_date).toISOString().split('T')[0] : '',
+        expiresAt: req.expiresAt ? new Date(req.expiresAt).toISOString().split('T')[0] : '',
+        pricing_method: req.pricing_method || 'OPEN',
+        fixed_price: req.fixed_price ? String(req.fixed_price) : '',
+      });
+    }
+  }, [requestDetails]);
+
+  // Debounced Auto-Save Draft
+  useEffect(() => {
+    if (!formData.title || !formData.sectorId) return;
+
+    const delayDebounceFn = setTimeout(async () => {
+      setAutoSaveStatus('جاري حفظ المسودة تلقائياً...');
+      try {
+        const defaultItem = {
+          lineNumber: 1,
+          freeTextDescription: formData.description || formData.title,
+          quantity: parseFloat(formData.quantity) || 1,
+          unit: formData.unit || 'وحدة',
+        };
+
+        const payload = {
+          header: {
+            title: formData.title,
+            description: formData.description,
+            sectorId: formData.sectorId ? parseInt(formData.sectorId) : null,
+            tender_type: formData.tender_type || 'PUBLIC',
+            pricing_method: formData.pricing_method || 'OPEN',
+            fixed_price: formData.fixed_price ? parseFloat(formData.fixed_price) : null,
+            delivery_date: formData.delivery_date || null,
+            expiresAt: formData.expiresAt || null,
+            delivery_city: formData.project_address || null,
+            deliveryLocations: formData.project_address
+              ? [{ address: formData.project_address }]
+              : [],
+          },
+          items: [defaultItem],
+          invitations: [],
+        };
+
+        if (draftId) {
+          await updateRequestMutation.mutateAsync({ id: draftId, data: payload });
+          setAutoSaveStatus('تم الحفظ تلقائياً ✓');
+        } else {
+          const response = await createRequestMutation.mutateAsync(payload);
+          const newId = response.request?.id || response.data?.request?.id || response.data?.id;
+          if (newId) {
+            setDraftId(newId);
+            setAutoSaveStatus('تم الحفظ تلقائياً ✓');
+          }
+        }
+      } catch (error) {
+        setAutoSaveStatus('فشل الحفظ التلقائي');
+      }
+    }, 2500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    formData.title,
+    formData.sectorId,
+    formData.description,
+    formData.quantity,
+    formData.unit,
+    formData.project_address,
+    formData.delivery_date,
+    formData.expiresAt,
+    formData.pricing_method,
+    formData.fixed_price,
+    draftId
+  ]);
 
   const handleNext = () => {
     if (step === 1) {
@@ -46,15 +137,12 @@ export const IntakeWizard = () => {
   };
 
   const handlePublish = async () => {
-    await submitRequest('published'); // It goes to draft first, we can publish it immediately or just let the backend handle it based on status. For now we just create it as draft and if they want to publish, we can call publishRequest endpoint. The PR says createRequest makes it 'draft' by default. So we'll save it as draft, then optionally call publish.
-    // Actually the requirement is "Create basic draft then redirect is NOT good. Must fill form fully -> Draft". So let's just create it.
+    await submitRequest('published');
   };
 
   const submitRequest = async (targetStatus) => {
     setIsSubmitting(true);
     try {
-      // Backend expects: { header: {...}, items: [{...}], invitations: [] }
-      // items must always have at least one entry — built from formData
       const defaultItem = {
         lineNumber: 1,
         freeTextDescription: formData.description || formData.title,
@@ -69,6 +157,7 @@ export const IntakeWizard = () => {
           sectorId: formData.sectorId ? parseInt(formData.sectorId) : null,
           tender_type: formData.tender_type || 'PUBLIC',
           pricing_method: formData.pricing_method || 'OPEN',
+          fixed_price: formData.fixed_price ? parseFloat(formData.fixed_price) : null,
           delivery_date: formData.delivery_date || null,
           expiresAt: formData.expiresAt || null,
           delivery_city: formData.project_address || null,
@@ -80,19 +169,33 @@ export const IntakeWizard = () => {
         invitations: [],
       };
 
-      const response = await createRequestMutation.mutateAsync(payload);
-
-      if (response.success) {
+      let activeId = draftId;
+      if (activeId) {
+        await updateRequestMutation.mutateAsync({ id: activeId, data: payload });
         if (targetStatus === 'published') {
-          await publishRequestMutation.mutateAsync(response.data.id);
-          toast.success('تم إنشاء ونشر الطلب بنجاح');
+          await publishRequestMutation.mutateAsync(activeId);
+          toast.success('تم إنشاء ونشر الطلب بنجاح 🚀');
         } else {
-          toast.success('تم حفظ كمسودة بنجاح');
+          toast.success('تم حفظ التعديلات كمسودة بنجاح ✓');
         }
-        navigate(`/requests/${response.data.id}`);
+        navigate(`/workspace/${activeId}`);
+      } else {
+        const response = await createRequestMutation.mutateAsync(payload);
+        const newId = response.request?.id || response.data?.request?.id || response.data?.id;
+        if (newId) {
+          if (targetStatus === 'published') {
+            await publishRequestMutation.mutateAsync(newId);
+            toast.success('تم إنشاء ونشر الطلب بنجاح 🚀');
+          } else {
+            toast.success('تم حفظ كمسودة بنجاح ✓');
+          }
+          navigate(`/workspace/${newId}`);
+        } else {
+          throw new Error('فشل في العثور على رقم الطلب المسترجع');
+        }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'فشل معالجة الطلب');
+      toast.error(error.message || 'فشل معالجة الطلب');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,9 +220,16 @@ export const IntakeWizard = () => {
     <div className="max-w-4xl mx-auto py-8 px-4" dir="rtl">
       
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">إنشاء طلب شراء جديد</h1>
-        <p className="text-gray-500 mt-2">اختر طريقة الإدخال المناسبة، ثم أكمل تفاصيل الطلب.</p>
+      <div className="mb-8 flex justify-between items-center bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900">{draftId ? 'تعديل طلب الشراء / RFQ' : 'إنشاء طلب شراء جديد'}</h1>
+          <p className="text-gray-500 mt-2">اختر طريقة الإدخال المناسبة، ثم أكمل تفاصيل الطلب.</p>
+        </div>
+        {autoSaveStatus && (
+          <span className="text-xs bg-indigo-50 text-indigo-700 px-3.5 py-2 rounded-full font-bold border border-indigo-100 animate-pulse">
+            {autoSaveStatus}
+          </span>
+        )}
       </div>
 
       {step === 1 && (

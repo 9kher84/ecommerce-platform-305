@@ -1,11 +1,12 @@
 import React from 'react';
-import { useMyRequests, useUpdateRequestStatus } from '../../hooks/queries/entityQueries';
+import { useMyRequests, useUpdateRequestStatus, useDeleteDraft } from '../../hooks/queries/entityQueries';
 import { Button } from '../common/Button';
 import { useNavigate } from 'react-router-dom';
 
 export const BuyerDrafts = () => {
   const { data: response, isLoading, error } = useMyRequests({});
   const updateStatusMutation = useUpdateRequestStatus();
+  const deleteDraftMutation = useDeleteDraft();
   const navigate = useNavigate();
 
   if (isLoading) return <div className="text-gray-500 py-4">جاري تحميل المسودات...</div>;
@@ -20,6 +21,12 @@ export const BuyerDrafts = () => {
   const handlePublish = (id) => {
     if (window.confirm('هل أنت متأكد من نشر هذا الطلب؟')) {
       updateStatusMutation.mutate({ id, status: 'published' });
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('هل أنت متأكد من نقل هذه المسودة إلى المهملات (Trash)؟')) {
+      deleteDraftMutation.mutate(id);
     }
   };
 
@@ -39,6 +46,14 @@ export const BuyerDrafts = () => {
             </Button>
             <Button size="sm" onClick={() => handlePublish(draft.id)} isLoading={updateStatusMutation.isPending}>
               نشر (Publish)
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-bold"
+              onClick={() => handleDelete(draft.id)} 
+              isLoading={deleteDraftMutation.isPending}
+            >
+              حذف
             </Button>
           </div>
         </div>

@@ -60,7 +60,7 @@ export const RequestForm = ({ formData, setFormData, isPreview = false }) => {
           <div>
             <span className="block text-sm font-semibold text-gray-500 mb-1">طريقة التسعير:</span>
             <p className="text-gray-900 font-medium">
-              {formData.pricing_method === 'OPEN' ? 'تسعير مفتوح (يحدد المورد السعر)' : 'ميزانية محددة (أقصى سقف مسموح)'}
+              {formData.pricing_method === 'OPEN' ? 'تسعير مفتوح (يحدد المورد السعر)' : `ميزانية محددة (${formData.fixed_price || 0} ريال سعودي)`}
             </p>
           </div>
 
@@ -264,9 +264,24 @@ export const RequestForm = ({ formData, setFormData, isPreview = false }) => {
           </label>
           <label className={`flex items-start p-4 border rounded cursor-pointer transition-colors ${formData.pricing_method === 'FIXED_BUDGET' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'}`}>
             <input type="radio" name="pricing_method" value="FIXED_BUDGET" checked={formData.pricing_method === 'FIXED_BUDGET'} onChange={handleChange} className="mt-1 w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-            <div className="mr-3">
+            <div className="mr-3 w-full">
               <span className="block text-sm font-bold text-gray-900">ميزانية محددة (Maximum Budget)</span>
-              <span className="block text-sm text-gray-500 mt-1">تحديد سقف أعلى للميزانية. لا يمكن للموردين تقديم عروض تتجاوز هذا السقف.</span>
+              <span className="block text-sm text-gray-500 mt-1 mb-2">تحديد سقف أعلى للميزانية. لا يمكن للموردين تقديم عروض تتجاوز هذا السقف.</span>
+              {formData.pricing_method === 'FIXED_BUDGET' && (
+                <div className="mt-3">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">الميزانية القصوى (ريال سعودي)*</label>
+                  <input
+                    type="number"
+                    name="fixed_price"
+                    required
+                    min="1"
+                    placeholder="مثال: 50000"
+                    value={formData.fixed_price || ''}
+                    onChange={handleChange}
+                    className="w-full md:w-1/2 p-2 border border-indigo-300 rounded focus:ring-indigo-500 bg-white"
+                  />
+                </div>
+              )}
             </div>
           </label>
         </div>

@@ -4,8 +4,7 @@ import { Button } from '../common/Button';
 export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectProcess }) => {
   const [chatInput, setChatInput] = useState('');
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'system', text: `مرحباً بك! مساحة الشراء السريعة لـ: "${project?.title || 'طلب توريد جديد'}"` },
-    { id: 2, sender: 'seller', name: 'مورد أجهزة ومواد البناء', price: '5,400 ريال', text: 'أستطيع توفير الحزمة بالكامل والتسليم خلال 48 ساعة.' }
+    { id: 1, sender: 'system', text: `مرحباً بك! مساحة الشراء السريعة لـ: "${project?.title || 'طلب توريد جديد'}"` }
   ]);
 
   const handleSend = (e) => {

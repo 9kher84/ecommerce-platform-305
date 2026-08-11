@@ -309,6 +309,20 @@ router.post(
   requestControllerV2.publishRequest,
 );
 
+router.delete(
+  "/:id/draft",
+  protect,
+  loadResource(PurchaseRequest),
+  authorize(null, "Request", "update"),
+  requestControllerV2.deleteDraft,
+);
+
+router.post(
+  "/drafts/bulk-delete",
+  protect,
+  requestControllerV2.bulkDeleteDrafts,
+);
+
 /**
  * @swagger
  * /api/requests/{id}/request-modification:

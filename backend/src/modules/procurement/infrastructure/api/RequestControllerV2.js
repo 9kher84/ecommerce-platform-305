@@ -30,6 +30,8 @@ class RequestControllerV2 {
     // Bind context to preserve 'this'
     this.publishRequest = this.publishRequest.bind(this);
     this.createRequest = this.createRequest.bind(this);
+    this.deleteDraft = this.deleteDraft.bind(this);
+    this.bulkDeleteDrafts = this.bulkDeleteDrafts.bind(this);
   }
 
   createRequest = asyncHandler(async (req, res) => {
@@ -77,6 +79,56 @@ class RequestControllerV2 {
       success: true,
       message: `Request published successfully as ${targetStatus}. Sellers will be notified.`,
       request,
+    });
+  });
+
+  deleteDraft = asyncHandler(async (req, res) => {
+    const request = req.resource;
+    if (!request) {
+      res.status(404);
+      throw new Error("Request not found");
+    }
+
+    if (request.status !== "draft") {
+      res.status(400);
+      throw new Error("Only draft requests can be moved to trash");
+    }
+
+    if (request.userId !== req.user.id && req.user.role !== "admin") {
+      res.status(403);
+      throw new Error("Unauthorized to delete this draft");
+    }
+
+    const { PurchaseRequest } = require("../../../../../sequelize_setup");
+    await PurchaseRequest.destroy({
+      where: { id: request.id }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Draft moved to trash successfully"
+    });
+  });
+
+  bulkDeleteDrafts = asyncHandler(async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      res.status(400);
+      throw new Error("Draft IDs list is required");
+    }
+
+    const { PurchaseRequest } = require("../../../../../sequelize_setup");
+    const affectedCount = await PurchaseRequest.destroy({
+      where: {
+        id: ids,
+        userId: req.user.id,
+        status: "draft"
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${affectedCount} drafts moved to trash successfully`
     });
   });
 }

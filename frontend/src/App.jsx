@@ -362,7 +362,7 @@ export const App = () => {
         element={
           <ProtectedRoute>
             <div className="p-8">
-              <EditDraft />
+              <IntakeWizard />
             </div>
           </ProtectedRoute>
         } 

@@ -41,32 +41,32 @@ export const useWorkspaceOrchestrator = (projectId) => {
     // Dynamic Health %
     let healthScore = 100;
     if (projectPendingAwards.length > 0) healthScore -= 10 * projectPendingAwards.length;
-    if (totalPackages === 0) healthScore = 50;
+    if (totalPackages === 0) healthScore = 0;
 
     // Dynamic Risk Level
-    let riskLevel = 'Low';
+    let riskLevel = totalPackages > 0 ? 'Low' : 'N/A';
     if (projectPendingAwards.length > 1) riskLevel = 'High';
     else if (projectPendingAwards.length === 1 || totalNegotiations > 3) riskLevel = 'Medium';
 
     const totalCommitted = awardedPackages * 150000;
-    const totalBudget = totalPackages * 200000 || 500000;
-    const remainingBudget = totalBudget - totalCommitted;
+    const totalBudget = parseFloat(project?.fixed_price) || (totalPackages * 200000);
+    const remainingBudget = totalBudget > 0 ? (totalBudget - totalCommitted) : 0;
 
     return {
-      statusText: 'محرك الصفقة (Deal Engine) متصل بالبيانات الحية',
+      statusText: totalPackages > 0 ? 'محرك الصفقة (Deal Engine) متصل بالبيانات الحية' : 'بانتظار إنشاء حزم العمل وتعيين الميزانية',
       activeNegotiationsCount: totalNegotiations,
       awardedCount: awardedPackages,
       totalPackagesCount: totalPackages,
       progressPercent,
       healthPercent: healthScore,
       riskLevel,
-      budgetPercent: Math.round((totalCommitted / totalBudget) * 100) || 45,
+      budgetPercent: totalBudget > 0 ? Math.round((totalCommitted / totalBudget) * 100) : 0,
       totalBudget,
       totalCommitted,
       remainingBudget,
       aiState: 'جاهز للاستجابة'
     };
-  }, [workPackages, projectPendingAwards]);
+  }, [workPackages, projectPendingAwards, project]);
 
   // ============================================================
   // 🔥 DECISION ENGINE (Calculates Priorities)
@@ -86,20 +86,30 @@ export const useWorkspaceOrchestrator = (projectId) => {
           payload: { awardId: award.id, processId: award.id }
         });
       });
+    } else if (workPackages.length === 0) {
+      cards.push({
+        id: 'no-packages-insight',
+        priority: 'INFO',
+        type: 'AI_SUGGESTION',
+        title: 'ℹ️ لا توجد حزم عمل نشطة',
+        description: 'ابدأ بتقسيم طلب الشراء إلى حزم عمل للبدء في التفاوض والترسية مع الموردين.',
+        actionLabel: 'إنشاء حزمة عمل جديدة ❯',
+        payload: { targetDomain: 'Work' }
+      });
     } else {
       cards.push({
         id: 'exec-summary',
         priority: 'INSIGHT',
         type: 'AI_SUGGESTION',
         title: '🟢 مؤشر صحة الصفقة والتوفير',
-        description: `صحة الصفقة ${systemStatus.healthPercent}% مع تحقيق توفير تقديري 145,000 ريال.`,
+        description: `صحة الصفقة ${systemStatus.healthPercent}% مع تحقيق حزم العمل المنجزة لنسبة تقدم متسقة.`,
         actionLabel: 'استعراض التقرير ❯',
         payload: { targetDomain: 'Overview' }
       });
     }
 
     return cards.slice(0, 3);
-  }, [projectPendingAwards, systemStatus]);
+  }, [projectPendingAwards, systemStatus, workPackages]);
 
   // Actions
   const switchDomain = (domainName) => setActiveDomain(domainName);

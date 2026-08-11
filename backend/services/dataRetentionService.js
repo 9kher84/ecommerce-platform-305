@@ -35,6 +35,42 @@ class DataRetentionService {
       throw error;
     }
   }
+
+  /**
+   * Permanently deletes soft-deleted draft requests older than 30 days.
+   * @returns {Promise<number>} Number of deleted records
+   */
+  static async cleanExpiredDrafts() {
+    const retentionPeriodDays = 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionPeriodDays);
+
+    const { PurchaseRequest } = require("../sequelize_setup");
+    const { Op } = require("sequelize");
+
+    console.log(
+      `[DataRetention] Cleaning soft-deleted drafts older than: ${cutoffDate.toISOString()}`,
+    );
+
+    try {
+      const deletedCount = await PurchaseRequest.destroy({
+        where: {
+          deletedAt: {
+            [Op.lt]: cutoffDate,
+          },
+          status: "draft",
+        },
+        force: true, // Force permanent deletion of soft-deleted records
+        paranoid: false, // Bypass default Sequelize paranoid check to target soft-deleted records
+      });
+
+      console.log(`[DataRetention] Permanently deleted ${deletedCount} expired drafts.`);
+      return deletedCount;
+    } catch (error) {
+      console.error("[DataRetention] Error cleaning expired drafts:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = DataRetentionService;
