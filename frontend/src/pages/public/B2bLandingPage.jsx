@@ -82,7 +82,7 @@ export const B2bLandingPage = () => {
             onClick={() => {
               const token = localStorage.getItem('token');
               if (token) {
-                navigate('/requests');
+                navigate('/intake');
               } else {
                 navigate('/login');
               }
