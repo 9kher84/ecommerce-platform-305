@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCreateRequest, usePublishRequest, useRequestDetails, useUpdateRequest } from '../../hooks/queries/entityQueries';
 import { RequestForm } from '../../components/requests/RequestForm';
 import { toast } from 'react-hot-toast';
@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 export const IntakeWizard = () => {
   const navigate = useNavigate();
   const { id: routeId } = useParams();
+  const [searchParams] = useSearchParams();
   const [draftId, setDraftId] = useState(routeId || null);
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   
@@ -16,7 +17,7 @@ export const IntakeWizard = () => {
   const { data: requestDetails } = useRequestDetails(draftId);
 
   const [method, setMethod] = useState('manual'); // manual, ai, attachments
-  const [step, setStep] = useState(1); // 1: Input, 2: Preview
+  const [step, setStep] = useState(searchParams.get('step') === '2' ? 2 : 1); // 1: Input, 2: Preview
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({

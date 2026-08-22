@@ -43,10 +43,10 @@ export const RequestCard = ({ request }) => {
           Created: {new Date(request.createdAt).toLocaleDateString()}
         </span>
         <Link 
-          to={`/requests/${request.id}`}
+          to={request.status === 'draft' ? `/intake/${request.id}?step=2` : `/requests/${request.id}`}
           className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
         >
-          View Details →
+          {request.status === 'draft' ? 'مراجعة ونشر المسودة ←' : 'View Details →'}
         </Link>
       </div>
     </div>
