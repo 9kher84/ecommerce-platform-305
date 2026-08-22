@@ -132,6 +132,7 @@ export const IntakeWizard = () => {
     formData.expiresAt,
     formData.pricing_method,
     formData.fixed_price,
+    formData.tender_type,
     draftId,
     isHydrated
   ]);
