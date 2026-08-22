@@ -283,6 +283,17 @@ export const App = () => {
       />
 
       <Route 
+        path="/intake/:id" 
+        element={
+          <ProtectedRoute>
+            <div className="p-8">
+              <IntakeWizard />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
         path="/requests" 
         element={
           <RequireCapability capability="BUYER_PROCUREMENT">

@@ -33,29 +33,44 @@ export const IntakeWizard = () => {
     fixed_price: '',
   });
 
+  const [isHydrated, setIsHydrated] = useState(!draftId);
+
+  // Sync draftId when routeId changes
+  useEffect(() => {
+    if (routeId && routeId !== draftId) {
+      setDraftId(routeId);
+      setIsHydrated(false);
+    }
+  }, [routeId]);
+
   // Load existing draft if ID is present
   useEffect(() => {
     if (requestDetails?.request) {
       const req = requestDetails.request;
+      const header = req.header || {};
+      const firstItem = req.items?.[0] || {};
+      
       setFormData({
-        tender_type: req.tender_type || 'PUBLIC',
-        title: req.title || '',
-        sectorId: req.sectorId ? String(req.sectorId) : '',
-        description: req.description || '',
-        quantity: req.quantity ? String(req.quantity) : '',
-        unit: req.unit || '',
-        project_address: req.deliveryLocations?.[0]?.address || req.delivery_city || '',
-        delivery_date: req.delivery_date ? new Date(req.delivery_date).toISOString().split('T')[0] : '',
-        expiresAt: req.expiresAt ? new Date(req.expiresAt).toISOString().split('T')[0] : '',
-        pricing_method: req.pricing_method || 'OPEN',
-        fixed_price: req.fixed_price ? String(req.fixed_price) : '',
+        tender_type: header.tender_type || (header.auction_type === 'secret' ? 'PRIVATE' : 'PUBLIC'),
+        title: header.title || req.title || '',
+        sectorId: header.sectorId ? String(header.sectorId) : (req.sectorId ? String(req.sectorId) : ''),
+        description: header.description || req.description || '',
+        quantity: firstItem.quantity !== undefined ? String(firstItem.quantity) : (req.quantity ? String(req.quantity) : ''),
+        unit: firstItem.unit || req.unit || '',
+        project_address: header.delivery_city || req.deliveryLocations?.[0]?.address || req.delivery_city || '',
+        delivery_date: (header.delivery_date || req.delivery_date) ? new Date(header.delivery_date || req.delivery_date).toISOString().split('T')[0] : '',
+        expiresAt: (header.expiresAt || req.expiresAt) ? new Date(header.expiresAt || req.expiresAt).toISOString().split('T')[0] : '',
+        pricing_method: header.pricing_method || req.pricing_method || 'OPEN',
+        fixed_price: (header.fixed_price || req.fixed_price) ? String(header.fixed_price || req.fixed_price) : '',
       });
+      setIsHydrated(true);
     }
   }, [requestDetails]);
 
   // Debounced Auto-Save Draft
   useEffect(() => {
     if (!formData.title || !formData.sectorId) return;
+    if (draftId && !isHydrated) return; // Protection Guard: Do not autosave before hydration finishes
 
     const delayDebounceFn = setTimeout(async () => {
       setAutoSaveStatus('جاري حفظ المسودة تلقائياً...');
@@ -95,7 +110,8 @@ export const IntakeWizard = () => {
           const newId = response.request?.id || response.data?.request?.id || response.data?.id;
           if (newId) {
             setDraftId(newId);
-            navigate(`/intake/${newId}`, { replace: true });
+            setIsHydrated(true);
+            window.history.replaceState(null, '', `/intake/${newId}`);
             setAutoSaveStatus('تم الحفظ تلقائياً ✓');
           }
         }
@@ -116,7 +132,8 @@ export const IntakeWizard = () => {
     formData.expiresAt,
     formData.pricing_method,
     formData.fixed_price,
-    draftId
+    draftId,
+    isHydrated
   ]);
 
   const handleNext = () => {
@@ -200,7 +217,7 @@ export const IntakeWizard = () => {
         const newId = response.request?.id || response.data?.request?.id || response.data?.id;
         if (newId) {
           setDraftId(newId);
-          navigate(`/intake/${newId}`, { replace: true });
+          window.history.replaceState(null, '', `/intake/${newId}`);
           if (targetStatus === 'published') {
             await publishRequestMutation.mutateAsync(newId);
             toast.success('تم إنشاء ونشر الطلب بنجاح 🚀');
