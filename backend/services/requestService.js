@@ -202,6 +202,13 @@ class RequestService {
         if (updateData.sectorId && !updateData.categoryId) {
           updateData.categoryId = updateData.sectorId;
         }
+        if (updateData.tender_type !== undefined) {
+          if (updateData.tender_type === "PRIVATE") {
+            updateData.auction_type = "secret";
+          } else if (updateData.tender_type === "PUBLIC") {
+            updateData.auction_type = "public";
+          }
+        }
 
         if (commandData.version !== undefined && commandData.version !== null) {
           if (parseInt(commandData.version, 10) !== request.version) {

@@ -65,6 +65,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("public", "secret"),
         defaultValue: "public",
       },
+      tender_type: {
+        type: DataTypes.ENUM("PUBLIC", "PRIVATE", "INVITATION"),
+        allowNull: true,
+      },
+      pricing_method: {
+        type: DataTypes.ENUM("OPEN", "FIXED_BUDGET"),
+        allowNull: true,
+      },
       delivery_city: {
         type: DataTypes.STRING,
         allowNull: true,
