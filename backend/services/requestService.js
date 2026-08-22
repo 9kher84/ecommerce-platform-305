@@ -826,6 +826,8 @@ class RequestService {
           post_type: plainReq.post_type,
           auction_type: plainReq.auction_type,
           expiresAt: plainReq.expiresAt,
+          sectorId: plainReq.sectorId,
+          categoryId: plainReq.categoryId || plainReq.sectorId,
           buyer: plainReq.user,
           contactNumbers: plainReq.contactNumbers,
           deliveryLocations: plainReq.deliveryLocations,

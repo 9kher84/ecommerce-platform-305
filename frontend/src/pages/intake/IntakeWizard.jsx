@@ -53,7 +53,7 @@ export const IntakeWizard = () => {
       setFormData({
         tender_type: header.tender_type || (header.auction_type === 'secret' ? 'PRIVATE' : 'PUBLIC'),
         title: header.title || req.title || '',
-        sectorId: header.sectorId ? String(header.sectorId) : (req.sectorId ? String(req.sectorId) : ''),
+        sectorId: header.sectorId ? String(header.sectorId) : (header.categoryId ? String(header.categoryId) : (req.sectorId ? String(req.sectorId) : '')),
         description: header.description || req.description || '',
         quantity: firstItem.quantity !== undefined ? String(firstItem.quantity) : (req.quantity ? String(req.quantity) : ''),
         unit: firstItem.unit || req.unit || '',
