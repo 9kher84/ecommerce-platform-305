@@ -73,6 +73,8 @@ class PurchaseRequestRepository extends PurchaseRequestRepositoryPort {
       version: persistenceData.version,
       title: persistenceData.title,
       description: persistenceData.description,
+      sectorId: persistenceData.sectorId,
+      categoryId: persistenceData.categoryId,
       deliveryLocations: persistenceData.deliveryLocations,
       requiresDelivery: persistenceData.requiresDelivery,
       contactNumbers: persistenceData.contactNumbers,

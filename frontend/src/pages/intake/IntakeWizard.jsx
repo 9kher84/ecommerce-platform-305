@@ -72,6 +72,7 @@ export const IntakeWizard = () => {
             title: formData.title,
             description: formData.description,
             sectorId: formData.sectorId ? parseInt(formData.sectorId) : null,
+            categoryId: formData.sectorId ? parseInt(formData.sectorId) : null,
             tender_type: formData.tender_type || 'PUBLIC',
             pricing_method: formData.pricing_method || 'OPEN',
             fixed_price: formData.fixed_price ? parseFloat(formData.fixed_price) : null,
@@ -94,6 +95,7 @@ export const IntakeWizard = () => {
           const newId = response.request?.id || response.data?.request?.id || response.data?.id;
           if (newId) {
             setDraftId(newId);
+            navigate(`/intake/${newId}`, { replace: true });
             setAutoSaveStatus('تم الحفظ تلقائياً ✓');
           }
         }
@@ -123,6 +125,14 @@ export const IntakeWizard = () => {
         toast.error('يرجى تعبئة الحقول الإلزامية (العنوان، القطاع، والكمية)');
         return;
       }
+      if (formData.quantity && (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) <= 0)) {
+        toast.error('الكمية يجب أن تكون رقماً أكبر من صفر');
+        return;
+      }
+      if (formData.fixed_price && isNaN(parseFloat(formData.fixed_price))) {
+        toast.error('الميزانية يجب أن تكون رقماً صحيحاً');
+        return;
+      }
       setStep(2);
       window.scrollTo(0, 0);
     }
@@ -141,6 +151,11 @@ export const IntakeWizard = () => {
   };
 
   const submitRequest = async (targetStatus) => {
+    if (!formData.title || !formData.sectorId || !formData.quantity) {
+      toast.error('يرجى تعبئة جميع الحقول الإلزامية قبل النشر');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const defaultItem = {
@@ -155,6 +170,7 @@ export const IntakeWizard = () => {
           title: formData.title,
           description: formData.description,
           sectorId: formData.sectorId ? parseInt(formData.sectorId) : null,
+          categoryId: formData.sectorId ? parseInt(formData.sectorId) : null,
           tender_type: formData.tender_type || 'PUBLIC',
           pricing_method: formData.pricing_method || 'OPEN',
           fixed_price: formData.fixed_price ? parseFloat(formData.fixed_price) : null,
@@ -183,6 +199,8 @@ export const IntakeWizard = () => {
         const response = await createRequestMutation.mutateAsync(payload);
         const newId = response.request?.id || response.data?.request?.id || response.data?.id;
         if (newId) {
+          setDraftId(newId);
+          navigate(`/intake/${newId}`, { replace: true });
           if (targetStatus === 'published') {
             await publishRequestMutation.mutateAsync(newId);
             toast.success('تم إنشاء ونشر الطلب بنجاح 🚀');

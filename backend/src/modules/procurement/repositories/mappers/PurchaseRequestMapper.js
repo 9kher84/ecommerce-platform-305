@@ -48,6 +48,7 @@ class PurchaseRequestMapper {
       id: aggregate.id,
       userId: aggregate.userId,
       sectorId: aggregate.sectorId,
+      categoryId: aggregate.categoryId || aggregate.sectorId,
       status: aggregate.status,
       rfqStatus: aggregate.rfqStatus,
       statusHistory: aggregate.statusHistory,

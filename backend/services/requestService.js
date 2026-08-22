@@ -190,11 +190,18 @@ class RequestService {
     try {
       // 1. Update Header
       if (header) {
-        const allowedHeaderFields = ["title", "description", "delivery_city", "expiresAt", "notes"];
+        const allowedHeaderFields = [
+          "title", "description", "delivery_city", "delivery_date", 
+          "expiresAt", "pricing_method", "fixed_price", "tender_type", 
+          "sectorId", "categoryId", "notes"
+        ];
         const updateData = {};
         allowedHeaderFields.forEach(field => {
           if (header[field] !== undefined) updateData[field] = header[field];
         });
+        if (updateData.sectorId && !updateData.categoryId) {
+          updateData.categoryId = updateData.sectorId;
+        }
 
         if (commandData.version !== undefined && commandData.version !== null) {
           if (parseInt(commandData.version, 10) !== request.version) {
@@ -694,19 +701,16 @@ class RequestService {
           model: PurchaseRequestInvitation,
           as: "invitations",
         },
-        {
+      ];
+
+      // Safely attach WorkPackage include if defined in ORM setup
+      if (require("../sequelize_setup").WorkPackage) {
+        includes.push({
           model: require("../sequelize_setup").WorkPackage,
           as: "workPackages",
-          include: [
-            {
-              model: require("../sequelize_setup").CommercialProcess,
-              as: "commercialProcesses",
-              where: { processType: 'NEGOTIATION' },
-              required: false
-            }
-          ]
-        }
-      ];
+          required: false,
+        });
+      }
 
       const request = await PurchaseRequest.findByPk(requestId, {
         include: includes,

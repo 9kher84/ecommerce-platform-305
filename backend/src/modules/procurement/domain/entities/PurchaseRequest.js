@@ -13,6 +13,7 @@ class PurchaseRequest extends AggregateRoot {
     super(data.id, data.version || 1);
     this.userId = data.userId;
     this.sectorId = data.sectorId;
+    this.categoryId = data.categoryId || data.sectorId;
     this.status = data.status;
     this.rfqStatus = data.rfqStatus;
     this.statusHistory = data.statusHistory || [];
@@ -71,6 +72,7 @@ class PurchaseRequest extends AggregateRoot {
       version: 1,
       userId: authContext.actorId,
       sectorId: data.sectorId,
+      categoryId: data.categoryId || data.sectorId,
       status: "draft",
       title: data.title,
       description: data.description,

@@ -48,8 +48,8 @@ export const useWorkspaceOrchestrator = (projectId) => {
     if (projectPendingAwards.length > 1) riskLevel = 'High';
     else if (projectPendingAwards.length === 1 || totalNegotiations > 3) riskLevel = 'Medium';
 
-    const totalCommitted = awardedPackages * 150000;
-    const totalBudget = parseFloat(project?.fixed_price) || (totalPackages * 200000);
+    const totalCommitted = awardedPackages > 0 ? awardedPackages * 0 : 0;
+    const totalBudget = parseFloat(project?.fixed_price) || 0;
     const remainingBudget = totalBudget > 0 ? (totalBudget - totalCommitted) : 0;
 
     return {

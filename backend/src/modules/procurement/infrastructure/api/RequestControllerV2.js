@@ -35,19 +35,27 @@ class RequestControllerV2 {
   }
 
   createRequest = asyncHandler(async (req, res) => {
-    const headerData = req.body.header || { title: req.body.title, sectorId: req.body.sectorId || "construction" };
-    
-    // Map tender_type (PUBLIC/PRIVATE) to auction_type (public/secret)
-    if (headerData.tender_type === "PRIVATE") {
-      headerData.auction_type = "secret";
-    } else {
-      headerData.auction_type = "public";
-    }
+    const rawHeader = req.body.header || req.body;
+    const headerData = {
+      title: rawHeader.title,
+      description: rawHeader.description || "",
+      sectorId: rawHeader.sectorId || rawHeader.categoryId || null,
+      categoryId: rawHeader.categoryId || rawHeader.sectorId || null,
+      tender_type: rawHeader.tender_type || "PUBLIC",
+      pricing_method: rawHeader.pricing_method || "OPEN",
+      fixed_price: rawHeader.fixed_price ? parseFloat(rawHeader.fixed_price) : null,
+      delivery_date: rawHeader.delivery_date || null,
+      expiresAt: rawHeader.expiresAt || null,
+      delivery_city: rawHeader.delivery_city || rawHeader.project_address || null,
+      deliveryLocations: rawHeader.deliveryLocations || (rawHeader.delivery_city || rawHeader.project_address ? [{ address: rawHeader.delivery_city || rawHeader.project_address }] : []),
+      post_type: rawHeader.post_type || "standard",
+      auction_type: rawHeader.tender_type === "PRIVATE" ? "secret" : "public",
+    };
 
     const dto = {
       header: headerData,
-      items: req.body.items,
-      invitations: req.body.invitations,
+      items: req.body.items || [],
+      invitations: req.body.invitations || [],
       actorId: req.user.id,
       actorRole: req.user.role,
     };
