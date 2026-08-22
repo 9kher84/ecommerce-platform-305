@@ -77,20 +77,20 @@ export const RequestForm = ({ formData, setFormData, isPreview = false }) => {
   return (
     <div className="space-y-6 text-right" dir="rtl">
       
-      {/* 1. نوع المناقصة - Mandatory, First, Red bordered */}
-      <div className="p-4 border-2 border-red-200 bg-red-50 rounded-lg">
-        <label className="block text-sm font-bold text-red-800 mb-2">نوع المناقصة (إلزامي)*</label>
+      {/* 1. نوع المناقصة - Optional Choice, Neutral Styling */}
+      <div className="p-4 border border-gray-200 bg-white rounded-lg">
+        <label className="block text-sm font-bold text-gray-700 mb-2">نوع المناقصة (اختياري)</label>
         <select
           name="tender_type"
           value={formData.tender_type || 'PUBLIC'}
           onChange={handleChange}
-          className="w-full p-2.5 border border-red-300 rounded focus:ring-red-500 focus:border-red-500 bg-white"
+          className="w-full p-2.5 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 bg-white"
         >
           <option value="PUBLIC">عامة (مفتوحة لجميع الموردين في السوق)</option>
           <option value="PRIVATE">خاصة (تتطلب موافقة للبائع قبل تقديم عرض)</option>
           <option value="INVITATION" className="hidden">بالدعوة (مخفي حالياً)</option>
         </select>
-        <p className="text-xs text-red-600 mt-2">نوع المناقصة يحدد من يمكنه رؤية طلبك وتقديم العروض.</p>
+        <p className="text-xs text-gray-500 mt-2">نوع المناقصة يحدد من يمكنه رؤية طلبك وتقديم العروض (الافتراضي: عامة).</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border border-gray-200 p-6 rounded-lg bg-white">
