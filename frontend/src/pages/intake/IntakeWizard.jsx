@@ -139,31 +139,19 @@ export const IntakeWizard = () => {
   ]);
 
   const handleNext = () => {
-    console.log('[TRACE 1] Entered handleNext', { step, formData });
     if (step === 1) {
-      console.log('[TRACE 2] Inside step === 1 check');
       if (!formData.title || !formData.sectorId || !formData.quantity) {
-        console.log('[TRACE 3] Stopped at check 1 (missing required fields)', {
-          title: formData.title,
-          sectorId: formData.sectorId,
-          quantity: formData.quantity
-        });
         toast.error('يرجى تعبئة الحقول الإلزامية (العنوان، القطاع، والكمية)');
         return;
       }
-      console.log('[TRACE 4] Passed check 1');
       if (formData.quantity && (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) <= 0)) {
-        console.log('[TRACE 5] Stopped at check 2 (invalid quantity)', { quantity: formData.quantity });
         toast.error('الكمية يجب أن تكون رقماً أكبر من صفر');
         return;
       }
-      console.log('[TRACE 6] Passed check 2');
       if (formData.fixed_price && isNaN(parseFloat(formData.fixed_price))) {
-        console.log('[TRACE 7] Stopped at check 3 (invalid fixed_price)', { fixed_price: formData.fixed_price });
         toast.error('الميزانية يجب أن تكون رقماً صحيحاً');
         return;
       }
-      console.log('[TRACE 8] Reached setStep(2)');
       setStep(2);
       window.scrollTo(0, 0);
     }
