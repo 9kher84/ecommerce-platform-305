@@ -86,11 +86,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         get() {
           const { decrypt } = require("../utils/encryption");
-          return decrypt(this.getDataValue("fixed_price"));
+          const raw = this.getDataValue("fixed_price");
+          if (!raw) return null;
+          const decrypted = decrypt(raw);
+          return (decrypted === "null" || decrypted === "undefined" || decrypted === "") ? null : decrypted;
         },
         set(value) {
           const { encrypt } = require("../utils/encryption");
-          this.setDataValue("fixed_price", encrypt(String(value)));
+          if (value === null || value === undefined || value === "" || value === "null" || value === "undefined") {
+            this.setDataValue("fixed_price", null);
+          } else {
+            this.setDataValue("fixed_price", encrypt(String(value)));
+          }
         },
       },
       targetSellerId: {

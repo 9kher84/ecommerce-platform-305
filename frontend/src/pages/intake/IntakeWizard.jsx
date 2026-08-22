@@ -62,7 +62,7 @@ export const IntakeWizard = () => {
         delivery_date: (header.delivery_date || req.delivery_date) ? new Date(header.delivery_date || req.delivery_date).toISOString().split('T')[0] : '',
         expiresAt: (header.expiresAt || req.expiresAt) ? new Date(header.expiresAt || req.expiresAt).toISOString().split('T')[0] : '',
         pricing_method: header.pricing_method || req.pricing_method || 'OPEN',
-        fixed_price: (header.fixed_price || req.fixed_price) ? String(header.fixed_price || req.fixed_price) : '',
+        fixed_price: (header.fixed_price && header.fixed_price !== 'null' && header.fixed_price !== 'undefined') ? String(header.fixed_price) : ((req.fixed_price && req.fixed_price !== 'null' && req.fixed_price !== 'undefined') ? String(req.fixed_price) : ''),
       });
       setIsHydrated(true);
     }
