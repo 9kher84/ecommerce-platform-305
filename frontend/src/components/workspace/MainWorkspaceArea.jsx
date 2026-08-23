@@ -23,8 +23,14 @@ export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], on
             </span>
           </div>
           <div className="bg-white p-5 border border-gray-200 rounded-xl shadow-sm">
-            <span className="text-xs text-gray-500 font-bold block">حالة الميزانية المستهدفة</span>
-            <span className="text-3xl font-black text-blue-600 mt-1 block">ضمن النطاق</span>
+            <span className="text-xs text-gray-500 font-bold block">طريقة التسعير والميزانية</span>
+            <span className="text-lg font-black text-blue-600 mt-1 block truncate">
+              {project?.header?.pricing_method === 'OPEN'
+                ? 'تسعير مفتوح'
+                : (project?.header?.fixed_price !== null && project?.header?.fixed_price !== undefined && project?.header?.fixed_price !== '' && project?.header?.fixed_price !== 'null')
+                  ? `ميزانية محددة (${parseFloat(project.header.fixed_price).toLocaleString()} ريال)`
+                  : (project?.header?.pricing_method === 'FIXED_BUDGET' ? 'ميزانية غير محددة' : 'تسعير مفتوح')}
+            </span>
           </div>
         </div>
 
@@ -34,17 +40,39 @@ export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], on
             <div>
               <span className="text-gray-500 font-bold">اسم المنشأة/المشروع:</span>
               <p className="text-gray-900 font-medium mt-0.5">
-                {project?.header?.title || project?.title || 'لم يتم تعيين اسم المشروع بعد'}
+                {project?.header?.title || 'لم يتم تعيين اسم المشروع بعد'}
               </p>
             </div>
             <div>
-              <span className="text-gray-500 font-bold">تاريخ البدء:</span>
-              <p className="text-gray-900 font-medium mt-0.5">{(project?.header?.createdAt || project?.createdAt) ? new Date(project?.header?.createdAt || project?.createdAt).toLocaleDateString() : 'اليوم'}</p>
+              <span className="text-gray-500 font-bold">الكمية المطلوبة:</span>
+              <p className="text-gray-900 font-medium mt-0.5">
+                {(project?.items?.[0]?.quantity !== null && project?.items?.[0]?.quantity !== undefined && project?.items?.[0]?.quantity !== '')
+                  ? `${parseFloat(project.items[0].quantity).toLocaleString()} ${project.items[0].unit || ''}`
+                  : 'غير محدد'}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500 font-bold">تاريخ التسليم المستهدف:</span>
+              <p className="text-gray-900 font-medium mt-0.5 font-sans">
+                {project?.header?.delivery_date ? new Date(project.header.delivery_date).toLocaleDateString() : 'غير محدد'}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500 font-bold">موقع التسليم:</span>
+              <p className="text-gray-900 font-medium mt-0.5">
+                {project?.header?.delivery_city || 'غير محدد'}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500 font-bold">نهاية تقديم العروض:</span>
+              <p className="text-gray-900 font-medium mt-0.5 font-sans">
+                {project?.header?.expiresAt ? new Date(project.header.expiresAt).toLocaleDateString() : 'غير محدد'}
+              </p>
             </div>
             <div className="md:col-span-2">
               <span className="text-gray-500 font-bold">الوصف والتفاصيل:</span>
               <p className="text-gray-700 mt-0.5">
-                {project?.header?.description || project?.description || 'أضف وصف المشروع ليساعد الموردين على تقديم عروض أدق.'}
+                {project?.header?.description || 'أضف وصف المشروع ليساعد الموردين على تقديم عروض أدق.'}
               </p>
             </div>
           </div>
@@ -78,10 +106,30 @@ export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], on
   }
 
   if (activeDomain === 'Documents') {
+    const attachments = project?.header?.pdfAttachments || project?.pdfAttachments || [];
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
         <h3 className="font-bold text-lg text-gray-900 border-b border-gray-100 pb-3">عدسة العقود والمستندات</h3>
-        <p className="text-sm text-gray-500">لا توجد ملفات مرفقة حالياً. ارفع المستندات الرسمية لربطها بالحزم.</p>
+        {Array.isArray(attachments) && attachments.length > 0 ? (
+          <div className="space-y-2">
+            {attachments.map((file, idx) => {
+              const fileName = typeof file === 'string' ? file : (file?.name || file?.filename || `مستند مرفق ${idx + 1}`);
+              const fileUrl = typeof file === 'string' ? file : (file?.url || file?.path || '#');
+              return (
+                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <span className="text-sm font-medium text-gray-800">📄 {fileName}</span>
+                  {fileUrl !== '#' && (
+                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-indigo-600 hover:underline">
+                      عرض الملف ↗
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">لا توجد ملفات مرفقة حالياً في مساحة العمل.</p>
+        )}
       </div>
     );
   }

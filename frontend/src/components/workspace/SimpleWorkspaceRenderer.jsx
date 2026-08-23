@@ -2,15 +2,28 @@ import React, { useState } from 'react';
 import { Button } from '../common/Button';
 
 export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectProcess }) => {
-  const [chatInput, setChatInput] = useState('');
-  const [messages, setMessages] = useState([
-    { id: 1, sender: 'system', text: `مرحباً بك! مساحة الشراء السريعة لـ: "${project?.title || 'طلب توريد جديد'}"` }
-  ]);
+  const rfqTitle = project?.header?.title || project?.title || 'طلب شراء فردي';
+  const rfqDescription = project?.header?.description || project?.description || '';
+  const firstItem = project?.items?.[0];
+  const hasQuantity = firstItem?.quantity !== null && firstItem?.quantity !== undefined && firstItem?.quantity !== '';
+  const pricingMethod = project?.header?.pricing_method;
+  const fixedPrice = project?.header?.fixed_price;
+  const hasFixedPrice = fixedPrice !== null && fixedPrice !== undefined && fixedPrice !== '' && fixedPrice !== 'null';
+
+  const [messages, setMessages] = useState([]);
+
+  const defaultSystemMessage = { 
+    id: 1, 
+    sender: 'system', 
+    text: `مرحباً بك! مساحة الشراء السريعة لـ: "${rfqTitle}"` 
+  };
+
+  const activeMessages = messages.length > 0 ? messages : [defaultSystemMessage];
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: chatInput }]);
+    setMessages(prev => [...(prev.length > 0 ? prev : [defaultSystemMessage]), { id: Date.now(), sender: 'user', text: chatInput }]);
     setChatInput('');
   };
 
@@ -22,12 +35,24 @@ export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectPr
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Simple Header Banner */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-center">
-        <div>
-          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
-            طلب شراء سريع (Simple View)
-          </span>
-          <h2 className="text-xl font-black text-gray-900 mt-2">{project?.header?.title || project?.title || 'طلب شراء فردي'}</h2>
-          <p className="text-xs text-gray-500 mt-1">تواصل مالي وتفاوض مباشر مع المورد المعترف به.</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+              طلب شراء سريع (Simple View)
+            </span>
+            <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+              {pricingMethod === 'OPEN' ? 'تسعير مفتوح' : hasFixedPrice ? `ميزانية: ${parseFloat(fixedPrice).toLocaleString()} ريال` : 'تسعير مفتوح'}
+            </span>
+          </div>
+          <h2 className="text-xl font-black text-gray-900 mt-2">{rfqTitle}</h2>
+          {rfqDescription && (
+            <p className="text-xs text-gray-600 line-clamp-2">{rfqDescription}</p>
+          )}
+          {hasQuantity && (
+            <p className="text-xs font-semibold text-indigo-700 mt-1">
+              الكمية المطلوبة: {parseFloat(firstItem.quantity).toLocaleString()} {firstItem.unit || ''}
+            </p>
+          )}
         </div>
         <div className="text-right">
           <span className="text-xs text-gray-400 font-bold block">الحالة الحالية</span>
@@ -40,7 +65,7 @@ export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectPr
       {/* Stream / Social Chat Renderer */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4 min-h-[400px] flex flex-col justify-between">
         <div className="space-y-4 overflow-y-auto max-h-[450px] pr-2">
-          {messages.map((msg) => (
+          {activeMessages.map((msg) => (
             <div 
               key={msg.id}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
