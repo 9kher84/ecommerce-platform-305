@@ -53,6 +53,7 @@ export const useAcceptRevision = () => {
     onSuccess: (_, processId) => {
       queryClient.invalidateQueries({ queryKey: ['commercial', 'timeline', processId] });
       queryClient.invalidateQueries({ queryKey: ['commercial', 'inbox'] });
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
     }
   });
 };

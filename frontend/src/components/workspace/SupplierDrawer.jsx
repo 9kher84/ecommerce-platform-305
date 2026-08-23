@@ -17,13 +17,14 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const revisions = process?.negotiationSheets || [];
   const latestRevision = revisions.length > 0 ? revisions[revisions.length - 1] : null;
 
+  const [awardSuccess, setAwardSuccess] = useState(null);
+
   const handleAccept = () => {
     if (window.confirm('هل أنت متأكد من قبول هذا العرض والترسية؟')) {
       acceptMutation.mutate(processId, {
-        onSuccess: () => {
-          alert('تم قبول العرض ونقله للترسية بنجاح!');
-          onAwardSuccess && onAwardSuccess();
-          onClose();
+        onSuccess: (res) => {
+          setAwardSuccess(res?.data || res || { success: true });
+          onAwardSuccess && onAwardSuccess(res);
         }
       });
     }
@@ -70,6 +71,25 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
 
         {/* Drawer Body */}
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {awardSuccess && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-emerald-900 space-y-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🏆</span>
+                <div>
+                  <h4 className="font-bold text-base">تم اعتماد الترسية وإنشاء عقد الصفقة بنجاح!</h4>
+                  <p className="text-xs text-emerald-700 mt-0.5">
+                    تم تحديث حالة طلب الشراء ونقل العرض التجاري إلى عقد صفقة فعال (Active Deal).
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-emerald-200/60">
+                <Button size="sm" onClick={() => { setAwardSuccess(null); onClose(); }}>
+                  المتابعة في مساحة العمل (Workspace) ❯
+                </Button>
+              </div>
+            </div>
+          )}
+
           {isLoading && <div className="text-center py-8 text-gray-500">جاري تحميل تفاصيل التفاوض...</div>}
           {isError && <div className="text-center py-8 text-red-500">حدث خطأ في تحميل بيانات التفاوض.</div>}
 
