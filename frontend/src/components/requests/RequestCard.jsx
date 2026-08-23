@@ -29,7 +29,7 @@ export const RequestCard = ({ request }) => {
         <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 mb-4">
           <div>
             <span className="block font-medium text-gray-700">Category</span>
-            {request.category || 'N/A'}
+            {typeof request.category === 'object' ? (request.category?.name_ar || request.category?.name_en || 'N/A') : (request.category || 'N/A')}
           </div>
           <div>
             <span className="block font-medium text-gray-700">Target Price</span>

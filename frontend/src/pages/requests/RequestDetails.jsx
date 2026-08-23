@@ -55,8 +55,8 @@ export const RequestDetails = () => {
             <button onClick={() => navigate(-1)} className="text-sm text-indigo-600 hover:text-indigo-800 mb-2 inline-block">
               ← عودة للمشاريع
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">مشروع: {project.title}</h1>
-            <p className="text-gray-500 mt-2">{project.description}</p>
+            <h1 className="text-2xl font-bold text-gray-900">مشروع: {project?.header?.title || project?.title || 'بدون عنوان'}</h1>
+            <p className="text-gray-500 mt-2">{project?.header?.description || project?.description || ''}</p>
           </div>
           <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold">
             الحالة: {project.status.toUpperCase()}
