@@ -34,17 +34,17 @@ export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], on
             <div>
               <span className="text-gray-500 font-bold">اسم المنشأة/المشروع:</span>
               <p className="text-gray-900 font-medium mt-0.5">
-                {project?.title || 'لم يتم تعيين اسم المشروع بعد'}
+                {project?.header?.title || project?.title || 'لم يتم تعيين اسم المشروع بعد'}
               </p>
             </div>
             <div>
               <span className="text-gray-500 font-bold">تاريخ البدء:</span>
-              <p className="text-gray-900 font-medium mt-0.5">{project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'اليوم'}</p>
+              <p className="text-gray-900 font-medium mt-0.5">{(project?.header?.createdAt || project?.createdAt) ? new Date(project?.header?.createdAt || project?.createdAt).toLocaleDateString() : 'اليوم'}</p>
             </div>
             <div className="md:col-span-2">
               <span className="text-gray-500 font-bold">الوصف والتفاصيل:</span>
               <p className="text-gray-700 mt-0.5">
-                {project?.description || 'أضف وصف المشروع ليساعد الموردين على تقديم عروض أدق.'}
+                {project?.header?.description || project?.description || 'أضف وصف المشروع ليساعد الموردين على تقديم عروض أدق.'}
               </p>
             </div>
           </div>

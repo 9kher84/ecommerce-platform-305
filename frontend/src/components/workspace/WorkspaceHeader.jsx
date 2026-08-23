@@ -26,7 +26,7 @@ export const WorkspaceHeader = ({ project, activeDomain, onDomainChange, viewMod
                 Deal Workspace Engine
               </span>
               <h1 className="text-lg font-black text-white tracking-tight">
-                {project?.title || 'صفقة التوريد والشراء'}
+                {project?.header?.title || project?.title || 'صفقة التوريد والشراء'}
               </h1>
             </div>
             

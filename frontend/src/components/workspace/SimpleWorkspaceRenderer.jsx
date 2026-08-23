@@ -26,7 +26,7 @@ export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectPr
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
             طلب شراء سريع (Simple View)
           </span>
-          <h2 className="text-xl font-black text-gray-900 mt-2">{project?.title || 'طلب شراء فردي'}</h2>
+          <h2 className="text-xl font-black text-gray-900 mt-2">{project?.header?.title || project?.title || 'طلب شراء فردي'}</h2>
           <p className="text-xs text-gray-500 mt-1">تواصل مالي وتفاوض مباشر مع المورد المعترف به.</p>
         </div>
         <div className="text-right">
