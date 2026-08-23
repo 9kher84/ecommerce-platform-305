@@ -30,8 +30,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const NotificationService = require("./services/notificationService");
 const cacheService = require("./services/cacheService");
-
-
+const PolicyRegistry = require("./src/shared/infrastructure/eventBus/PolicyRegistry");
+PolicyRegistry.registerAll();
 
 // Import Routes
 const authRoutes = require("./routes/authRoutes");

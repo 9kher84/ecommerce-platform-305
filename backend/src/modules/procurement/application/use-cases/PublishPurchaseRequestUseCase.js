@@ -69,8 +69,15 @@ class PublishPurchaseRequestUseCase {
     }
 
     console.log(`[PublishPurchaseRequestUseCase] Events before commit: ${request._domainEvents.length}`);
+    let publishedEvents = [];
+
     await this.unitOfWork.commit(request, async (t) => {
       await this.requestRepo.store(request, expectedVersion, t);
+      if (typeof request.getEvents === 'function') {
+        publishedEvents = request.getEvents();
+      } else if (Array.isArray(request._domainEvents)) {
+        publishedEvents = [...request._domainEvents];
+      }
 
       // 5. Side Effects (Legacy Audit Logs)
       await appendEventLog({
@@ -102,6 +109,15 @@ class PublishPurchaseRequestUseCase {
         { transaction: t }
       );
     });
+
+    // 6. Dispatch events to in-memory listeners post-commit
+    for (const event of publishedEvents) {
+      try {
+        EventBus.publish(event);
+      } catch (err) {
+        console.error(`[PublishPurchaseRequestUseCase] EventBus publish error for ${event?.name}:`, err);
+      }
+    }
 
     return request;
   }

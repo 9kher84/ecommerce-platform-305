@@ -11,10 +11,20 @@ async function workPackageCreationHandler(event, transaction) {
   const aggregateId = event.aggregateId;
   const { title, description } = event.payload || {};
 
-  console.log(`[WorkPackageCreationPolicy] Creating WorkPackage for Request ${aggregateId}`);
+  console.log(`[WorkPackageCreationPolicy] Processing WorkPackage for Request ${aggregateId}`);
 
-  // In Wave 2.5, we create a single WorkPackage covering the entire PurchaseRequest.
-  // In future waves, this might create multiple packages based on line items.
+  // 1. Idempotency Check: Do not create duplicate WorkPackage for an existing PurchaseRequest
+  const existingWp = await WorkPackage.findOne({
+    where: { purchaseRequestId: aggregateId },
+    transaction
+  });
+
+  if (existingWp) {
+    console.log(`[WorkPackageCreationPolicy] WorkPackage already exists for Request ${aggregateId} (${existingWp.id}). Skipping duplicate creation.`);
+    return existingWp;
+  }
+
+  // 2. Create single default WorkPackage covering the PurchaseRequest
   const wp = await WorkPackage.create({
     purchaseRequestId: aggregateId,
     name: title || 'Default Package',
@@ -23,6 +33,7 @@ async function workPackageCreationHandler(event, transaction) {
   }, { transaction });
 
   console.log(`[WorkPackageCreationPolicy] Successfully created WorkPackage ${wp.id}`);
+  return wp;
 }
 
 // Wrap with Idempotency Middleware
