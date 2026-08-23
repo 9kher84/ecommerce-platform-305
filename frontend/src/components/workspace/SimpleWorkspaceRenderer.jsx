@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../common/Button';
 
 export const SimpleWorkspaceRenderer = ({ project, workPackages = [], onSelectProcess }) => {
+  const [chatInput, setChatInput] = useState('');
   const rfqTitle = project?.header?.title || project?.title || 'طلب شراء فردي';
   const rfqDescription = project?.header?.description || project?.description || '';
   const firstItem = project?.items?.[0];
