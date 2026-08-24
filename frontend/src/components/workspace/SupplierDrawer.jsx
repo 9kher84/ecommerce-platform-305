@@ -57,7 +57,7 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
         <div className="bg-slate-900 text-white p-6 flex justify-between items-center border-b border-slate-800">
           <div>
             <span className="text-xs text-amber-400 font-bold uppercase tracking-wider block">
-              حزمة: {workPackage?.name || 'تفاوض تجاري'}
+              حزمة: {typeof workPackage?.name === 'object' ? (workPackage.name?.name_ar || workPackage.name?.name_en || 'تفاوض تجاري') : (workPackage?.name || 'تفاوض تجاري')}
             </span>
             <h3 className="text-xl font-black mt-1">تفاصيل العرض والمفاضلة وتوجيه القرار</h3>
           </div>
@@ -99,7 +99,9 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex justify-between items-center">
                 <div>
                   <span className="text-xs text-indigo-700 font-bold block">حالة العملية الحالية</span>
-                  <span className="text-lg font-black text-indigo-900">{process.status.toUpperCase()}</span>
+                  <span className="text-lg font-black text-indigo-900">
+                    {typeof process?.status === 'string' ? process.status.toUpperCase() : (process?.status?.name_ar || process?.status?.name_en || 'WAITING_BUYER')}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleAccept} isLoading={acceptMutation.isPending}>
