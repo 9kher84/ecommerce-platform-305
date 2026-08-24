@@ -17,12 +17,14 @@ class InvoiceService {
   /**
    * Create an invoice from an accepted deal
    */
-  static async createInvoice(dealId, orderData) {
+  static async createInvoice(dealId, orderData = {}, options = {}) {
+    const tx = options.transaction;
     const deal = await Deal.findByPk(dealId, {
       include: [
         { model: User, as: "buyer" },
         { model: User, as: "seller" },
       ],
+      transaction: tx,
     });
 
     if (!deal) throw new AppError("Deal not found", 404);
@@ -50,12 +52,12 @@ class InvoiceService {
       sellerSnapshot: orderData.seller || {},
     };
 
-    const invoice = await Invoice.create(invoiceData);
+    const invoice = await Invoice.create(invoiceData, { transaction: tx });
 
     // Update Deal
     deal.invoice_id = invoice.id;
     deal.deal_locked = true;
-    await deal.save();
+    await deal.save({ transaction: tx });
 
     // Send WhatsApp
     await this.sendInvoiceViaWhatsApp(

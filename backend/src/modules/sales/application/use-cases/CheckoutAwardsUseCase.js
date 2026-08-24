@@ -63,6 +63,39 @@ class CheckoutAwardsUseCase {
           updatedAt: new Date()
         }, { transaction });
 
+        // Atomic Deal & Invoice Creation via DealService
+        const { Deal: DealModel, PurchaseRequest: PurchaseRequestModel } = require('../../../../../sequelize_setup');
+        const DealService = require('../../../../../services/dealService');
+
+        const existingDeal = await DealModel.findOne({
+          where: {
+            purchaseRequestId: process.workPackage.purchaseRequestId,
+            sellerId: sellerParty?.userId || sellerParty?.organizationId
+          },
+          transaction
+        });
+
+        if (!existingDeal && process.workPackage.purchaseRequestId) {
+          const pr = await PurchaseRequestModel.findByPk(process.workPackage.purchaseRequestId, { transaction });
+          if (pr) {
+            const finalAmount = parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0);
+            await DealService.createDeal({
+              purchaseRequest: pr,
+              acceptedQuote: {
+                id: dummyQuotationId,
+                sellerId: sellerParty?.userId || sellerParty?.organizationId,
+                priceType: 'fixed',
+                fixedPrice: finalAmount
+              },
+              invoiceData: {
+                totalAmount: finalAmount,
+                taxAmount: 0,
+                sellerOrganizationId: sellerParty?.organizationId || null
+              }
+            }, { transaction });
+          }
+        }
+
         awardedProcesses.push(process);
         createdAwards.push(award);
       }

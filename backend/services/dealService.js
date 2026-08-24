@@ -15,8 +15,9 @@ class DealService {
    * Create a new deal with limits and commission
    * WARNING: This function is not idempotent.
    */
-  static async createDeal(dealData) {
+  static async createDeal(dealData, options = {}) {
     const { purchaseRequest, acceptedQuote, invoiceData } = dealData;
+    const tx = options.transaction;
 
     // 1. Check buyer limit
     const limitCheck = await LimitService.canPlaceOrder(purchaseRequest.userId);
@@ -48,10 +49,10 @@ class DealService {
       status: "processing",
       invoiceData, // keep old for backward compatibility
       organization_id: purchaseRequest.organization_id,
-    });
+    }, { transaction: tx });
 
     // 4. Create independent Invoice
-    const invoice = await InvoiceService.createInvoice(deal.id, invoiceData);
+    const invoice = await InvoiceService.createInvoice(deal.id, invoiceData, { transaction: tx });
 
     // 5. Create Commission Transaction
     console.log("=== DEAL SERVICE DEBUG ===");
@@ -70,7 +71,7 @@ class DealService {
       amount: commissionAmount,
       status: "pending",
       invoice_id: invoice.id, // link to invoice
-    });
+    }, { transaction: tx });
 
     await appendEventLog({
       actorId: purchaseRequest.userId,
