@@ -55,20 +55,23 @@ async function runProductionSync() {
   // --------------------------------------------------------------------------------
   // TASK 2: VERIFY AND SYNC WORKPACKAGES TABLE
   // --------------------------------------------------------------------------------
-  console.log("\n>>> TASK 2: VERIFYING & SYNCING WorkPackages TABLE");
   const WorkPackage = require("../models/WorkPackage")(sequelize, DataTypes);
   const CommercialProcess = require("../models/CommercialProcess")(sequelize, DataTypes);
   const NegotiationSheet = require("../models/NegotiationSheet")(sequelize, DataTypes);
+  const Award = require("../models/Award")(sequelize, DataTypes);
+  const AwardLine = require("../models/AwardLine")(sequelize, DataTypes);
 
   await WorkPackage.sync({ alter: true });
   await CommercialProcess.sync({ alter: true });
   await NegotiationSheet.sync({ alter: true });
+  await Award.sync({ alter: true });
+  await AwardLine.sync({ alter: true });
   
   // Sync SmartInventory model to ensure availableQuantity and reservation fields exist on Neon production
   const SmartInventory = require("../models/SmartInventory")(sequelize, DataTypes);
   await SmartInventory.sync({ alter: true });
   
-  console.log("✅ WorkPackages, CommercialProcesses, NegotiationSheets, and SmartInventory tables verified and synced!");
+  console.log("✅ WorkPackages, CommercialProcesses, NegotiationSheets, Awards, AwardLines, and SmartInventory tables verified and synced!");
 
   // --------------------------------------------------------------------------------
   // TASK 3 & 4: OFFICIAL RBAC SEED (Permissions & RolePermissions)
