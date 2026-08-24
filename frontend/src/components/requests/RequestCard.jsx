@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../providers/AuthProvider';
 
 export const RequestCard = ({ request }) => {
+  const { user } = useAuth();
+  const isOwner = user && user.id === request.userId;
+
   const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800',
     active: 'bg-green-100 text-green-800',
@@ -10,6 +14,26 @@ export const RequestCard = ({ request }) => {
   };
 
   const statusClass = statusColors[request.status] || 'bg-gray-100 text-gray-800';
+
+  const getTargetRoute = () => {
+    if (request.status === 'draft') {
+      return `/intake/${request.id}?step=2`;
+    }
+    if (isOwner) {
+      return `/workspace/${request.id}`;
+    }
+    return `/requests/${request.id}`;
+  };
+
+  const getLinkLabel = () => {
+    if (request.status === 'draft') {
+      return 'مراجعة ونشر المسودة ←';
+    }
+    if (isOwner) {
+      return 'إدارة الطلب (مساحة العمل) ❯';
+    }
+    return 'عرض التفاصيل ←';
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col justify-between">
@@ -43,10 +67,10 @@ export const RequestCard = ({ request }) => {
           Created: {new Date(request.createdAt).toLocaleDateString()}
         </span>
         <Link 
-          to={request.status === 'draft' ? `/intake/${request.id}?step=2` : `/requests/${request.id}`}
+          to={getTargetRoute()}
           className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
         >
-          {request.status === 'draft' ? 'مراجعة ونشر المسودة ←' : 'View Details →'}
+          {getLinkLabel()}
         </Link>
       </div>
     </div>

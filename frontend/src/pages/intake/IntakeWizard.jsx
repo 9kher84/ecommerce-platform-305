@@ -46,7 +46,7 @@ export const IntakeWizard = () => {
 
   // Load existing draft if ID is present
   useEffect(() => {
-    if (requestDetails?.request) {
+    if (requestDetails?.request && !isHydrated) {
       const req = requestDetails.request;
       const header = req.header || {};
       const firstItem = req.items?.[0] || {};
@@ -66,7 +66,7 @@ export const IntakeWizard = () => {
       });
       setIsHydrated(true);
     }
-  }, [requestDetails]);
+  }, [requestDetails, isHydrated]);
 
   // Debounced Auto-Save Draft
   useEffect(() => {

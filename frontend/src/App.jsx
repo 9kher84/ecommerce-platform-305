@@ -62,7 +62,9 @@ const ProtectedRoute = ({ children }) => {
           <div className="font-bold text-xl text-indigo-600 flex items-center gap-6">
             <Link to="/" className="hover:opacity-80">MarketHub</Link>
             <div className="flex gap-4 text-sm font-medium text-gray-600">
-              {policy.can('BUYER_PROCUREMENT') && <Link to="/requests" className="hover:text-indigo-600">📋 طلبات الشراء</Link>}
+              {(policy.can('BUYER_PROCUREMENT') || policy.can('SELLER_PLATFORM')) && (
+                <Link to="/requests" className="hover:text-indigo-600">📋 سوق الطلبات (Market)</Link>
+              )}
               {policy.can('SELLER_PLATFORM') && <Link to="/seller/platform" className="hover:text-indigo-600">🏬 منصة البائع</Link>}
               <Link to="/merchant/passport" className="hover:text-indigo-600">🛡️ الجواز التجاري</Link>
             </div>
@@ -93,7 +95,8 @@ const RequireCapability = ({ children, capability }) => {
     return <Navigate to="/login" replace />;
   }
 
-  const isAllowed = policy.can(capability);
+  const capabilities = Array.isArray(capability) ? capability : [capability];
+  const isAllowed = capabilities.some(cap => policy.can(cap));
   if (!isAllowed) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
@@ -296,7 +299,7 @@ export const App = () => {
       <Route 
         path="/requests" 
         element={
-          <RequireCapability capability="BUYER_PROCUREMENT">
+          <RequireCapability capability={['BUYER_PROCUREMENT', 'SELLER_PLATFORM']}>
             <div className="p-8">
               <RequestsList />
             </div>
@@ -307,7 +310,7 @@ export const App = () => {
       <Route 
         path="/requests/:id" 
         element={
-          <RequireCapability capability="BUYER_PROCUREMENT">
+          <RequireCapability capability={['BUYER_PROCUREMENT', 'SELLER_PLATFORM']}>
             <div className="p-8">
               <RequestDetails />
             </div>

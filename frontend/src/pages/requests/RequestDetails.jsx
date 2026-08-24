@@ -46,8 +46,26 @@ export const RequestDetails = () => {
   // For pending decisions, we'd ideally look at process statuses, but we simplify here
   const pendingDecisions = workPackages.reduce((acc, wp) => acc + (wp.commercialProcesses?.filter(p => p.status === 'waiting_buyer' || p.status === 'pending_award').length || 0), 0);
 
+  const isOwner = user && project && user.id === project.userId;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Owner Workspace Navigation Fallback Banner */}
+      {isOwner && (
+        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white p-5 rounded-xl shadow-md flex justify-between items-center dir-rtl">
+          <div>
+            <h2 className="text-base font-black text-white">🚀 غرفة عمليات الترسية والمفاوضات السيادية (Deal Workspace)</h2>
+            <p className="text-xs text-indigo-200 mt-1">بصفتك صاحب هذا الطلب، يمكنك إدارة حزم العمل، مقارنة عروض السعر، واعتماد الترسية من مساحة العمل الخاصة بك.</p>
+          </div>
+          <button
+            onClick={() => navigate(`/workspace/${id}`)}
+            className="bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow-lg transition-all"
+          >
+            الانتقال إلى غرفة العمليات ❯
+          </button>
+        </div>
+      )}
+
       {/* KPI Header */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex justify-between items-start mb-6">
