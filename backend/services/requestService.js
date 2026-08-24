@@ -711,11 +711,45 @@ class RequestService {
       ];
 
       // Safely attach WorkPackage include if defined in ORM setup
-      if (require("../sequelize_setup").WorkPackage) {
+      const { WorkPackage, CommercialProcess, NegotiationSheet, ProcessParty, User: UserModel, Organization: OrgModel } = require("../sequelize_setup");
+      if (WorkPackage) {
         includes.push({
-          model: require("../sequelize_setup").WorkPackage,
+          model: WorkPackage,
           as: "workPackages",
           required: false,
+          include: [
+            {
+              model: CommercialProcess,
+              as: "commercialProcesses",
+              required: false,
+              include: [
+                {
+                  model: NegotiationSheet,
+                  as: "negotiationSheets",
+                  required: false,
+                },
+                {
+                  model: ProcessParty,
+                  as: "parties",
+                  required: false,
+                  include: [
+                    {
+                      model: UserModel,
+                      as: "user",
+                      attributes: ["id", "name", "email"],
+                      required: false,
+                    },
+                    {
+                      model: OrgModel,
+                      as: "organization",
+                      attributes: ["id", "name"],
+                      required: false,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         });
       }
 

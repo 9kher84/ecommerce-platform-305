@@ -125,8 +125,9 @@ class NegotiationController {
       // In a real implementation, this would aggregate from multiple domains (collaboration, negotiations, etc)
       // For Wave 2.5 MVP, we'll fetch processes that are 'pending_award'
       
+      const { Op } = require('sequelize');
       const pendingAwards = await CommercialProcess.findAll({
-        where: { status: 'pending_award' },
+        where: { status: { [Op.in]: ['waiting_buyer', 'pending_award'] } },
         include: [
           { model: ProcessParty, as: 'parties', where: { userId, partyRole: 'BUYER' } },
           { 
