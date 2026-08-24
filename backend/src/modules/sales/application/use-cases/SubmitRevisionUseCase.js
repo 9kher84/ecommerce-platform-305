@@ -31,7 +31,7 @@ class SubmitRevisionUseCase {
       });
 
       if (!process) throw new Error('CommercialProcess not found');
-      if (['agreed', 'awarded', 'cancelled', 'expired', 'closed'].includes(process.status)) {
+      if (['pending_award', 'agreed', 'awarded', 'cancelled', 'expired', 'closed'].includes(process.status)) {
         throw new Error(`Cannot submit revision. Process is already ${process.status}`);
       }
 

@@ -49,6 +49,8 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
     });
   };
 
+  const isAwardDecisionLocked = ['pending_award', 'awarded', 'closed'].includes(process?.status);
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-sm flex justify-end transition-opacity">
       <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto transform transition-transform">
@@ -104,9 +106,15 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleAccept} isLoading={acceptMutation.isPending}>
-                    🏆 اعتماد الترسية الفوري (Award)
-                  </Button>
+                  {!isAwardDecisionLocked ? (
+                    <Button size="sm" onClick={handleAccept} isLoading={acceptMutation.isPending}>
+                      🏆 اعتماد الترسية الفوري (Award)
+                    </Button>
+                  ) : (
+                    <span className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                      {process.status === 'awarded' ? '🏆 تم الترسية بنجاح' : '⏳ ترسية معلقة (Pending Award)'}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -164,46 +172,48 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
               )}
 
               {/* Counter Offer Toggle Form */}
-              <div className="border-t border-gray-200 pt-4 space-y-4">
-                {!showCounterForm ? (
-                  <Button variant="secondary" className="w-full" onClick={() => setShowCounterForm(true)}>
-                    + تقديم عرض مقابل (Counter Offer)
-                  </Button>
-                ) : (
-                  <form onSubmit={handleSendCounter} className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-                    <h4 className="font-bold text-sm text-gray-900">تقديم عرض مقابل</h4>
-                    <div>
-                      <label className="text-xs font-bold text-gray-700 block mb-1">السعر المقترح (ريال)</label>
-                      <input 
-                        type="number" 
-                        required
-                        value={counterPrice}
-                        onChange={(e) => setCounterPrice(e.target.value)}
-                        placeholder="أدخل السعر المقترح" 
-                        className="w-full border rounded p-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-700 block mb-1">ملاحظات العرض المقابل</label>
-                      <textarea 
-                        rows={2}
-                        value={counterNotes}
-                        onChange={(e) => setCounterNotes(e.target.value)}
-                        placeholder="أضف أي مبررات أو شروط إضافية" 
-                        className="w-full border rounded p-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button type="button" variant="secondary" size="sm" onClick={() => setShowCounterForm(false)}>
-                        إلغاء
-                      </Button>
-                      <Button type="submit" size="sm" isLoading={counterMutation.isPending}>
-                        إرسال العرض المقابل
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </div>
+              {!isAwardDecisionLocked && (
+                <div className="border-t border-gray-200 pt-4 space-y-4">
+                  {!showCounterForm ? (
+                    <Button variant="secondary" className="w-full" onClick={() => setShowCounterForm(true)}>
+                      + تقديم عرض مقابل (Counter Offer)
+                    </Button>
+                  ) : (
+                    <form onSubmit={handleSendCounter} className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                      <h4 className="font-bold text-sm text-gray-900">تقديم عرض مقابل</h4>
+                      <div>
+                        <label className="text-xs font-bold text-gray-700 block mb-1">السعر المقترح (ريال)</label>
+                        <input 
+                          type="number" 
+                          required
+                          value={counterPrice}
+                          onChange={(e) => setCounterPrice(e.target.value)}
+                          placeholder="أدخل السعر المقترح" 
+                          className="w-full border rounded p-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-700 block mb-1">ملاحظات العرض المقابل</label>
+                        <textarea 
+                          rows={2}
+                          value={counterNotes}
+                          onChange={(e) => setCounterNotes(e.target.value)}
+                          placeholder="أضف أي مبررات أو شروط إضافية" 
+                          className="w-full border rounded p-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setShowCounterForm(false)}>
+                          إلغاء
+                        </Button>
+                        <Button type="submit" size="sm" isLoading={counterMutation.isPending}>
+                          إرسال العرض المقابل
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
 
               {/* Revision History Timeline */}
               <div className="space-y-3">

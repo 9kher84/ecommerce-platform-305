@@ -24,6 +24,11 @@ class CheckoutAwardsUseCase {
         process.status = 'awarded';
         await process.save({ transaction });
 
+        if (process.workPackage) {
+          process.workPackage.status = 'awarded';
+          await process.workPackage.save({ transaction });
+        }
+
         // Retrieve accepted sheet to extract terms for Award
         const acceptedSheet = await NegotiationSheet.findOne({
           where: { commercialProcessId: processId, status: 'ACCEPTED' },

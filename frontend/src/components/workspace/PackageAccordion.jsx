@@ -23,7 +23,7 @@ export const PackageAccordion = ({ workPackages = [], onSelectProcess }) => {
         const isExpanded = expandedPackageIds.includes(wp.id);
         const processes = wp.commercialProcesses || [];
         const processCount = processes.length;
-        const isAwarded = wp.status === 'awarded';
+        const isAwarded = wp.status === 'awarded' || processes.some(p => ['awarded', 'pending_award'].includes(p.status));
 
         // Calculate lowest and highest prices from negotiation sheets
         const allPrices = processes.flatMap(p => 
