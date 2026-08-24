@@ -35,6 +35,7 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
     counterMutation.mutate({
       processId,
       payload: {
+        decision: 'COUNTER',
         terms: { price: parseFloat(counterPrice) },
         notes: counterNotes
       }
