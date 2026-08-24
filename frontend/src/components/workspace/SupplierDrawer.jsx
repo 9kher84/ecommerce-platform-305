@@ -6,6 +6,7 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const [counterPrice, setCounterPrice] = useState('');
   const [counterNotes, setCounterNotes] = useState('');
   const [showCounterForm, setShowCounterForm] = useState(false);
+  const [awardSuccess, setAwardSuccess] = useState(null);
 
   const { data: response, isLoading, isError } = useCommercialTimeline(processId);
   const counterMutation = useSubmitRevision();
@@ -16,8 +17,6 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const process = response?.data;
   const revisions = process?.negotiationSheets || [];
   const latestRevision = revisions.length > 0 ? revisions[revisions.length - 1] : null;
-
-  const [awardSuccess, setAwardSuccess] = useState(null);
 
   const handleAccept = () => {
     if (window.confirm('هل أنت متأكد من قبول هذا العرض والترسية؟')) {
