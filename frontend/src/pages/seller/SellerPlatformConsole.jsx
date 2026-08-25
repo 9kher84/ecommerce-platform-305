@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
 import { Button } from '../../components/common/Button';
 import { ProductIngressModal } from '../product/ProductIngressModal';
-import { useMatchRadar, useSellerStats } from '../../hooks/queries/dashboardQueries';
+import { useSellerStats } from '../../hooks/queries/dashboardQueries';
 import { useQuery } from '@tanstack/react-query';
 import { commercialService } from '../../services/commercialService';
 import { invoiceService } from '../../services/invoiceService';
+import { entityService } from '../../services/entityService';
 
 export const SellerPlatformConsole = () => {
   const [activeModule, setActiveModule] = useState('TODAY_BUSINESS');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   
   // Real Domain Queries using Canonical Frontend Services
-  const { data: matchRadarData, isLoading: isRadarLoading } = useMatchRadar();
+  const { data: canonicalRequestsData, isLoading: isRequestsLoading } = useQuery({
+    queryKey: ['requests', 'published'],
+    queryFn: () => entityService.getRequests(),
+    staleTime: 30 * 1000,
+  });
+
   const { data: sellerStatsData, isLoading: isStatsLoading } = useSellerStats();
 
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
@@ -65,8 +71,11 @@ export const SellerPlatformConsole = () => {
   ].filter(item => capabilities.enabledModules.includes(item.id));
 
   // Compute Card Metrics with STRICT Business Semantics
-  // 1. RFQs Opportunity Count (AI Matched / Published RFQs for Seller Sector)
-  const rfqsCount = matchRadarData ? (Array.isArray(matchRadarData) ? matchRadarData.length : (matchRadarData.count || 0)) : null;
+  // 1. Canonical RFQs Opportunity Count matching /requests page (published / active RFQs)
+  const rfqsCount = canonicalRequestsData ?
+    (Array.isArray(canonicalRequestsData.data) ? canonicalRequestsData.data.length : (Array.isArray(canonicalRequestsData) ? canonicalRequestsData.length : (canonicalRequestsData.count || 0)))
+    : null;
+
 
   // 2. Negotiations Awaiting Seller Action (status: waiting_seller OR pending_award)
   const pendingInboxCount = inboxData?.data ?
@@ -154,14 +163,14 @@ export const SellerPlatformConsole = () => {
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] text-slate-400">فرص شراء جديدة</span>
-                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">AI MATCH</span>
+                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">MARKET</span>
                   </div>
                   <div className="text-2xl font-black text-indigo-400 font-mono">
-                    {isRadarLoading ? '...' : (rfqsCount !== null ? `${rfqsCount} طلبات` : 'غير متاح')}
+                    {isRequestsLoading ? '...' : (rfqsCount !== null ? `${rfqsCount} طلبات` : 'غير متاح')}
                   </div>
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
                     <span className="text-slate-400">فرص الشراء المتاحة</span>
-                    <Button onClick={() => setActiveModule('QUOTATIONS')} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] px-3 py-1 font-bold">
+                    <Button onClick={() => window.location.href = '/requests'} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] px-3 py-1 font-bold">
                       تقديم عرض سعر ❯
                     </Button>
                   </div>

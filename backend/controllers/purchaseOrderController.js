@@ -99,7 +99,16 @@ exports.rejectPO = catchAsync(async (req, res, next) => {
 // @route   GET /api/v2/purchase-orders/seller
 // @access  Private (Seller)
 exports.getSellerPOs = catchAsync(async (req, res, next) => {
-  const sellerOrgId = req.user.organization_id || req.user.organizationId;
+  const sellerOrgId = req.user?.organization_id || req.user?.organizationId;
+
+  if (!sellerOrgId) {
+    return res.status(400).json({
+      success: false,
+      message: "Seller organization identification missing. Please complete organization setup.",
+      data: []
+    });
+  }
+
   const pos = await ProcurementService.getSellerPurchaseOrders(sellerOrgId);
   res.status(200).json({ success: true, count: pos.length, data: pos });
 });
