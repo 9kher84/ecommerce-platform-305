@@ -30,16 +30,21 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
           checkoutMutation.mutate([processId], {
             onSuccess: async (checkoutRes) => {
               const createdAwards = checkoutRes?.data?.createdAwards || checkoutRes?.createdAwards || [];
+              let poSuccess = true;
               if (createdAwards.length > 0) {
                 for (const award of createdAwards) {
                   try {
                     await generatePOMutation.mutateAsync(award.id);
                   } catch (poErr) {
-                    console.error("PO Auto-generation error:", poErr);
+                    console.error("PO Auto-generation error for award:", award.id, poErr);
+                    poSuccess = false;
                   }
                 }
               }
-              setAwardSuccess(checkoutRes?.data || checkoutRes || { success: true });
+              setAwardSuccess({ 
+                ... (checkoutRes?.data || checkoutRes || { success: true }),
+                poFailed: !poSuccess
+              });
               onAwardSuccess && onAwardSuccess(checkoutRes);
             },
             onError: (chkErr) => {
@@ -98,22 +103,28 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
         {/* Drawer Body */}
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
           {awardSuccess && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-emerald-900 space-y-3 shadow-sm">
+            <div className={`border rounded-xl p-5 space-y-3 shadow-sm ${awardSuccess.poFailed ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
               <div className="flex items-center gap-3">
-                <span className="text-2xl">🏆</span>
+                <span className="text-2xl">{awardSuccess.poFailed ? '⚠️' : '🏆'}</span>
                 <div>
                   <h4 className="font-bold text-base">
-                    {awardSuccess.pendingOnly ? 'تم قبول العرض وبانتظار الترسية النهائية' : 'تم اعتماد الترسية وإصدار أمر الشراء (PO) بنجاح!'}
+                    {awardSuccess.pendingOnly 
+                      ? 'تم قبول العرض وبانتظار الترسية النهائية' 
+                      : awardSuccess.poFailed 
+                        ? 'تم اعتماد الترسية بنجاح، وتجري معالجة توليد أمر الشراء (PO)' 
+                        : 'تم اعتماد الترسية وإصدار أمر الشراء (PO) بنجاح!'}
                   </h4>
-                  <p className="text-xs text-emerald-700 mt-0.5">
+                  <p className={`text-xs mt-0.5 ${awardSuccess.poFailed ? 'text-amber-700' : 'text-emerald-700'}`}>
                     {awardSuccess.pendingOnly 
                       ? 'تم قبول مراجعة التفاوض بنجاح. يمكنك إتمام الترسية والدفع من صندوق الوارد التجاري.'
-                      : 'تم تحويل العرض المقبول إلى ترسية رسمية (Award) وتوليد أمر الشراء (Purchase Order) للمورد.'}
+                      : awardSuccess.poFailed 
+                        ? 'تم تحويل العرض إلى ترسية رسمية (Award). يمكنك متابعة إصدار أمر الشراء مباشرة من صندوق الوارد.'
+                        : 'تم تحويل العرض المقبول إلى ترسية رسمية (Award) وتوليد أمر الشراء (Purchase Order) للمورد.'}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-emerald-200/60">
-                <Button size="sm" onClick={() => { setAwardSuccess(null); onClose(); navigate('/inbox/commercial'); }}>
+                <Button size="sm" onClick={() => { setAwardSuccess(null); onClose(); navigate('/inbox'); }}>
                   الانتقال إلى صندوق الوارد ومتابعة أسلوب التعميد ❯
                 </Button>
               </div>

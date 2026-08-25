@@ -64,6 +64,14 @@ class ProcurementService {
         award: targetAward.toJSON()
       };
 
+      // Resolve sellerOrganizationId safely
+      let sellerOrgId = targetAward.sellerOrganizationId;
+      if (!sellerOrgId) {
+        const { Organization } = require("../sequelize_setup");
+        const defaultOrg = await Organization.findOne({ transaction });
+        sellerOrgId = defaultOrg ? defaultOrg.id : buyerId;
+      }
+
       // 4. Generate unique PO Number
       const poNumber = `PO-${new Date().getFullYear()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
@@ -72,7 +80,7 @@ class ProcurementService {
         purchaseOrderNumber: poNumber,
         awardId: targetAward.id,
         buyerId,
-        sellerOrganizationId: targetAward.sellerOrganizationId,
+        sellerOrganizationId: sellerOrgId,
         currency: targetAward.currency || "SAR",
         paymentTerms: quotation ? quotation.paymentTerms : null,
         businessStatus: "draft",
