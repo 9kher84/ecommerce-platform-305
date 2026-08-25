@@ -10,4 +10,6 @@ router.post("/preparation/:poId/ready", protect, restrictTo("seller"), shipmentC
 router.post("/", protect, restrictTo("seller"), shipmentController.createShipment);
 router.post("/:id/dispatch", protect, restrictTo("seller"), shipmentController.dispatchShipment);
 
+router.get("/po/:poId/summary", protect, restrictTo("seller"), shipmentController.getFulfillmentSummary);
+
 module.exports = router;

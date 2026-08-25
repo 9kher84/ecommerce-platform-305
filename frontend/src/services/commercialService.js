@@ -63,5 +63,31 @@ export const commercialService = {
   rejectPO: async (poId, reason) => {
     const response = await apiClient.post(`/api/v2/purchase-orders/${poId}/reject`, { reason });
     return response.data;
+  },
+
+  // Fulfillment Operations
+  startPreparation: async (poId) => {
+    const response = await apiClient.post('/api/v2/shipments/preparation', { poId });
+    return response.data;
+  },
+
+  markReadyToShip: async (poId) => {
+    const response = await apiClient.post(`/api/v2/shipments/preparation/${poId}/ready`);
+    return response.data;
+  },
+
+  createShipment: async (payload) => {
+    const response = await apiClient.post('/api/v2/shipments', payload);
+    return response.data;
+  },
+
+  dispatchShipment: async (shipmentId) => {
+    const response = await apiClient.post(`/api/v2/shipments/${shipmentId}/dispatch`);
+    return response.data;
+  },
+
+  getFulfillmentSummary: async (poId) => {
+    const response = await apiClient.get(`/api/v2/shipments/po/${poId}/summary`);
+    return response.data;
   }
 };

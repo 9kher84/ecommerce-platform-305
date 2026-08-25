@@ -115,3 +115,43 @@ export const useRejectPO = () => {
     }
   });
 };
+
+export const useStartPreparation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (poId) => commercialService.startPreparation(poId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};
+
+export const useMarkReadyToShip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (poId) => commercialService.markReadyToShip(poId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};
+
+export const useCreateShipment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => commercialService.createShipment(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};
+
+export const useDispatchShipment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipmentId) => commercialService.dispatchShipment(shipmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};

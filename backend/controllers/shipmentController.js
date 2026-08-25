@@ -62,3 +62,21 @@ exports.dispatchShipment = catchAsync(async (req, res, next) => {
   const shipment = await FulfillmentService.dispatchShipment(shipmentId, req.user.id);
   res.status(200).json({ success: true, message: "Shipment dispatched", data: shipment });
 });
+
+// @desc    Get Fulfillment Summary Read Model for a Purchase Order
+// @route   GET /api/v2/shipments/po/:poId/summary
+// @access  Private (Seller)
+exports.getFulfillmentSummary = catchAsync(async (req, res, next) => {
+  const { poId } = req.params;
+  const sellerOrganizationId = req.user?.organization_id || req.user?.sellerOrganizationId;
+
+  if (!sellerOrganizationId) {
+    return res.status(400).json({
+      success: false,
+      message: "Seller Organization ID missing. Organization setup is required to access fulfillment details."
+    });
+  }
+
+  const summary = await FulfillmentService.getFulfillmentSummary(poId, sellerOrganizationId);
+  res.status(200).json({ success: true, data: summary });
+});

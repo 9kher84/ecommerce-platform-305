@@ -106,6 +106,18 @@ class FulfillmentService {
       throw err;
     }
   }
+
+  // --- READ MODEL PROJECTION ---
+  static async getFulfillmentSummary(poId, sellerOrganizationId) {
+    const StateProjectionModule = require("./StateProjectionModule");
+    const summary = await StateProjectionModule.getPOFulfillmentSummary(poId);
+
+    if (sellerOrganizationId && summary.sellerOrganizationId !== sellerOrganizationId) {
+      throw { statusCode: 403, message: "Forbidden: You do not have permission to view fulfillment details for this Purchase Order." };
+    }
+
+    return summary;
+  }
 }
 
 module.exports = FulfillmentService;

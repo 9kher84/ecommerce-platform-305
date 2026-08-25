@@ -73,6 +73,61 @@ class StateProjectionModule {
 
     return projectedStatus;
   }
+
+  /**
+   * Pure read-only summary for Fulfillment Execution.
+   * Computes ordered, shipped, and remaining quantities per PO line across all shipments.
+   */
+  static async getPOFulfillmentSummary(poId, transaction) {
+    const po = await PurchaseOrder.findByPk(poId, {
+      include: [{ model: PurchaseOrderLine, as: "lines" }],
+      transaction
+    });
+
+    if (!po) throw { statusCode: 404, message: "Purchase Order not found for fulfillment summary" };
+
+    const shipments = await Shipment.findAll({
+      where: { purchaseOrderId: poId },
+      include: [{ model: ShipmentLine, as: "lines" }],
+      transaction
+    });
+
+    // Map shipped quantities per purchaseOrderLineId across dispatched shipments
+    const shippedByLine = {};
+    shipments.forEach(s => {
+      // Only count shipments that have officially been dispatched (in_transit, delivered)
+      if (s.status !== "preparing" && s.lines && Array.isArray(s.lines)) {
+        s.lines.forEach(sl => {
+          const lineId = sl.purchaseOrderLineId;
+          const qty = parseFloat(sl.quantityShipped) || 0;
+          shippedByLine[lineId] = (shippedByLine[lineId] || 0) + qty;
+        });
+      }
+    });
+
+    const linesSummary = po.lines.map(line => {
+      const ordered = parseFloat(line.quantity) || 0;
+      const shipped = shippedByLine[line.id] || 0;
+      const remaining = Math.max(0, ordered - shipped);
+      return {
+        purchaseOrderLineId: line.id,
+        productDNAId: line.productDNAId || null,
+        unitPrice: line.unitPrice,
+        orderedQuantity: ordered,
+        shippedQuantity: shipped,
+        remainingQuantity: remaining
+      };
+    });
+
+    return {
+      purchaseOrderId: po.id,
+      purchaseOrderNumber: po.purchaseOrderNumber,
+      sellerOrganizationId: po.sellerOrganizationId,
+      businessStatus: po.businessStatus,
+      fulfillmentStatus: po.fulfillmentStatus,
+      lines: linesSummary
+    };
+  }
 }
 
 module.exports = StateProjectionModule;

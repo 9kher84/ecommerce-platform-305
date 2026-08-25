@@ -6,12 +6,25 @@ import { useQuery } from '@tanstack/react-query';
 import { commercialService } from '../../services/commercialService';
 import { invoiceService } from '../../services/invoiceService';
 import { entityService } from '../../services/entityService';
-import { useAcceptPO } from '../../hooks/queries/commercialQueries';
+import {
+  useAcceptPO,
+  useStartPreparation,
+  useMarkReadyToShip,
+  useCreateShipment,
+  useDispatchShipment
+} from '../../hooks/queries/commercialQueries';
 
 export const SellerPlatformConsole = () => {
   const [activeModule, setActiveModule] = useState('TODAY_BUSINESS');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [activeShipmentModalPO, setActiveShipmentModalPO] = useState(null);
+  const [shipmentFormData, setShipmentFormData] = useState({ carrier: '', trackingNumber: '', lines: [] });
+
   const acceptPOMutation = useAcceptPO();
+  const startPrepMutation = useStartPreparation();
+  const markReadyMutation = useMarkReadyToShip();
+  const createShipmentMutation = useCreateShipment();
+  const dispatchShipmentMutation = useDispatchShipment();
   
   // Real Domain Queries using Canonical Frontend Services
   const { data: canonicalRequestsData, isLoading: isRequestsLoading } = useQuery({
@@ -327,7 +340,7 @@ export const SellerPlatformConsole = () => {
                       </div>
 
                       {/* Action Footer */}
-                      <div className="flex justify-end gap-3 pt-2">
+                      <div className="flex flex-wrap justify-end gap-3 pt-2">
                         {po.businessStatus !== 'accepted' ? (
                           <Button
                             disabled={acceptPOMutation.isPending}
@@ -347,15 +360,192 @@ export const SellerPlatformConsole = () => {
                             {acceptPOMutation.isPending ? 'جاري القبول...' : '✓ قبول أمر الشراء (Accept PO)'}
                           </Button>
                         ) : (
-                          <Button
-                            onClick={() => window.location.href = '/workspace/execution'}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20">
-                            📦 الانتقال لمتابعة الشحن والتوريد (Fulfillment) ❯
-                          </Button>
+                          <>
+                            {/* State 1: pending -> start preparation */}
+                            {po.fulfillmentStatus === 'pending' && (
+                              <Button
+                                disabled={startPrepMutation.isPending}
+                                onClick={() => {
+                                  startPrepMutation.mutate(po.id, {
+                                    onSuccess: () => alert('تم بدء تجهيز الطلب بنجاح.'),
+                                    onError: (err) => alert(err?.message || 'حدث خطأ أثناء بدء التجهيز.')
+                                  });
+                                }}
+                                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-amber-600/20 disabled:opacity-50">
+                                {startPrepMutation.isPending ? 'جاري بدء التجهيز...' : '⚙️ بدء تجهيز الطلب (Start Preparation)'}
+                              </Button>
+                            )}
+
+                            {/* State 2: preparing -> mark ready to ship */}
+                            {po.fulfillmentStatus === 'preparing' && (
+                              <Button
+                                disabled={markReadyMutation.isPending}
+                                onClick={() => {
+                                  markReadyMutation.mutate(po.id, {
+                                    onSuccess: () => alert('تم تأكيد تجهيز الطلب كـ جاهز للشحن.'),
+                                    onError: (err) => alert(err?.message || 'حدث خطأ أثناء التحديث.')
+                                  });
+                                }}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+                                {markReadyMutation.isPending ? 'جاري تحديث الحالة...' : '📦 تم التجهيز / جاهز للشحن (Mark Ready)'}
+                              </Button>
+                            )}
+
+                            {/* State 3: ready_to_ship OR partially_shipped -> open create shipment modal */}
+                            {(po.fulfillmentStatus === 'ready_to_ship' || po.fulfillmentStatus === 'partially_shipped') && (
+                              <Button
+                                onClick={() => {
+                                  commercialService.getFulfillmentSummary(po.id).then((res) => {
+                                    const summaryData = res?.data || {};
+                                    const summaryLines = summaryData.lines || [];
+                                    const initialLines = (po.lines || []).map(line => {
+                                      const lineSummary = summaryLines.find(l => l.purchaseOrderLineId === line.id);
+                                      const remainingQty = lineSummary ? lineSummary.remainingQuantity : (parseFloat(line.quantity) || 0);
+                                      return {
+                                        purchaseOrderLineId: line.id,
+                                        quantityShipped: Math.min(remainingQty, parseFloat(line.quantity) || 1),
+                                        orderedQuantity: parseFloat(line.quantity) || 0,
+                                        remainingQuantity: remainingQty
+                                      };
+                                    });
+                                    setShipmentFormData({ carrier: '', trackingNumber: '', lines: initialLines });
+                                    setActiveShipmentModalPO(po);
+                                  }).catch(() => {
+                                    const initialLines = (po.lines || []).map(line => ({
+                                      purchaseOrderLineId: line.id,
+                                      quantityShipped: parseFloat(line.quantity) || 1,
+                                      orderedQuantity: parseFloat(line.quantity) || 0,
+                                      remainingQuantity: parseFloat(line.quantity) || 0
+                                    }));
+                                    setShipmentFormData({ carrier: '', trackingNumber: '', lines: initialLines });
+                                    setActiveShipmentModalPO(po);
+                                  });
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20">
+                                🚚 + إنشاء وتأكيد شحنة جديدة (Create Shipment)
+                              </Button>
+                            )}
+
+                            {/* State 4: shipped / received status badges */}
+                            {po.fulfillmentStatus === 'shipped' && (
+                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-4 py-2 rounded-xl font-bold">
+                                ✓ تم شحن أمر الشراء بالكامل (Shipped)
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Interactive Shipment Creation Modal */}
+              {activeShipmentModalPO && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                  <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                      <h3 className="text-sm font-bold text-white">إنشاء شحنة لأمر الشراء #{activeShipmentModalPO.purchaseOrderNumber || activeShipmentModalPO.id?.substring(0, 8)}</h3>
+                      <button onClick={() => setActiveShipmentModalPO(null)} className="text-slate-400 hover:text-white text-xs">✕ إغلاق</button>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-bold">شركة الشحن (Carrier):</label>
+                        <input
+                          type="text"
+                          placeholder="مثال: DHL / Aramex / توريد مباشر"
+                          value={shipmentFormData.carrier}
+                          onChange={(e) => setShipmentFormData({ ...shipmentFormData, carrier: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-bold">رقم التتبع التجاري (Tracking Number):</label>
+                        <input
+                          type="text"
+                          placeholder="مثال: TRK-99281203"
+                          value={shipmentFormData.trackingNumber}
+                          onChange={(e) => setShipmentFormData({ ...shipmentFormData, trackingNumber: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-slate-800">
+                        <span className="block font-bold text-slate-400">كميات أصناف الشحنة (Physical Quantities):</span>
+                        {activeShipmentModalPO.lines && activeShipmentModalPO.lines.map((line, idx) => {
+                          const formLine = shipmentFormData.lines.find(l => l.purchaseOrderLineId === line.id);
+                          const remainingQty = formLine?.remainingQuantity !== undefined ? formLine.remainingQuantity : (parseFloat(line.quantity) || 0);
+                          const isFullyShipped = remainingQty <= 0;
+
+                          return (
+                            <div key={line.id || idx} className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                              <span className="text-slate-300">
+                                صنف #{line.productDNAId?.substring(0, 8) || (idx + 1)} (المتبقي: {remainingQty} من {line.quantity})
+                                {isFullyShipped && <span className="text-[10px] text-emerald-400 font-bold mr-2">(تم الشحن بالكامل)</span>}
+                              </span>
+                              {!isFullyShipped ? (
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max={remainingQty}
+                                  value={formLine?.quantityShipped ?? remainingQty}
+                                  onChange={(e) => {
+                                    const parsedVal = parseFloat(e.target.value) || 0;
+                                    const clampedQty = Math.min(remainingQty, Math.max(0, parsedVal));
+                                    const updatedLines = shipmentFormData.lines.map(l =>
+                                      l.purchaseOrderLineId === line.id ? { ...l, quantityShipped: clampedQty, quantityPacked: clampedQty, quantityLoaded: clampedQty } : l
+                                    );
+                                    setShipmentFormData({ ...shipmentFormData, lines: updatedLines });
+                                  }}
+                                  className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-center text-white font-mono"
+                                />
+                              ) : (
+                                <span className="text-xs font-mono text-slate-500 font-bold">0</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                      <Button onClick={() => setActiveShipmentModalPO(null)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2">
+                        إلغاء
+                      </Button>
+                      <Button
+                        disabled={createShipmentMutation.isPending || dispatchShipmentMutation.isPending}
+                        onClick={() => {
+                          createShipmentMutation.mutate({
+                            poId: activeShipmentModalPO.id,
+                            carrier: shipmentFormData.carrier,
+                            trackingNumber: shipmentFormData.trackingNumber,
+                            lines: shipmentFormData.lines
+                          }, {
+                            onSuccess: (createdShipmentData) => {
+                              const createdShipmentId = createdShipmentData?.data?.id || createdShipmentData?.id;
+                              if (createdShipmentId) {
+                                dispatchShipmentMutation.mutate(createdShipmentId, {
+                                  onSuccess: () => {
+                                    alert('تم إنشاء الشحنة وتأكيد إرسالها بنجاح!');
+                                    setActiveShipmentModalPO(null);
+                                  },
+                                  onError: (err) => alert('تم إنشاء الشحنة ولكن حدث خطأ في التأكيد: ' + (err?.message || ''))
+                                });
+                              } else {
+                                alert('تم إنشاء الشحنة بنجاح.');
+                                setActiveShipmentModalPO(null);
+                              }
+                            },
+                            onError: (err) => alert(err?.message || 'حدث خطأ أثناء إنشاء الشحنة.')
+                          });
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-lg shadow-emerald-600/20 disabled:opacity-50">
+                        {createShipmentMutation.isPending || dispatchShipmentMutation.isPending ? 'جاري التنفيذ...' : '✓ إنشاء وتأكيد الشحنة (Dispatch)'}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
