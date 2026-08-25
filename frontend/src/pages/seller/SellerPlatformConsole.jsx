@@ -6,10 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { commercialService } from '../../services/commercialService';
 import { invoiceService } from '../../services/invoiceService';
 import { entityService } from '../../services/entityService';
+import { useAcceptPO } from '../../hooks/queries/commercialQueries';
 
 export const SellerPlatformConsole = () => {
   const [activeModule, setActiveModule] = useState('TODAY_BUSINESS');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const acceptPOMutation = useAcceptPO();
   
   // Real Domain Queries using Canonical Frontend Services
   const { data: canonicalRequestsData, isLoading: isRequestsLoading } = useQuery({
@@ -263,7 +265,103 @@ export const SellerPlatformConsole = () => {
             </div>
           )}
 
-          {activeModule !== 'TODAY_BUSINESS' && activeModule !== 'PERFORMANCE_METRICS' && (
+          {activeModule === 'ORDERS_AND_FULFILLMENT' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-black text-white">الطلبات وأوامر الشراء (Orders & Fulfillment)</h2>
+                  <p className="text-xs text-slate-400 mt-1">مراجعة وتأكيد أوامر الشراء الصادرة من المشتري ومتابعة الشحن للتوريد.</p>
+                </div>
+              </div>
+
+              {isPOsLoading ? (
+                <div className="p-8 text-center text-slate-400 text-xs font-mono animate-pulse">جاري تحميل أوامر الشراء الصادرة...</div>
+              ) : !sellerPOsData?.data || sellerPOsData.data.length === 0 ? (
+                <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center space-y-2">
+                  <div className="text-3xl">📦</div>
+                  <h3 className="text-sm font-bold text-white">لا توجد أوامر شراء صادرة حالياً</h3>
+                  <p className="text-xs text-slate-400">ستظهر هنا جميع أوامر الشراء المعتمدة فور ترسية المنافسات وتأكيد المشتري.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sellerPOsData.data.map((po) => (
+                    <div key={po.id} className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+                      <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="text-xs font-mono font-bold text-indigo-400">أمر شراء رقم #{po.purchaseOrderNumber || po.id?.substring(0, 8)}</span>
+                          <span className="text-[11px] text-slate-400 block mt-0.5">تاريخ الإصدار: {new Date(po.createdAt).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${
+                            po.businessStatus === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                            po.businessStatus === 'issued' || po.businessStatus === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                            'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                          }`}>
+                            الحالة: {po.businessStatus === 'accepted' ? 'تمت موافقة المورد (Accepted)' : 'بانتظار موافقة المورد (Pending Acceptance)'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* PO Line Items Snapshot */}
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-bold text-slate-400">تفاصيل العقد والشروط المجمدة (Frozen Commercial Snapshot):</div>
+                        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 space-y-2 text-xs">
+                          {po.lines && po.lines.length > 0 ? (
+                            po.lines.map((line, idx) => (
+                              <div key={line.id || idx} className="flex justify-between items-center text-slate-300">
+                                <span>صنف رقم #{line.productDNAId?.substring(0, 8) || (idx + 1)}</span>
+                                <span className="font-mono text-slate-400">الكمية: {line.quantity} × {line.unitPrice} SAR</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="flex justify-between items-center text-slate-300">
+                              <span>إجمالي قيمة أمر الشراء الأصلي</span>
+                              <span className="font-mono font-bold text-emerald-400">SAR {Number(po.totalAmount || 0).toLocaleString()}</span>
+                            </div>
+                          )}
+                          <div className="border-t border-slate-800 pt-2 flex justify-between items-center font-bold text-white">
+                            <span>المبلغ الإجمالي المعتمد:</span>
+                            <span className="font-mono text-emerald-400">SAR {Number(po.totalAmount || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="flex justify-end gap-3 pt-2">
+                        {po.businessStatus !== 'accepted' ? (
+                          <Button
+                            disabled={acceptPOMutation.isPending}
+                            onClick={() => {
+                              if (window.confirm('هل أنت متأكد من قبول أمر الشراء والتأكيد النهائي للمشتري؟')) {
+                                acceptPOMutation.mutate(po.id, {
+                                  onSuccess: () => {
+                                    alert('تم قبول أمر الشراء بنجاح! تم تحويل حالة الطلب إلى مقبول وتجهيزه للشحن.');
+                                  },
+                                  onError: (err) => {
+                                    alert(err?.message || 'حدث خطأ أثناء قبول أمر الشراء.');
+                                  }
+                                });
+                              }
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 disabled:opacity-50">
+                            {acceptPOMutation.isPending ? 'جاري القبول...' : '✓ قبول أمر الشراء (Accept PO)'}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => window.location.href = '/workspace/execution'}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20">
+                            📦 الانتقال لمتابعة الشحن والتوريد (Fulfillment) ❯
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeModule !== 'TODAY_BUSINESS' && activeModule !== 'PERFORMANCE_METRICS' && activeModule !== 'ORDERS_AND_FULFILLMENT' && (
             <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center space-y-3">
               <div className="text-3xl">⚙️</div>
               <h3 className="text-sm font-bold text-white">وحدة {activeModule} مفعلة وجاهزة بنظام الصلاحيات الديناميكي</h3>
