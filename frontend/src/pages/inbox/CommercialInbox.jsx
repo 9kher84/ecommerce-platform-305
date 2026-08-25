@@ -19,17 +19,30 @@ export const CommercialInbox = () => {
 
   const pendingAwards = response?.data?.pendingAwards || [];
 
-  // Transform to common inbox format
-  const inboxItems = pendingAwards.map(award => ({
-    id: award.id,
-    type: 'pending_award',
-    title: award.workPackage ? `اعتماد ترسية: حزمة ${award.workPackage.name}` : `Award Pending: Process #${award.id.substring(0,8)}`,
-    processId: award.id,
-    workPackageId: award.workPackage?.id || '1',
-    requestId: award.workPackage?.purchaseRequestId || '1',
-    date: new Date(award.updatedAt).toLocaleDateString(),
-    selected: selectedItemIds.includes(award.id)
-  }));
+  const getWpName = (wp) => {
+    if (!wp || !wp.name) return 'تفاوض تجاري';
+    if (typeof wp.name === 'object') {
+      return wp.name.name_ar || wp.name.name_en || 'تفاوض تجاري';
+    }
+    return String(wp.name);
+  };
+
+  // Transform to common inbox format safely
+  const inboxItems = pendingAwards.map(award => {
+    const wpName = getWpName(award?.workPackage);
+    const dateStr = award?.updatedAt ? new Date(award.updatedAt).toLocaleDateString() : '';
+    const processIdStr = award?.id ? String(award.id).substring(0, 8) : '';
+    return {
+      id: award.id,
+      type: 'pending_award',
+      title: award?.workPackage ? `اعتماد ترسية: حزمة ${wpName}` : `Award Pending: Process #${processIdStr}`,
+      processId: award.id,
+      workPackageId: award?.workPackage?.id || '1',
+      requestId: award?.workPackage?.purchaseRequestId || '1',
+      date: dateStr,
+      selected: selectedItemIds.includes(award.id)
+    };
+  });
 
   const handleSelect = (id) => {
     setSelectedItemIds(prev => 
@@ -111,7 +124,11 @@ export const CommercialInbox = () => {
             </div>
           ))}
           {inboxItems.length === 0 && (
-            <div className="p-8 text-center text-gray-500">Inbox is empty.</div>
+            <div className="p-12 text-center space-y-3">
+              <span className="text-4xl block">🏆</span>
+              <h3 className="text-lg font-bold text-gray-800">لا توجد موافقات أو ترسيات معلقة بانتظار الاعتماد</h3>
+              <p className="text-sm text-gray-500">تم اعتماد الترسيات السابقة بنجاح ونقلها إلى مرحلة الإصدار والتنفيذ (AWARDED / PO Issued).</p>
+            </div>
           )}
         </div>
       </div>
