@@ -85,9 +85,15 @@ class FulfillmentService {
   // --- RECEIPT ---
   static async logReceipt(poId, buyerUserId, receiptData) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const receipt = await ReceiptModule.logReceipt(poId, buyerUserId, receiptData, transaction);
+      const receipt = await ReceiptModule.logReceipt(poId, buyerUserId, receiptData, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit receipt event error:", e); }
+      }
+
       return receipt;
     } catch (err) {
       await transaction.rollback();
@@ -97,9 +103,15 @@ class FulfillmentService {
 
   static async acceptReceipt(receiptId, buyerUserId) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const receipt = await ReceiptModule.acceptReceipt(receiptId, buyerUserId, transaction);
+      const receipt = await ReceiptModule.acceptReceipt(receiptId, buyerUserId, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit receipt event error:", e); }
+      }
+
       return receipt;
     } catch (err) {
       await transaction.rollback();
