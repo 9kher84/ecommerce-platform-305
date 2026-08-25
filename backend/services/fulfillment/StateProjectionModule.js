@@ -128,6 +128,114 @@ class StateProjectionModule {
       lines: linesSummary
     };
   }
+
+  /**
+   * Pure read-only summary for Receipt / Goods Inspection Execution.
+   * Computes line-by-line ordered, shipped, received, accepted, damaged, rejected,
+   * remainingToReceive, and remainingToAccept quantities for a Purchase Order.
+   */
+  static async getPOReceiptSummary(poId, transaction) {
+    const po = await PurchaseOrder.findByPk(poId, {
+      include: [{ model: PurchaseOrderLine, as: "lines" }],
+      transaction
+    });
+
+    if (!po) throw { statusCode: 404, message: "Purchase Order not found for receipt summary" };
+
+    const shipments = await Shipment.findAll({
+      where: { purchaseOrderId: poId },
+      include: [{ model: ShipmentLine, as: "lines" }],
+      transaction
+    });
+
+    const receipts = await Receipt.findAll({
+      where: { purchaseOrderId: poId },
+      include: [{ model: ReceiptLine, as: "lines" }],
+      transaction
+    });
+
+    // Map shipped quantities per purchaseOrderLineId across dispatched shipments
+    const shippedByLine = {};
+    shipments.forEach(s => {
+      if (s.status !== "preparing" && s.lines && Array.isArray(s.lines)) {
+        s.lines.forEach(sl => {
+          const lineId = sl.purchaseOrderLineId;
+          const qty = parseFloat(sl.quantityShipped) || 0;
+          shippedByLine[lineId] = (shippedByLine[lineId] || 0) + qty;
+        });
+      }
+    });
+
+    // Map physical receipt quantities per purchaseOrderLineId across all receipts
+    const receivedByLine = {};
+    const acceptedByLine = {};
+    const damagedByLine = {};
+    const rejectedByLine = {};
+
+    receipts.forEach(r => {
+      if (r.lines && Array.isArray(r.lines)) {
+        r.lines.forEach(rl => {
+          const lineId = rl.purchaseOrderLineId;
+          const acc = parseFloat(rl.acceptedQuantity) || 0;
+          const dam = parseFloat(rl.damagedQuantity) || 0;
+          const rej = parseFloat(rl.rejectedQuantity) || 0;
+          const tot = acc + dam + rej;
+
+          receivedByLine[lineId] = (receivedByLine[lineId] || 0) + tot;
+          damagedByLine[lineId] = (damagedByLine[lineId] || 0) + dam;
+          rejectedByLine[lineId] = (rejectedByLine[lineId] || 0) + rej;
+
+          // acceptedQuantity only counts when receipt is accepted or lines accepted
+          if (r.status === "accepted") {
+            acceptedByLine[lineId] = (acceptedByLine[lineId] || 0) + acc;
+          }
+        });
+      }
+    });
+
+    const linesSummary = po.lines.map(line => {
+      const ordered = parseFloat(line.quantity) || 0;
+      const shipped = shippedByLine[line.id] || 0;
+      const received = receivedByLine[line.id] || 0;
+      const accepted = acceptedByLine[line.id] || 0;
+      const damaged = damagedByLine[line.id] || 0;
+      const rejected = rejectedByLine[line.id] || 0;
+
+      const remainingToReceive = Math.max(0, shipped - received);
+      const remainingToAccept = Math.max(0, ordered - accepted);
+
+      return {
+        purchaseOrderLineId: line.id,
+        productDNAId: line.productDNAId || null,
+        unitPrice: line.unitPrice,
+        orderedQuantity: ordered,
+        shippedQuantity: shipped,
+        receivedQuantity: received,
+        acceptedQuantity: accepted,
+        damagedQuantity: damaged,
+        rejectedQuantity: rejected,
+        remainingToReceiveQuantity: remainingToReceive,
+        remainingToAcceptQuantity: remainingToAccept
+      };
+    });
+
+    const receiptSummaries = receipts.map(r => ({
+      receiptId: r.id,
+      shipmentId: r.shipmentId,
+      status: r.status,
+      receivedAt: r.receivedAt
+    }));
+
+    return {
+      purchaseOrderId: po.id,
+      purchaseOrderNumber: po.purchaseOrderNumber,
+      buyerId: po.buyerId,
+      businessStatus: po.businessStatus,
+      fulfillmentStatus: po.fulfillmentStatus,
+      lines: linesSummary,
+      receipts: receiptSummaries
+    };
+  }
 }
 
 module.exports = StateProjectionModule;

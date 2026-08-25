@@ -130,6 +130,23 @@ class FulfillmentService {
 
     return summary;
   }
+
+  static async getReceiptSummary(poId, buyerOrganizationId) {
+    const StateProjectionModule = require("./StateProjectionModule");
+    const { PurchaseOrder, Award } = require("../../sequelize_setup");
+
+    const po = await PurchaseOrder.findByPk(poId, {
+      include: [{ model: Award, as: "award" }]
+    });
+
+    if (!po) throw { statusCode: 404, message: "Purchase Order not found" };
+
+    if (buyerOrganizationId && po.award && po.award.buyerOrganizationId !== buyerOrganizationId) {
+      throw { statusCode: 403, message: "Forbidden: You do not have permission to view receipt details for this Purchase Order." };
+    }
+
+    return await StateProjectionModule.getPOReceiptSummary(poId);
+  }
 }
 
 module.exports = FulfillmentService;
