@@ -10,8 +10,61 @@ exports.generatePO = catchAsync(async (req, res, next) => {
     return res.status(400).json({ success: false, message: "awardId is required." });
   }
 
-  const po = await ProcurementService.generatePOFromAward(awardId, req.user.id);
-  res.status(201).json({ success: true, message: "Purchase Order generated", data: po });
+  try {
+    // IDOR / Authorization Check: Verify requesting user owns the Award's PurchaseRequest or matches buyerOrg
+    const { Award, PurchaseRequest, OrganizationUser } = require("../sequelize_setup");
+    const award = await Award.findByPk(awardId, {
+      include: [{ model: PurchaseRequest, as: "purchaseRequest" }]
+    });
+
+    if (!award) {
+      return res.status(404).json({ success: false, message: `Award not found: ${awardId}` });
+    }
+
+    const requestingUserId = req.user.id;
+    let isAuthorized = false;
+
+    if (award.purchaseRequest && award.purchaseRequest.userId === requestingUserId) {
+      isAuthorized = true;
+    } else if (award.buyerOrganizationId) {
+      const userOrg = await OrganizationUser.findOne({
+        where: { user_id: requestingUserId, organization_id: award.buyerOrganizationId }
+      });
+      if (userOrg) isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have authorization to generate a Purchase Order for this Award."
+      });
+    }
+
+    const po = await ProcurementService.generatePOFromAward(awardId);
+    res.status(201).json({ success: true, message: "Purchase Order generated", data: po });
+  } catch (error) {
+    console.error("=== GENERATE PO ERROR DIAGNOSTIC ===", {
+      awardId,
+      userId: req.user ? req.user.id : null,
+      errorName: error.name,
+      errorMessage: error.message,
+      parentError: error.parent ? error.parent.message : null,
+      parentDetail: error.parent ? error.parent.detail : null,
+      parentConstraint: error.parent ? error.parent.constraint : null,
+      parentCode: error.parent ? error.parent.code : null,
+      originalError: error.original ? error.original.message : null,
+      sql: error.sql || null
+    });
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: "PURCHASE_ORDER_GENERATION_FAILED",
+      message: error.message || "Failed to generate Purchase Order",
+      details: {
+        constraint: error.parent ? error.parent.constraint : null,
+        code: error.parent ? error.parent.code : null
+      }
+    });
+  }
 });
 
 // @desc    Issue a Draft PO

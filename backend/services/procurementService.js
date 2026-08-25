@@ -7,7 +7,7 @@ class ProcurementService {
    * Transforms an accepted Award into an independent Purchase Order with deep snapshots.
    * Marks the Award as converted (immutable).
    */
-  static async generatePOFromAward(awardId, buyerId, options = {}) {
+  static async generatePOFromAward(awardId, options = {}) {
     const transaction = options.transaction || await sequelize.transaction();
     const isLocalTx = !options.transaction;
     try {
@@ -40,7 +40,7 @@ class ProcurementService {
         throw { statusCode: 400, message: `Cannot generate PO from award in '${targetAward.status}' state.` };
       }
 
-      // 2. Fetch RFQ and Quotation context for the deep snapshot
+      // 2. Fetch RFQ and Quotation context for authoritative buyer & snapshot
       const rfq = await PurchaseRequest.findByPk(targetAward.purchaseRequestId, {
         attributes: ['id', 'userId', 'organization_id', 'title', 'status'],
         transaction
@@ -57,29 +57,42 @@ class ProcurementService {
         }
       }
 
-      // 3. Construct deep snapshot for the PO
+      // 3. Authoritative seller organization resolution
+      let sellerOrgId = targetAward.sellerOrganizationId || (rfq ? rfq.organization_id : null);
+      if (!sellerOrgId) {
+        throw { statusCode: 400, message: "Cannot generate Purchase Order: Seller Organization ID is missing on Award." };
+      }
+
+      // 4. Authoritative buyer User ID resolution strictly from PurchaseRequest owner or Award
+      const { User: UserModel } = require("../sequelize_setup");
+      let buyerUserId = rfq ? rfq.userId : null;
+      // Validate buyerUserId exists in User model
+      let validUser = null;
+      if (buyerUserId) {
+        validUser = await UserModel.findByPk(buyerUserId, { attributes: ['id'], transaction });
+      }
+      if (!validUser && targetAward.buyerOrganizationId) {
+        const orgUser = await UserModel.findByPk(targetAward.buyerOrganizationId, { attributes: ['id'], transaction });
+        if (orgUser) validUser = orgUser;
+      }
+
+      if (!validUser) {
+        throw { statusCode: 400, message: "Cannot generate Purchase Order: Authoritative Buyer User ID is missing or invalid in domain." };
+      }
+
+      buyerUserId = validUser.id;
+
+      // 5. Construct deep snapshot for the PO
       const poSnapshot = {
         rfq: rfq ? rfq.toJSON() : null,
         quotation: quotation ? quotation.toJSON() : null,
         award: targetAward.toJSON()
       };
 
-      // Resolve sellerOrganizationId from Award or RFQ
-      let sellerOrgId = targetAward.sellerOrganizationId || (rfq ? rfq.organization_id : null);
-      if (!sellerOrgId) {
-        throw { statusCode: 400, message: "Cannot generate Purchase Order: Seller Organization ID is missing on Award." };
-      }
-
-      // Resolve buyerUserId safely from buyerId or RFQ owner
-      let buyerUserId = buyerId || (rfq ? rfq.userId : null);
-      if (!buyerUserId) {
-        throw { statusCode: 400, message: "Cannot generate Purchase Order: Buyer User ID is missing." };
-      }
-
-      // 4. Generate unique PO Number
+      // 6. Generate unique PO Number
       const poNumber = `PO-${new Date().getFullYear()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
-      // 5. Create Purchase Order
+      // 7. Create Purchase Order
       const po = await PurchaseOrder.create({
         purchaseOrderNumber: poNumber,
         awardId: targetAward.id,
@@ -109,7 +122,7 @@ class ProcurementService {
       // 7. Update Award status to 'confirmed'
       await targetAward.update({ status: "confirmed" }, { transaction });
 
-      emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerId, { purchaseOrderNumber: poNumber, awardId: targetAward.id });
+      emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerUserId, { purchaseOrderNumber: poNumber, awardId: targetAward.id });
 
       if (isLocalTx) await transaction.commit();
       return po;
