@@ -1,12 +1,38 @@
 import React, { useState } from 'react';
 import { Button } from '../../components/common/Button';
 import { ProductIngressModal } from '../product/ProductIngressModal';
+import { useMatchRadar, useSellerStats } from '../../hooks/queries/dashboardQueries';
+import { useQuery } from '@tanstack/react-query';
+import { commercialService } from '../../services/commercialService';
+import { invoiceService } from '../../services/invoiceService';
 
 export const SellerPlatformConsole = () => {
   const [activeModule, setActiveModule] = useState('TODAY_BUSINESS');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   
-  // Simulated dynamic capability state from SellerCapabilityEngine
+  // Real Domain Queries using Canonical Frontend Services
+  const { data: matchRadarData, isLoading: isRadarLoading } = useMatchRadar();
+  const { data: sellerStatsData, isLoading: isStatsLoading } = useSellerStats();
+
+  const { data: inboxData, isLoading: isInboxLoading } = useQuery({
+    queryKey: ['negotiations', 'inbox'],
+    queryFn: () => commercialService.getInbox(),
+    staleTime: 30 * 1000,
+  });
+
+  const { data: sellerPOsData, isLoading: isPOsLoading } = useQuery({
+    queryKey: ['purchaseOrders', 'seller'],
+    queryFn: () => commercialService.getSellerPOs(),
+    staleTime: 30 * 1000,
+  });
+
+  const { data: myInvoicesData, isLoading: isInvoicesLoading } = useQuery({
+    queryKey: ['invoices', 'my'],
+    queryFn: () => invoiceService.getMyInvoices(),
+    staleTime: 30 * 1000,
+  });
+
+  // Preserved Design Contract
   const [capabilities] = useState({
     tier: 'PRO',
     enabledModules: [
@@ -37,6 +63,29 @@ export const SellerPlatformConsole = () => {
     { id: 'AI_INTELLIGENCE', label: 'ذكاء السوق (AI Engine)', icon: '🤖' },
     { id: 'SETTINGS', label: 'الإعدادات (Settings)', icon: '⚙️' }
   ].filter(item => capabilities.enabledModules.includes(item.id));
+
+  // Compute Card Metrics with STRICT Business Semantics
+  // 1. RFQs Opportunity Count (AI Matched / Published RFQs for Seller Sector)
+  const rfqsCount = matchRadarData ? (Array.isArray(matchRadarData) ? matchRadarData.length : (matchRadarData.count || 0)) : null;
+
+  // 2. Negotiations Awaiting Seller Action (status: waiting_seller OR pending_award)
+  const pendingInboxCount = inboxData?.data ?
+    (Array.isArray(inboxData.data) ? inboxData.data.filter(p => p.status === 'waiting_seller' || p.status === 'pending_award').length : 0) : null;
+
+  // 3. Actionable POs Requiring Seller Confirmation/Fulfillment (businessStatus: issued OR fulfillmentStatus: pending/preparing)
+  const pendingPOsCount = sellerPOsData?.data ?
+    (Array.isArray(sellerPOsData.data) ? sellerPOsData.data.filter(po => po.businessStatus === 'issued' || po.fulfillmentStatus === 'pending' || po.fulfillmentStatus === 'preparing').length : 0) : null;
+
+  // 4. Outstanding / Due Seller Obligations Amount (status: pending OR partially_paid OR overdue)
+  const outstandingInvoicesAmount = myInvoicesData?.data ?
+    (Array.isArray(myInvoicesData.data)
+      ? myInvoicesData.data
+          .filter(inv => inv.status === 'pending' || inv.status === 'partially_paid' || inv.status === 'overdue')
+          .reduce((sum, inv) => sum + (parseFloat(inv.totalAmount || 0) - parseFloat(inv.paidAmount || 0)), 0)
+      : 0) : null;
+
+  // Seller Stats - Strictly Mapped
+  const sellerStats = sellerStatsData?.stats;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
@@ -101,40 +150,49 @@ export const SellerPlatformConsole = () => {
               <h2 className="text-lg font-black text-white">إنجازات ومهام اليوم (Today's Business Actions)</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1: RFQs / Opportunities */}
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] text-slate-400">فرص شراء جديدة</span>
-                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">AI MATCH: 94%</span>
+                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">AI MATCH</span>
                   </div>
-                  <div className="text-2xl font-black text-indigo-400 font-mono">4 طلبات</div>
+                  <div className="text-2xl font-black text-indigo-400 font-mono">
+                    {isRadarLoading ? '...' : (rfqsCount !== null ? `${rfqsCount} طلبات` : 'غير متاح')}
+                  </div>
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">توريد حديد وخراسانات</span>
+                    <span className="text-slate-400">فرص الشراء المتاحة</span>
                     <Button onClick={() => setActiveModule('QUOTATIONS')} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] px-3 py-1 font-bold">
                       تقديم عرض سعر ❯
                     </Button>
                   </div>
                 </div>
 
+                {/* Card 2: Offers awaiting seller response */}
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] text-slate-400">عروض ينتظر رد البائع</span>
                     <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">عاجل</span>
                   </div>
-                  <div className="text-2xl font-black text-amber-400 font-mono">1 عرض</div>
+                  <div className="text-2xl font-black text-amber-400 font-mono">
+                    {isInboxLoading ? '...' : (pendingInboxCount !== null ? `${pendingInboxCount} عرض` : 'غير متاح')}
+                  </div>
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">مفاوضات بند السعر</span>
+                    <span className="text-slate-400">مفاوضات جارية</span>
                     <Button onClick={() => window.location.href = '/workspace/negotiation'} className="bg-amber-600 hover:bg-amber-500 text-white text-[11px] px-3 py-1 font-bold">
                       فتح المفاوضة ❯
                     </Button>
                   </div>
                 </div>
 
+                {/* Card 3: Shipments requiring confirmation */}
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] text-slate-400">شحنات تحتاج تأكيد</span>
                     <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">قيد الشحن</span>
                   </div>
-                  <div className="text-2xl font-black text-emerald-400 font-mono">2 شحنة</div>
+                  <div className="text-2xl font-black text-emerald-400 font-mono">
+                    {isPOsLoading ? '...' : (pendingPOsCount !== null ? `${pendingPOsCount} شحنة` : 'غير متاح')}
+                  </div>
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
                     <span className="text-slate-400">تأكيد التوريد والضمان</span>
                     <Button onClick={() => window.location.href = '/workspace/execution'} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-3 py-1 font-bold">
@@ -143,14 +201,17 @@ export const SellerPlatformConsole = () => {
                   </div>
                 </div>
 
+                {/* Card 4: Financial obligations / Outstanding Due Invoices Amount */}
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-[11px] text-slate-400">عمولة مستحقة الدفع</span>
-                    <span className="bg-slate-500/10 text-slate-300 border border-slate-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">3.4% RATE</span>
+                    <span className="text-[11px] text-slate-400">الفواتير المستحقة</span>
+                    <span className="bg-slate-500/10 text-slate-300 border border-slate-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">FINANCE</span>
                   </div>
-                  <div className="text-2xl font-black text-slate-300 font-mono">SAR 3,400</div>
+                  <div className="text-2xl font-black text-slate-300 font-mono">
+                    {isInvoicesLoading ? '...' : (outstandingInvoicesAmount !== null ? `SAR ${outstandingInvoicesAmount.toLocaleString()}` : 'غير متاح')}
+                  </div>
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">حالة المستحقات: سليمة</span>
+                    <span className="text-slate-400">سجل الفواتير المستحقة</span>
                     <Button onClick={() => window.location.href = '/merchant/passport'} className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] px-3 py-1 font-bold">
                       جواز السفر ❯
                     </Button>
@@ -166,20 +227,28 @@ export const SellerPlatformConsole = () => {
               
               <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
-                  <span className="text-xs text-slate-400 block">الصفقات المنجزة</span>
-                  <strong className="text-2xl font-black text-white font-mono">248</strong>
+                  <span className="text-xs text-slate-400 block">إجمالي العروض</span>
+                  <strong className="text-2xl font-black text-white font-mono">
+                    {isStatsLoading ? '...' : (sellerStats?.totalQuotes ?? '0')}
+                  </strong>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-400 block">عدد الإلغاءات</span>
-                  <strong className="text-2xl font-black text-rose-400 font-mono">3</strong>
+                  <span className="text-xs text-slate-400 block">العروض المقبولة</span>
+                  <strong className="text-2xl font-black text-emerald-400 font-mono">
+                    {isStatsLoading ? '...' : (sellerStats?.acceptedQuotes ?? '0')}
+                  </strong>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-400 block">سرعة الاستجابة</span>
-                  <strong className="text-2xl font-black text-indigo-400 font-mono">18 دقيقة</strong>
+                  <span className="text-xs text-slate-400 block">نسبة الفوز</span>
+                  <strong className="text-2xl font-black text-indigo-400 font-mono">
+                    {isStatsLoading ? '...' : (sellerStats?.winRate ?? '0%')}
+                  </strong>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-400 block">نسبة الالتزام بالـ SLA</span>
-                  <strong className="text-2xl font-black text-emerald-400 font-mono">98.5%</strong>
+                  <span className="text-xs text-slate-400 block">الباقة النشطة</span>
+                  <strong className="text-2xl font-black text-amber-400 font-mono">
+                    {isStatsLoading ? '...' : (sellerStats?.plan || 'PRO')}
+                  </strong>
                 </div>
               </div>
             </div>
