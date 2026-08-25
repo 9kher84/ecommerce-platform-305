@@ -71,10 +71,6 @@ class ProcurementService {
       if (buyerUserId) {
         validUser = await UserModel.findByPk(buyerUserId, { attributes: ['id'], transaction });
       }
-      if (!validUser && targetAward.buyerOrganizationId) {
-        const orgUser = await UserModel.findByPk(targetAward.buyerOrganizationId, { attributes: ['id'], transaction });
-        if (orgUser) validUser = orgUser;
-      }
 
       if (!validUser) {
         throw { statusCode: 400, message: "Cannot generate Purchase Order: Authoritative Buyer User ID is missing or invalid in domain." };

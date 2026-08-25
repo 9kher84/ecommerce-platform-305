@@ -14,7 +14,7 @@ exports.generatePO = catchAsync(async (req, res, next) => {
     // IDOR / Authorization Check: Verify requesting user owns the Award's PurchaseRequest or matches buyerOrg
     const { Award, PurchaseRequest, OrganizationUser } = require("../sequelize_setup");
     const award = await Award.findByPk(awardId, {
-      include: [{ model: PurchaseRequest, as: "purchaseRequest" }]
+      include: [{ model: PurchaseRequest, as: "request" }]
     });
 
     if (!award) {
@@ -24,7 +24,7 @@ exports.generatePO = catchAsync(async (req, res, next) => {
     const requestingUserId = req.user.id;
     let isAuthorized = false;
 
-    if (award.purchaseRequest && award.purchaseRequest.userId === requestingUserId) {
+    if (award.request && award.request.userId === requestingUserId) {
       isAuthorized = true;
     } else if (award.buyerOrganizationId) {
       const userOrg = await OrganizationUser.findOne({
@@ -55,14 +55,14 @@ exports.generatePO = catchAsync(async (req, res, next) => {
       originalError: error.original ? error.original.message : null,
       sql: error.sql || null
     });
-    return res.status(error.statusCode || 500).json({
+    const isKnownDomainError = typeof error.statusCode === "number" && error.statusCode >= 400 && error.statusCode < 500;
+    const responseStatusCode = isKnownDomainError ? error.statusCode : 500;
+    const responseMessage = isKnownDomainError ? error.message : "An unexpected error occurred while generating the Purchase Order.";
+
+    return res.status(responseStatusCode).json({
       success: false,
       code: "PURCHASE_ORDER_GENERATION_FAILED",
-      message: error.message || "Failed to generate Purchase Order",
-      details: {
-        constraint: error.parent ? error.parent.constraint : null,
-        code: error.parent ? error.parent.code : null
-      }
+      message: responseMessage
     });
   }
 });
