@@ -89,5 +89,21 @@ export const commercialService = {
   getFulfillmentSummary: async (poId) => {
     const response = await apiClient.get(`/api/v2/shipments/po/${poId}/summary`);
     return response.data;
+  },
+
+  // Receipt & Goods Inspection Operations
+  getReceiptSummary: async (poId) => {
+    const response = await apiClient.get(`/api/v2/receipts/po/${poId}/summary`);
+    return response.data;
+  },
+
+  logReceipt: async (payload) => {
+    const response = await apiClient.post('/api/v2/receipts', payload);
+    return response.data;
+  },
+
+  acceptReceipt: async (receiptId) => {
+    const response = await apiClient.post(`/api/v2/receipts/${receiptId}/accept`);
+    return response.data;
   }
 };

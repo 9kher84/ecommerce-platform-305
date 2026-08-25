@@ -155,3 +155,35 @@ export const useDispatchShipment = () => {
     }
   });
 };
+
+export const useReceiptSummary = (poId) => {
+  return useQuery({
+    queryKey: ['receiptSummary', poId],
+    queryFn: () => commercialService.getReceiptSummary(poId),
+    enabled: !!poId
+  });
+};
+
+export const useLogReceipt = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => commercialService.logReceipt(payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['receiptSummary', variables.poId] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+    }
+  });
+};
+
+export const useAcceptReceipt = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ receiptId, poId }) => commercialService.acceptReceipt(receiptId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['receiptSummary', variables.poId] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+    }
+  });
+};

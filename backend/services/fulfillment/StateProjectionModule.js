@@ -226,6 +226,20 @@ class StateProjectionModule {
       receivedAt: r.receivedAt
     }));
 
+    const shipmentSummaries = shipments
+      .filter(s => s.status !== "preparing")
+      .map(s => ({
+        shipmentId: s.id,
+        trackingNumber: s.trackingNumber,
+        carrier: s.carrier,
+        status: s.status,
+        shippedAt: s.shippedAt || s.createdAt,
+        lines: (s.lines || []).map(sl => ({
+          purchaseOrderLineId: sl.purchaseOrderLineId,
+          quantityShipped: parseFloat(sl.quantityShipped) || 0
+        }))
+      }));
+
     return {
       purchaseOrderId: po.id,
       purchaseOrderNumber: po.purchaseOrderNumber,
@@ -233,6 +247,7 @@ class StateProjectionModule {
       businessStatus: po.businessStatus,
       fulfillmentStatus: po.fulfillmentStatus,
       lines: linesSummary,
+      shipments: shipmentSummaries,
       receipts: receiptSummaries
     };
   }

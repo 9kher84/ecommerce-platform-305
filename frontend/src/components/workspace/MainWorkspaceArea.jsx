@@ -1,5 +1,6 @@
 import React from 'react';
 import { PackageAccordion } from './PackageAccordion';
+import { FulfillmentSummaryCard } from './FulfillmentSummaryCard';
 
 export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], onSelectProcess }) => {
   if (activeDomain === 'Overview') {
@@ -91,6 +92,26 @@ export const MainWorkspaceArea = ({ activeDomain, project, workPackages = [], on
         />
       </div>
     );
+  }
+
+  if (activeDomain === 'Fulfillment' || activeDomain === 'Execution') {
+    // Extract Purchase Order ID from awarded work packages if available
+    const awardedWp = workPackages.find(wp => wp.status === 'awarded' || wp.purchaseOrder?.id);
+    const poId = awardedWp?.purchaseOrder?.id || project?.purchaseOrderId || project?.poId;
+
+    if (!poId) {
+      return (
+        <div className="bg-slate-900 border border-slate-800 text-slate-300 rounded-2xl p-8 text-center space-y-3">
+          <div className="text-3xl">📦</div>
+          <h3 className="font-bold text-base text-white">مرحلة فحص واستلام البضائع (Goods Receipt & Inspection)</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            ستظهر كميات الاستلام ومستندات الفحص الميدانية بمجرد قبول طلب الشراء (Purchase Order) وبدء شحن البضائع.
+          </p>
+        </div>
+      );
+    }
+
+    return <FulfillmentSummaryCard poId={poId} />;
   }
 
   if (activeDomain === 'Financial') {

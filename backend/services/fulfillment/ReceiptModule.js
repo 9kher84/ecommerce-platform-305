@@ -18,7 +18,11 @@ class ReceiptModule {
       throw { statusCode: 400, message: `Cannot log receipt for PO in '${po.businessStatus}' state. Must be accepted.` };
     }
 
-    // Validate Shipment if shipmentId provided
+    if (!receiptData.shipmentId) {
+      throw { statusCode: 400, message: "shipmentId is required. Receipt must be bound to a dispatched shipment." };
+    }
+
+    // Validate Shipment
     let shipment = null;
     let shipmentLines = [];
     let shipmentReceivedByLine = {};

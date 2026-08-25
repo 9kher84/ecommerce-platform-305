@@ -30,6 +30,10 @@ exports.logReceipt = catchAsync(async (req, res, next) => {
     return res.status(400).json({ success: false, message: "poId is required" });
   }
 
+  if (!shipmentId) {
+    return res.status(400).json({ success: false, message: "shipmentId is required. Receipt must be bound to a dispatched shipment." });
+  }
+
   if (!lines || !Array.isArray(lines) || lines.length === 0) {
     return res.status(400).json({ success: false, message: "lines array with item quantities is required" });
   }
