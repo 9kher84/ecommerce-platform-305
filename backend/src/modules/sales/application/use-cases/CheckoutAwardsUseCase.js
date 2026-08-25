@@ -111,10 +111,41 @@ class CheckoutAwardsUseCase {
         // Legacy Deal creation skipped safely to prevent transactional aborts on missing legacy deal_locked column
         awardedProcesses.push(process.get({ plain: true }));
         createdAwards.push(award.get({ plain: true }));
+
+        // -------------------------------------------------------------
+        // CANONICAL DOMAIN ATOMICITY: Award + PurchaseOrder in 1 Tx
+        // -------------------------------------------------------------
+        const ProcurementService = require('../../../../../services/procurementService');
+        const pendingEvents = [];
+        const po = await ProcurementService.generatePOFromAward(award.id, {
+          transaction,
+          deferEvents: true,
+          pendingEvents
+        });
+
+        if (!createdPurchaseOrders) var createdPurchaseOrders = [];
+        createdPurchaseOrders.push(po.get ? po.get({ plain: true }) : po);
+
+        if (pendingEvents.length > 0) {
+          if (!deferredEventsToEmit) var deferredEventsToEmit = [];
+          deferredEventsToEmit.push(...pendingEvents);
+        }
       }
 
       await transaction.commit();
-      return { awardedProcesses, createdAwards };
+
+      // Post-commit event execution
+      if (typeof deferredEventsToEmit !== 'undefined' && Array.isArray(deferredEventsToEmit)) {
+        for (const emitFn of deferredEventsToEmit) {
+          try {
+            emitFn();
+          } catch (evtErr) {
+            console.error("[CheckoutAwardsUseCase] Post-commit event emission error:", evtErr);
+          }
+        }
+      }
+
+      return { awardedProcesses, createdAwards, createdPurchaseOrders: createdPurchaseOrders || [] };
     } catch (err) {
       await transaction.rollback();
       throw err;

@@ -53,20 +53,14 @@ export const CommercialInbox = () => {
   const handleCheckout = () => {
     if (selectedItemIds.length === 0) return;
     checkoutMutation.mutate(selectedItemIds, {
-      onSuccess: async (res) => {
-        // Trigger PO generation for created awards if returned by checkout API
-        const createdAwards = res?.data?.createdAwards || res?.createdAwards || [];
-        if (createdAwards.length > 0) {
-          for (const award of createdAwards) {
-            try {
-              await generatePOMutation.mutateAsync(award.id);
-            } catch (err) {
-              console.error("PO Generation error for award:", award.id, err);
-            }
-          }
-        }
-        alert(`Checkout complete! Successfully awarded ${selectedItemIds.length} packages & generated POs.`);
+      onSuccess: (res) => {
+        const createdPOs = res?.data?.createdPurchaseOrders || res?.createdPurchaseOrders || [];
+        alert(`تمت الترسية وإصدار أمر الشراء بنجاح! تم اعتماد ${selectedItemIds.length} حزم وتوليد ${createdPOs.length} أمر شراء.`);
         setSelectedItemIds([]);
+      },
+      onError: (err) => {
+        console.error("Checkout error:", err);
+        alert(err?.response?.data?.message || err?.message || "حدث خطأ أثناء اعتماد الترسية وإصدار أمر الشراء.");
       }
     });
   };

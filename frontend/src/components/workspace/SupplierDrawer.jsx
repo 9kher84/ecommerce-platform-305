@@ -23,36 +23,16 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const latestRevision = revisions.length > 0 ? revisions[revisions.length - 1] : null;
 
   const handleAccept = () => {
-    if (window.confirm('هل أنت متأكد من قبول هذا العرض وإعتماد الترسية فوراً؟')) {
+    if (window.confirm('هل أنت متأكد من قبول هذا العرض وتحويله للتأكيد النهائي؟')) {
       acceptMutation.mutate(processId, {
         onSuccess: (acceptRes) => {
-          // Immediately execute Checkout to convert pending_award -> awarded and generate Award + PO
-          checkoutMutation.mutate([processId], {
-            onSuccess: async (checkoutRes) => {
-              const createdAwards = checkoutRes?.data?.createdAwards || checkoutRes?.createdAwards || [];
-              let poSuccess = true;
-              if (createdAwards.length > 0) {
-                for (const award of createdAwards) {
-                  try {
-                    await generatePOMutation.mutateAsync(award.id);
-                  } catch (poErr) {
-                    console.error("PO Auto-generation error for award:", award.id, poErr);
-                    poSuccess = false;
-                  }
-                }
-              }
-              setAwardSuccess({ 
-                ... (checkoutRes?.data || checkoutRes || { success: true }),
-                poFailed: !poSuccess
-              });
-              onAwardSuccess && onAwardSuccess(checkoutRes);
-            },
-            onError: (chkErr) => {
-              console.error("Checkout error after accept:", chkErr);
-              alert("تم قبول العرض وتحويله لترسية معلقة (Pending Award). يرجى التأكيد النهائي من صندوق الوارد.");
-              setAwardSuccess({ pendingOnly: true });
-            }
-          });
+          setAwardSuccess({ pendingOnly: true, ... (acceptRes?.data || acceptRes || {}) });
+          alert("تم قبول العرض وتحويله لترسية معلقة (Pending Award). يرجى التأكيد النهائي وإصدار أمر الشراء من صندوق الوارد للمشتري.");
+          onAwardSuccess && onAwardSuccess(acceptRes);
+        },
+        onError: (err) => {
+          console.error("Accept error:", err);
+          alert("حدث خطأ أثناء قبول العرض. يرجى المحاولة لاحقاً.");
         }
       });
     }

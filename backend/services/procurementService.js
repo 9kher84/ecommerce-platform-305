@@ -118,7 +118,13 @@ class ProcurementService {
       // 7. Update Award status to 'confirmed'
       await targetAward.update({ status: "confirmed" }, { transaction });
 
-      emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerUserId, { purchaseOrderNumber: poNumber, awardId: targetAward.id });
+      const emitEventFn = () => emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerUserId, { purchaseOrderNumber: poNumber, awardId: targetAward.id });
+
+      if (options.deferEvents && Array.isArray(options.pendingEvents)) {
+        options.pendingEvents.push(emitEventFn);
+      } else {
+        emitEventFn();
+      }
 
       if (isLocalTx) await transaction.commit();
       return po;
