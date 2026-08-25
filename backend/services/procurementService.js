@@ -64,12 +64,16 @@ class ProcurementService {
         award: targetAward.toJSON()
       };
 
-      // Resolve sellerOrganizationId safely
-      let sellerOrgId = targetAward.sellerOrganizationId;
+      // Resolve sellerOrganizationId from Award or RFQ
+      let sellerOrgId = targetAward.sellerOrganizationId || (rfq ? rfq.organization_id : null);
       if (!sellerOrgId) {
-        const { Organization } = require("../sequelize_setup");
-        const defaultOrg = await Organization.findOne({ transaction });
-        sellerOrgId = defaultOrg ? defaultOrg.id : buyerId;
+        throw { statusCode: 400, message: "Cannot generate Purchase Order: Seller Organization ID is missing on Award." };
+      }
+
+      // Resolve buyerUserId safely from buyerId or RFQ owner
+      let buyerUserId = buyerId || (rfq ? rfq.userId : null);
+      if (!buyerUserId) {
+        throw { statusCode: 400, message: "Cannot generate Purchase Order: Buyer User ID is missing." };
       }
 
       // 4. Generate unique PO Number
@@ -79,7 +83,7 @@ class ProcurementService {
       const po = await PurchaseOrder.create({
         purchaseOrderNumber: poNumber,
         awardId: targetAward.id,
-        buyerId,
+        buyerId: buyerUserId,
         sellerOrganizationId: sellerOrgId,
         currency: targetAward.currency || "SAR",
         paymentTerms: quotation ? quotation.paymentTerms : null,

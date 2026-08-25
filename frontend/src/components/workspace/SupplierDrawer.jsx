@@ -111,14 +111,14 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
                     {awardSuccess.pendingOnly 
                       ? 'تم قبول العرض وبانتظار الترسية النهائية' 
                       : awardSuccess.poFailed 
-                        ? 'تم اعتماد الترسية بنجاح، وتجري معالجة توليد أمر الشراء (PO)' 
+                        ? 'تم اعتماد الترسية، لكن لم يصدر أمر الشراء بعد.' 
                         : 'تم اعتماد الترسية وإصدار أمر الشراء (PO) بنجاح!'}
                   </h4>
                   <p className={`text-xs mt-0.5 ${awardSuccess.poFailed ? 'text-amber-700' : 'text-emerald-700'}`}>
                     {awardSuccess.pendingOnly 
                       ? 'تم قبول مراجعة التفاوض بنجاح. يمكنك إتمام الترسية والدفع من صندوق الوارد التجاري.'
                       : awardSuccess.poFailed 
-                        ? 'تم تحويل العرض إلى ترسية رسمية (Award). يمكنك متابعة إصدار أمر الشراء مباشرة من صندوق الوارد.'
+                        ? 'تمت الترسية بنجاح وحالة العملية أصبحت AWARDED، ويمكنك إعادة استدعاء الترسية من صندوق الوارد لإصدار أمر الشراء.'
                         : 'تم تحويل العرض المقبول إلى ترسية رسمية (Award) وتوليد أمر الشراء (Purchase Order) للمورد.'}
                   </p>
                 </div>
