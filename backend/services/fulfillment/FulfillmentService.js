@@ -11,9 +11,15 @@ class FulfillmentService {
   // --- PREPARATION ---
   static async startPreparation(poId, sellerUserId) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const po = await PreparationModule.startPreparation(poId, sellerUserId, transaction);
+      const po = await PreparationModule.startPreparation(poId, sellerUserId, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit event error:", e); }
+      }
+
       return po;
     } catch (err) {
       await transaction.rollback();
@@ -23,9 +29,15 @@ class FulfillmentService {
 
   static async markReadyToShip(poId, sellerUserId) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const po = await PreparationModule.markReadyToShip(poId, sellerUserId, transaction);
+      const po = await PreparationModule.markReadyToShip(poId, sellerUserId, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit event error:", e); }
+      }
+
       return po;
     } catch (err) {
       await transaction.rollback();
@@ -36,9 +48,15 @@ class FulfillmentService {
   // --- SHIPMENT ---
   static async createShipment(poId, sellerOrganizationId, sellerUserId, shipmentData) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const shipment = await ShipmentModule.createShipment(poId, sellerOrganizationId, sellerUserId, shipmentData, transaction);
+      const shipment = await ShipmentModule.createShipment(poId, sellerOrganizationId, sellerUserId, shipmentData, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit event error:", e); }
+      }
+
       return shipment;
     } catch (err) {
       await transaction.rollback();
@@ -48,9 +66,15 @@ class FulfillmentService {
 
   static async dispatchShipment(shipmentId, sellerUserId) {
     const transaction = await sequelize.transaction();
+    const pendingEvents = [];
     try {
-      const shipment = await ShipmentModule.dispatchShipment(shipmentId, sellerUserId, transaction);
+      const shipment = await ShipmentModule.dispatchShipment(shipmentId, sellerUserId, transaction, { deferEvents: true, pendingEvents });
       await transaction.commit();
+
+      for (const emitFn of pendingEvents) {
+        try { emitFn(); } catch (e) { console.error("[FulfillmentService] Post-commit event error:", e); }
+      }
+
       return shipment;
     } catch (err) {
       await transaction.rollback();
