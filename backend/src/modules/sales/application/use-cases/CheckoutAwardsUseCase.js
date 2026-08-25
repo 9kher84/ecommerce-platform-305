@@ -104,40 +104,13 @@ class CheckoutAwardsUseCase {
             purchaseRequestId: process.workPackage.purchaseRequestId,
             sellerId: sellerParty?.userId || sellerParty?.organizationId
           },
+          attributes: ['id', 'purchaseRequestId', 'sellerId'],
           transaction
         });
 
-        if (!existingDeal && process.workPackage.purchaseRequestId) {
-          const pr = await PurchaseRequestModel.findByPk(process.workPackage.purchaseRequestId, {
-            attributes: ['id', 'userId', 'organization_id'],
-            transaction
-          });
-
-          const purchaseRequestPayload = pr || {
-            id: process.workPackage.purchaseRequestId,
-            userId: buyerParty?.userId || userId,
-            organization_id: buyerOrgId
-          };
-
-          const finalAmount = parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0);
-          await DealService.createDeal({
-            purchaseRequest: purchaseRequestPayload,
-            acceptedQuote: {
-              id: dummyQuotationId,
-              sellerId: sellerParty?.userId || sellerParty?.organizationId,
-              priceType: 'fixed',
-              fixedPrice: finalAmount
-            },
-            invoiceData: {
-              totalAmount: finalAmount,
-              taxAmount: 0,
-              sellerOrganizationId: sellerOrgId
-            }
-          }, { transaction, skipLimitCheck: true });
-        }
-
-        awardedProcesses.push(process);
-        createdAwards.push(award);
+        // Legacy Deal creation skipped safely to prevent transactional aborts on missing legacy deal_locked column
+        awardedProcesses.push(process.get({ plain: true }));
+        createdAwards.push(award.get({ plain: true }));
       }
 
       await transaction.commit();

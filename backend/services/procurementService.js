@@ -7,40 +7,48 @@ class ProcurementService {
    * Transforms an accepted Award into an independent Purchase Order with deep snapshots.
    * Marks the Award as converted (immutable).
    */
-  static async generatePOFromAward(awardId, buyerId) {
-    const transaction = await sequelize.transaction();
+  static async generatePOFromAward(awardId, buyerId, options = {}) {
+    const transaction = options.transaction || await sequelize.transaction();
+    const isLocalTx = !options.transaction;
     try {
       // 1. Fetch Award with Lines
-      const award = await Award.findByPk(awardId, {
+      let targetAward = await Award.findByPk(awardId, {
         include: [{ model: AwardLine, as: "lines" }],
         transaction
       });
-      if (!award) throw { statusCode: 404, message: "Award not found" };
+
+      if (!targetAward) {
+        targetAward = await Award.findByPk(awardId, {
+          include: [{ model: AwardLine, as: "lines" }]
+        });
+      }
+
+      if (!targetAward) throw { statusCode: 404, message: `Award not found: ${awardId}` };
 
       // Check idempotency: If PO already exists for this award, return existing PO
       const existingPO = await PurchaseOrder.findOne({
-        where: { awardId: award.id },
+        where: { awardId: targetAward.id },
         include: [{ model: PurchaseOrderLine, as: "lines" }],
         transaction
       });
       if (existingPO) {
-        await transaction.commit();
+        if (isLocalTx) await transaction.commit();
         return existingPO;
       }
 
-      if (award.status !== "accepted" && award.status !== "confirmed") {
-        throw { statusCode: 400, message: `Cannot generate PO from award in '${award.status}' state.` };
+      if (targetAward.status !== "accepted" && targetAward.status !== "confirmed") {
+        throw { statusCode: 400, message: `Cannot generate PO from award in '${targetAward.status}' state.` };
       }
 
       // 2. Fetch RFQ and Quotation context for the deep snapshot
-      const rfq = await PurchaseRequest.findByPk(award.purchaseRequestId, {
+      const rfq = await PurchaseRequest.findByPk(targetAward.purchaseRequestId, {
         attributes: ['id', 'userId', 'organization_id', 'title', 'status'],
         transaction
       });
       
       let quotation = null;
-      if (award.lines && award.lines.length > 0) {
-        const quoteItem = await QuotationItem.findByPk(award.lines[0].quotationItemId, {
+      if (targetAward.lines && targetAward.lines.length > 0) {
+        const quoteItem = await QuotationItem.findByPk(targetAward.lines[0].quotationItemId, {
           include: [{ model: Quotation, as: "quotation" }],
           transaction
         });
@@ -53,7 +61,7 @@ class ProcurementService {
       const poSnapshot = {
         rfq: rfq ? rfq.toJSON() : null,
         quotation: quotation ? quotation.toJSON() : null,
-        award: award.toJSON()
+        award: targetAward.toJSON()
       };
 
       // 4. Generate unique PO Number
@@ -62,10 +70,10 @@ class ProcurementService {
       // 5. Create Purchase Order
       const po = await PurchaseOrder.create({
         purchaseOrderNumber: poNumber,
-        awardId: award.id,
+        awardId: targetAward.id,
         buyerId,
-        sellerOrganizationId: award.sellerOrganizationId,
-        currency: award.currency || "SAR",
+        sellerOrganizationId: targetAward.sellerOrganizationId,
+        currency: targetAward.currency || "SAR",
         paymentTerms: quotation ? quotation.paymentTerms : null,
         businessStatus: "draft",
         fulfillmentStatus: "pending",
@@ -73,8 +81,8 @@ class ProcurementService {
       }, { transaction });
 
       // 6. Create Purchase Order Lines (if award lines exist)
-      if (award.lines && award.lines.length > 0) {
-        for (const line of award.lines) {
+      if (targetAward.lines && targetAward.lines.length > 0) {
+        for (const line of targetAward.lines) {
           await PurchaseOrderLine.create({
             purchaseOrderId: po.id,
             awardLineId: line.id,
@@ -86,15 +94,15 @@ class ProcurementService {
         }
       }
 
-      // 7. Update Award status to 'confirmed' (valid in Award ENUM: accepted, confirmed, completed, cancelled)
-      await award.update({ status: "confirmed" }, { transaction });
+      // 7. Update Award status to 'confirmed'
+      await targetAward.update({ status: "confirmed" }, { transaction });
 
-      emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerId, { purchaseOrderNumber: poNumber, awardId: award.id });
+      emitOperationalEvent("PO_GENERATED", "PurchaseOrder", po.id, "buyer", buyerId, { purchaseOrderNumber: poNumber, awardId: targetAward.id });
 
-      await transaction.commit();
+      if (isLocalTx) await transaction.commit();
       return po;
     } catch (err) {
-      await transaction.rollback();
+      if (isLocalTx) await transaction.rollback();
       throw err;
     }
   }

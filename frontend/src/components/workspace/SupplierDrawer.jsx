@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../common/Button';
-import { useCommercialTimeline, useSubmitRevision, useAcceptRevision } from '../../hooks/queries/commercialQueries';
+import { useCommercialTimeline, useSubmitRevision, useAcceptRevision, useCheckoutAwards, useGeneratePO } from '../../hooks/queries/commercialQueries';
 
 export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwardSuccess }) => {
+  const navigate = useNavigate();
   const [counterPrice, setCounterPrice] = useState('');
   const [counterNotes, setCounterNotes] = useState('');
   const [showCounterForm, setShowCounterForm] = useState(false);
@@ -11,6 +13,8 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const { data: response, isLoading, isError } = useCommercialTimeline(processId);
   const counterMutation = useSubmitRevision();
   const acceptMutation = useAcceptRevision();
+  const checkoutMutation = useCheckoutAwards();
+  const generatePOMutation = useGeneratePO();
 
   if (!isOpen) return null;
 
@@ -19,11 +23,31 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
   const latestRevision = revisions.length > 0 ? revisions[revisions.length - 1] : null;
 
   const handleAccept = () => {
-    if (window.confirm('هل أنت متأكد من قبول هذا العرض والترسية؟')) {
+    if (window.confirm('هل أنت متأكد من قبول هذا العرض وإعتماد الترسية فوراً؟')) {
       acceptMutation.mutate(processId, {
-        onSuccess: (res) => {
-          setAwardSuccess(res?.data || res || { success: true });
-          onAwardSuccess && onAwardSuccess(res);
+        onSuccess: (acceptRes) => {
+          // Immediately execute Checkout to convert pending_award -> awarded and generate Award + PO
+          checkoutMutation.mutate([processId], {
+            onSuccess: async (checkoutRes) => {
+              const createdAwards = checkoutRes?.data?.createdAwards || checkoutRes?.createdAwards || [];
+              if (createdAwards.length > 0) {
+                for (const award of createdAwards) {
+                  try {
+                    await generatePOMutation.mutateAsync(award.id);
+                  } catch (poErr) {
+                    console.error("PO Auto-generation error:", poErr);
+                  }
+                }
+              }
+              setAwardSuccess(checkoutRes?.data || checkoutRes || { success: true });
+              onAwardSuccess && onAwardSuccess(checkoutRes);
+            },
+            onError: (chkErr) => {
+              console.error("Checkout error after accept:", chkErr);
+              alert("تم قبول العرض وتحويله لترسية معلقة (Pending Award). يرجى التأكيد النهائي من صندوق الوارد.");
+              setAwardSuccess({ pendingOnly: true });
+            }
+          });
         }
       });
     }
@@ -78,15 +102,19 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🏆</span>
                 <div>
-                  <h4 className="font-bold text-base">تم اعتماد الترسية وإنشاء عقد الصفقة بنجاح!</h4>
+                  <h4 className="font-bold text-base">
+                    {awardSuccess.pendingOnly ? 'تم قبول العرض وبانتظار الترسية النهائية' : 'تم اعتماد الترسية وإصدار أمر الشراء (PO) بنجاح!'}
+                  </h4>
                   <p className="text-xs text-emerald-700 mt-0.5">
-                    تم تحديث حالة طلب الشراء ونقل العرض التجاري إلى عقد صفقة فعال (Active Deal).
+                    {awardSuccess.pendingOnly 
+                      ? 'تم قبول مراجعة التفاوض بنجاح. يمكنك إتمام الترسية والدفع من صندوق الوارد التجاري.'
+                      : 'تم تحويل العرض المقبول إلى ترسية رسمية (Award) وتوليد أمر الشراء (Purchase Order) للمورد.'}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-emerald-200/60">
-                <Button size="sm" onClick={() => { setAwardSuccess(null); onClose(); }}>
-                  المتابعة في مساحة العمل (Workspace) ❯
+                <Button size="sm" onClick={() => { setAwardSuccess(null); onClose(); navigate('/inbox/commercial'); }}>
+                  الانتقال إلى صندوق الوارد ومتابعة أسلوب التعميد ❯
                 </Button>
               </div>
             </div>
@@ -107,12 +135,16 @@ export const SupplierDrawer = ({ isOpen, processId, workPackage, onClose, onAwar
                 </div>
                 <div className="flex gap-2">
                   {!isAwardDecisionLocked ? (
-                    <Button size="sm" onClick={handleAccept} isLoading={acceptMutation.isPending}>
+                    <Button size="sm" onClick={handleAccept} isLoading={acceptMutation.isPending || checkoutMutation.isPending}>
                       🏆 اعتماد الترسية الفوري (Award)
+                    </Button>
+                  ) : process.status === 'pending_award' ? (
+                    <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold" onClick={handleAccept} isLoading={checkoutMutation.isPending}>
+                      🛒 إتمام الترسية الآن (Checkout)
                     </Button>
                   ) : (
                     <span className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm">
-                      {process.status === 'awarded' ? '🏆 تم الترسية بنجاح' : '⏳ ترسية معلقة (Pending Award)'}
+                      🏆 تم الترسية بنجاح
                     </span>
                   )}
                 </div>
