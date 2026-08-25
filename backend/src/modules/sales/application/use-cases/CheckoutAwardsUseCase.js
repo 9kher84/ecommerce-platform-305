@@ -52,6 +52,19 @@ class CheckoutAwardsUseCase {
           status: 'accepted'
         }, { transaction });
 
+        // Create PriceQuote for Deal FK compatibility
+        const PriceQuoteModel = require('../../../../../sequelize_setup').PriceQuote;
+        if (PriceQuoteModel) {
+          await PriceQuoteModel.create({
+            id: dummyQuotationId,
+            requestId: process.workPackage?.purchaseRequestId,
+            sellerId: sellerParty?.userId || sellerParty?.organizationId,
+            priceType: 'fixed',
+            fixedPrice: parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0),
+            status: 'accepted'
+          }, { transaction }).catch(() => null);
+        }
+
         const award = await Award.create({
           id: uuidv4(),
           purchaseRequestId: process.workPackage.purchaseRequestId,
@@ -76,24 +89,32 @@ class CheckoutAwardsUseCase {
         });
 
         if (!existingDeal && process.workPackage.purchaseRequestId) {
-          const pr = await PurchaseRequestModel.findByPk(process.workPackage.purchaseRequestId, { transaction });
-          if (pr) {
-            const finalAmount = parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0);
-            await DealService.createDeal({
-              purchaseRequest: pr,
-              acceptedQuote: {
-                id: dummyQuotationId,
-                sellerId: sellerParty?.userId || sellerParty?.organizationId,
-                priceType: 'fixed',
-                fixedPrice: finalAmount
-              },
-              invoiceData: {
-                totalAmount: finalAmount,
-                taxAmount: 0,
-                sellerOrganizationId: sellerParty?.organizationId || null
-              }
-            }, { transaction });
-          }
+          const pr = await PurchaseRequestModel.findByPk(process.workPackage.purchaseRequestId, {
+            attributes: ['id', 'userId', 'organization_id'],
+            transaction
+          }).catch(() => null);
+
+          const purchaseRequestPayload = pr || {
+            id: process.workPackage.purchaseRequestId,
+            userId: buyerParty?.userId || userId,
+            organization_id: buyerParty?.organizationId || null
+          };
+
+          const finalAmount = parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0);
+          await DealService.createDeal({
+            purchaseRequest: purchaseRequestPayload,
+            acceptedQuote: {
+              id: dummyQuotationId,
+              sellerId: sellerParty?.userId || sellerParty?.organizationId,
+              priceType: 'fixed',
+              fixedPrice: finalAmount
+            },
+            invoiceData: {
+              totalAmount: finalAmount,
+              taxAmount: 0,
+              sellerOrganizationId: sellerParty?.organizationId || null
+            }
+          }, { transaction });
         }
 
         awardedProcesses.push(process);

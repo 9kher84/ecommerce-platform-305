@@ -60,12 +60,14 @@ async function runProductionSync() {
   const NegotiationSheet = require("../models/NegotiationSheet")(sequelize, DataTypes);
   const Award = require("../models/Award")(sequelize, DataTypes);
   const AwardLine = require("../models/AwardLine")(sequelize, DataTypes);
+  const Deal = require("../models/Deal")(sequelize, DataTypes);
 
   await WorkPackage.sync({ alter: true });
   await CommercialProcess.sync({ alter: true });
   await NegotiationSheet.sync({ alter: true });
   await Award.sync({ alter: true });
   await AwardLine.sync({ alter: true });
+  await Deal.sync({ alter: true });
   
   // Sync SmartInventory model to ensure availableQuantity and reservation fields exist on Neon production
   const SmartInventory = require("../models/SmartInventory")(sequelize, DataTypes);
