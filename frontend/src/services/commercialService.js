@@ -42,5 +42,26 @@ export const commercialService = {
   rejectRevision: async (processId) => {
     const response = await apiClient.post(`/api/v2/negotiations/${processId}/reject`);
     return response.data;
+  },
+
+  // Purchase Order Operations
+  generatePO: async (awardId) => {
+    const response = await apiClient.post('/api/v2/purchase-orders/generate', { awardId });
+    return response.data;
+  },
+
+  getSellerPOs: async () => {
+    const response = await apiClient.get('/api/v2/purchase-orders/seller');
+    return response.data;
+  },
+
+  acceptPO: async (poId) => {
+    const response = await apiClient.post(`/api/v2/purchase-orders/${poId}/accept`);
+    return response.data;
+  },
+
+  rejectPO: async (poId, reason) => {
+    const response = await apiClient.post(`/api/v2/purchase-orders/${poId}/reject`, { reason });
+    return response.data;
   }
 };

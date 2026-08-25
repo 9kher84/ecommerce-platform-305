@@ -77,3 +77,41 @@ export const useCheckoutAwards = () => {
     }
   });
 };
+
+export const useGeneratePO = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (awardId) => commercialService.generatePO(awardId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commercial', 'inbox'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};
+
+export const useSellerPOs = () => {
+  return useQuery({
+    queryKey: ['purchaseOrders', 'seller'],
+    queryFn: commercialService.getSellerPOs
+  });
+};
+
+export const useAcceptPO = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (poId) => commercialService.acceptPO(poId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};
+
+export const useRejectPO = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ poId, reason }) => commercialService.rejectPO(poId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+    }
+  });
+};

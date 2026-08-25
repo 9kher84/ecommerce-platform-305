@@ -19,13 +19,25 @@ class DealService {
     const { purchaseRequest, acceptedQuote, invoiceData } = dealData;
     const tx = options.transaction;
 
-    // 1. Check buyer limit
-    const limitCheck = await LimitService.canPlaceOrder(purchaseRequest.userId);
-    if (!limitCheck.canCreate) {
-      throw new AppError(
-        "لقد تجاوزت الحد المسموح. أكد استلام طلباتك السابقة أولاً عبر واتساب.",
-        403,
-      );
+    // 1. Check buyer limit (exclude current request if it's already an active published request being awarded)
+    if (!options.skipLimitCheck) {
+      const limitCheck = await LimitService.canPlaceOrder(purchaseRequest.userId);
+      if (!limitCheck.canCreate) {
+        const currentPrCount = await PurchaseRequest.count({
+          where: {
+            id: purchaseRequest.id,
+            userId: purchaseRequest.userId,
+          },
+          transaction: tx
+        }).catch(() => 0);
+
+        if ((limitCheck.activeCount - currentPrCount) >= limitCheck.currentLimit) {
+          throw new AppError(
+            "لقد تجاوزت الحد المسموح. أكد استلام طلباتك السابقة أولاً عبر واتساب.",
+            403,
+          );
+        }
+      }
     }
 
     // 2. Calculate Commission

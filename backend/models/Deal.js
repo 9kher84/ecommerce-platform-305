@@ -86,6 +86,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true,
       },
+      invoice_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      deal_locked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
     },
     {
       tableName: "deals",

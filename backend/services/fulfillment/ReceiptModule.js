@@ -52,8 +52,15 @@ class ReceiptModule {
     // Project state upward to PO
     const newStatus = await StateProjectionModule.projectPOState(receipt.purchaseOrderId, transaction);
 
-    if (newStatus === "received") {
+    if (newStatus === "received" || receipt.status === "accepted") {
         emitOperationalEvent("PO_COMPLETED", "PurchaseOrder", receipt.purchaseOrderId, "system", buyerUserId, { purchaseOrderId: receipt.purchaseOrderId });
+        // Automatically issue real Invoice upon receipt completion
+        try {
+          const InvoiceService = require("../invoiceService");
+          await InvoiceService.createInvoiceFromPO(receipt.purchaseOrderId, { transaction });
+        } catch (invErr) {
+          console.error("Auto Invoice creation on Receipt error:", invErr);
+        }
     }
 
     // Hand off to Inventory

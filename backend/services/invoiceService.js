@@ -80,6 +80,135 @@ class InvoiceService {
     return invoice;
   }
 
+  /**
+   * Create an official Invoice directly from a PurchaseOrder / Receipt
+   */
+  static async createInvoiceFromPO(poId, options = {}) {
+    const tx = options.transaction;
+    const { PurchaseOrder, PurchaseOrderLine, Award, Deal, User } = require("../sequelize_setup");
+
+    const po = await PurchaseOrder.findByPk(poId, {
+      include: [{ model: PurchaseOrderLine, as: "lines" }],
+      transaction: tx
+    });
+
+    if (!po) throw new AppError("PurchaseOrder not found", 404);
+
+    // Idempotency: Check if an Invoice already exists for this deal/PO
+    let existingDeal = null;
+    if (po.awardId) {
+      const award = await Award.findByPk(po.awardId, { transaction: tx });
+      if (award && award.purchaseRequestId) {
+        existingDeal = await Deal.findOne({
+          where: { purchaseRequestId: award.purchaseRequestId },
+          attributes: ['id', 'purchaseRequestId', 'buyerId', 'sellerId'],
+          transaction: tx
+        });
+      }
+    }
+
+    const searchDealId = existingDeal ? existingDeal.id : po.awardId;
+    const existingInvoice = await Invoice.findOne({
+      where: { dealId: searchDealId },
+      transaction: tx
+    });
+    if (existingInvoice) {
+      return existingInvoice;
+    }
+
+    // Determine buyer & seller user IDs
+    let buyerUserId = po.buyerId;
+    let sellerUserId = null;
+
+    if (existingDeal) {
+      buyerUserId = existingDeal.buyerId || buyerUserId;
+      sellerUserId = existingDeal.sellerId;
+    }
+
+    if (!sellerUserId && po.sellerOrganizationId) {
+      const { OrganizationUser } = require("../sequelize_setup");
+      const orgUser = await OrganizationUser.findOne({
+        where: { organization_id: po.sellerOrganizationId },
+        transaction: tx
+      });
+      if (orgUser) sellerUserId = orgUser.user_id;
+    }
+
+    // Fallback sellerUserId to a system/buyer proxy if unknown to satisfy NOT NULL constraint safely
+    if (!sellerUserId) sellerUserId = buyerUserId;
+
+    // Calculate total amount from PO snapshot or lines
+    let totalAmount = 0;
+    const items = [];
+
+    if (po.lines && po.lines.length > 0) {
+      for (const line of po.lines) {
+        const lineTotal = parseFloat(line.unitPrice || 0) * parseFloat(line.quantity || 0);
+        totalAmount += lineTotal;
+        items.push({
+          description: `PO Item ${line.productDNAId || line.id}`,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          totalPrice: lineTotal
+        });
+      }
+    }
+
+    if (totalAmount === 0 && po.snapshot && po.snapshot.award) {
+      totalAmount = parseFloat(po.snapshot.award.totalAmount || 0);
+    }
+
+    const dueDate = new Date();
+    const dueDays = parseInt(process.env.INVOICE_DUE_DAYS) || 30;
+    dueDate.setDate(dueDate.getDate() + dueDays);
+
+    const autoCancelDate = new Date();
+    const cancelDays = parseInt(process.env.INVOICE_AUTO_CANCEL_DAYS) || 45;
+    autoCancelDate.setDate(autoCancelDate.getDate() + cancelDays);
+
+    // Reuse existingDeal.id or generate fallback UUID for dealId compatibility
+    const dealId = existingDeal ? existingDeal.id : po.awardId;
+
+    const invoiceData = {
+      dealId,
+      buyerId: buyerUserId,
+      sellerId: sellerUserId,
+      status: "pending",
+      dueDate,
+      autoCancelDate,
+      totalAmount: totalAmount || 0,
+      taxAmount: 0,
+      currency: po.currency || "SAR",
+      items: items.length > 0 ? items : [{ description: `Purchase Order ${po.purchaseOrderNumber}`, quantity: 1, unitPrice: totalAmount, totalPrice: totalAmount }],
+      buyerSnapshot: po.snapshot?.rfq || {},
+      sellerSnapshot: { sellerOrganizationId: po.sellerOrganizationId },
+      notes: `Generated from Purchase Order ${po.purchaseOrderNumber}`
+    };
+
+    const invoice = await Invoice.create(invoiceData, { transaction: tx });
+
+    if (existingDeal) {
+      try {
+        existingDeal.invoice_id = invoice.id;
+        await existingDeal.save({ transaction: tx, fields: ['invoice_id'] });
+      } catch (e) {
+        // Ignore legacy deal save column errors
+      }
+    }
+
+    await appendEventLog({
+      actorId: sellerUserId,
+      actorRole: "seller",
+      entityType: "invoice",
+      entityId: invoice.uuid,
+      actionType: "invoice_created_from_po",
+      beforeState: null,
+      afterState: { status: "pending", purchaseOrderNumber: po.purchaseOrderNumber },
+    });
+
+    return invoice;
+  }
+
   static async getInvoiceByToken(token) {
     const invoice = await Invoice.findOne({
       where: { token },

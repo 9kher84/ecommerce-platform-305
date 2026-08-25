@@ -8,6 +8,8 @@ const { protect, restrictTo } = require("../middleware/authMiddleware");
 router.post("/generate", protect, restrictTo("buyer"), purchaseOrderController.generatePO);
 router.post("/:id/issue", protect, restrictTo("buyer"), purchaseOrderController.issuePO);
 
+router.get("/seller", protect, restrictTo("seller"), purchaseOrderController.getSellerPOs);
+
 router.post("/:id/accept", protect, restrictTo("seller"), purchaseOrderController.acceptPO);
 router.post("/:id/reject", protect, restrictTo("seller"), purchaseOrderController.rejectPO);
 

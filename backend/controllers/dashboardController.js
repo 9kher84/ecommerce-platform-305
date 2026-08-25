@@ -204,33 +204,60 @@ exports.getBuyerSummary = asyncHandler(async (req, res) => {
 exports.getBuyerInvoices = asyncHandler(async (req, res) => {
   const buyerId = req.user.id;
 
-  const deals = await Deal.findAll({
+  const { Invoice: InvoiceModel } = require("../sequelize_setup");
+
+  // 1. Fetch real Invoices from Invoice table
+  const realInvoices = await InvoiceModel.findAll({
     where: { buyerId },
-    include: [
-      {
-        model: PurchaseRequest,
-        as: "purchaseRequest",
-        attributes: ["title", "id"],
-      },
-      {
-        model: User,
-        as: "seller",
-        attributes: ["name", "businessName"],
-      },
-    ],
+    include: [{ model: User, as: "seller", attributes: ["name", "businessName"] }],
     order: [["createdAt", "DESC"]],
   });
 
-  const invoices = deals.map((deal) => ({
-    id: deal.id,
-    invoiceNumber: deal.invoiceData?.invoiceNumber || "N/A",
-    date: deal.createdAt,
-    amount: deal.finalAmount,
-    status: deal.status === "completed" ? "paid" : "pending",
-    requestTitle: deal.purchaseRequest?.title,
-    sellerName: deal.seller?.businessName || deal.seller?.name,
-    details: deal.invoiceData,
+  let invoices = realInvoices.map((inv) => ({
+    id: inv.id,
+    uuid: inv.uuid,
+    invoiceNumber: inv.invoiceNumber,
+    date: inv.issueDate || inv.createdAt,
+    amount: inv.totalAmount,
+    status: inv.status,
+    sellerName: inv.seller?.businessName || inv.seller?.name || "Supplier",
+    details: {
+      items: inv.items,
+      notes: inv.notes,
+      buyerSnapshot: inv.buyerSnapshot,
+    },
   }));
+
+  // 2. Fallback: If no real invoices, query legacy Deals
+  if (invoices.length === 0) {
+    const deals = await Deal.findAll({
+      where: { buyerId },
+      include: [
+        {
+          model: PurchaseRequest,
+          as: "purchaseRequest",
+          attributes: ["title", "id"],
+        },
+        {
+          model: User,
+          as: "seller",
+          attributes: ["name", "businessName"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    invoices = deals.map((deal) => ({
+      id: deal.id,
+      invoiceNumber: deal.invoiceData?.invoiceNumber || "N/A",
+      date: deal.createdAt,
+      amount: deal.finalAmount,
+      status: deal.status === "completed" ? "paid" : "pending",
+      requestTitle: deal.purchaseRequest?.title,
+      sellerName: deal.seller?.businessName || deal.seller?.name,
+      details: deal.invoiceData,
+    }));
+  }
 
   res.status(200).json({
     success: true,

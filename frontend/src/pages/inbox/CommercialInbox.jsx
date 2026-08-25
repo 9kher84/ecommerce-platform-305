@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useInbox, useCheckoutAwards } from '../../hooks/queries/commercialQueries';
+import { useInbox, useCheckoutAwards, useGeneratePO } from '../../hooks/queries/commercialQueries';
 import { useAuth } from '../../providers/AuthProvider';
 
 export const CommercialInbox = () => {
@@ -12,6 +12,7 @@ export const CommercialInbox = () => {
   // Fetch real inbox data
   const { data: response, isLoading, isError } = useInbox();
   const checkoutMutation = useCheckoutAwards();
+  const generatePOMutation = useGeneratePO();
 
   if (isLoading) return <div className="p-8 text-center">Loading Inbox...</div>;
   if (isError) return <div className="p-8 text-center text-red-500">Error loading Inbox.</div>;
@@ -39,8 +40,19 @@ export const CommercialInbox = () => {
   const handleCheckout = () => {
     if (selectedItemIds.length === 0) return;
     checkoutMutation.mutate(selectedItemIds, {
-      onSuccess: () => {
-        alert(`Checkout complete! Successfully awarded ${selectedItemIds.length} packages.`);
+      onSuccess: async (res) => {
+        // Trigger PO generation for created awards if returned by checkout API
+        const createdAwards = res?.data?.createdAwards || res?.createdAwards || [];
+        if (createdAwards.length > 0) {
+          for (const award of createdAwards) {
+            try {
+              await generatePOMutation.mutateAsync(award.id);
+            } catch (err) {
+              console.error("PO Generation error for award:", award.id, err);
+            }
+          }
+        }
+        alert(`Checkout complete! Successfully awarded ${selectedItemIds.length} packages & generated POs.`);
         setSelectedItemIds([]);
       }
     });

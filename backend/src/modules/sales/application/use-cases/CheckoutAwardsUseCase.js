@@ -39,6 +39,25 @@ class CheckoutAwardsUseCase {
         const buyerParty = parties.find(p => p.partyRole === 'BUYER');
         const sellerParty = parties.find(p => p.partyRole === 'SELLER');
 
+        const { Organization: OrganizationModel, OrganizationUser: OrganizationUserModel } = require('../../../../../sequelize_setup');
+        let buyerOrgId = buyerParty?.organizationId;
+        let sellerOrgId = sellerParty?.organizationId;
+
+        if (!buyerOrgId && buyerParty?.userId) {
+          const bOrg = await OrganizationUserModel.findOne({ where: { user_id: buyerParty.userId }, transaction });
+          buyerOrgId = bOrg?.organization_id || null;
+        }
+        if (!sellerOrgId && sellerParty?.userId) {
+          const sOrg = await OrganizationUserModel.findOne({ where: { user_id: sellerParty.userId }, transaction });
+          sellerOrgId = sOrg?.organization_id || null;
+        }
+
+        if (!buyerOrgId || !sellerOrgId) {
+          const defaultOrg = await OrganizationModel.findOne({ transaction });
+          if (!buyerOrgId) buyerOrgId = defaultOrg?.id;
+          if (!sellerOrgId) sellerOrgId = defaultOrg?.id;
+        }
+
         const dummyQuotationId = uuidv4();
         
         console.log("DEBUG CheckoutAwards: process.workPackage is:", JSON.stringify(process.workPackage));
@@ -48,7 +67,7 @@ class CheckoutAwardsUseCase {
         await require('../../../../../sequelize_setup').Quotation.create({
           id: dummyQuotationId,
           purchaseRequestId: process.workPackage?.purchaseRequestId,
-          sellerOrganizationId: sellerParty?.organizationId || sellerParty?.userId, // Fallback if no org
+          sellerOrganizationId: sellerOrgId,
           status: 'accepted'
         }, { transaction });
 
@@ -62,15 +81,15 @@ class CheckoutAwardsUseCase {
             priceType: 'fixed',
             fixedPrice: parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0),
             status: 'accepted'
-          }, { transaction }).catch(() => null);
+          }, { transaction });
         }
 
         const award = await Award.create({
           id: uuidv4(),
           purchaseRequestId: process.workPackage.purchaseRequestId,
           quotationId: dummyQuotationId,
-          buyerOrganizationId: buyerParty?.organizationId || buyerParty?.userId,
-          sellerOrganizationId: sellerParty?.organizationId || sellerParty?.userId,
+          buyerOrganizationId: buyerOrgId,
+          sellerOrganizationId: sellerOrgId,
           status: 'accepted',
           createdAt: new Date(),
           updatedAt: new Date()
@@ -92,12 +111,12 @@ class CheckoutAwardsUseCase {
           const pr = await PurchaseRequestModel.findByPk(process.workPackage.purchaseRequestId, {
             attributes: ['id', 'userId', 'organization_id'],
             transaction
-          }).catch(() => null);
+          });
 
           const purchaseRequestPayload = pr || {
             id: process.workPackage.purchaseRequestId,
             userId: buyerParty?.userId || userId,
-            organization_id: buyerParty?.organizationId || null
+            organization_id: buyerOrgId
           };
 
           const finalAmount = parseFloat(acceptedSheet?.terms?.price || acceptedSheet?.terms?.grandTotal || 0);
@@ -112,9 +131,9 @@ class CheckoutAwardsUseCase {
             invoiceData: {
               totalAmount: finalAmount,
               taxAmount: 0,
-              sellerOrganizationId: sellerParty?.organizationId || null
+              sellerOrganizationId: sellerOrgId
             }
-          }, { transaction });
+          }, { transaction, skipLimitCheck: true });
         }
 
         awardedProcesses.push(process);

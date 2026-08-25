@@ -41,3 +41,12 @@ exports.rejectPO = catchAsync(async (req, res, next) => {
   const po = await ProcurementService.rejectPurchaseOrder(poId, req.user.id, reason);
   res.status(200).json({ success: true, message: "Purchase Order rejected", data: po });
 });
+
+// @desc    Get Seller POs
+// @route   GET /api/v2/purchase-orders/seller
+// @access  Private (Seller)
+exports.getSellerPOs = catchAsync(async (req, res, next) => {
+  const sellerOrgId = req.user.organization_id || req.user.organizationId;
+  const pos = await ProcurementService.getSellerPurchaseOrders(sellerOrgId);
+  res.status(200).json({ success: true, count: pos.length, data: pos });
+});
