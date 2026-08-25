@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '../../services/dashboardService';
+import { invoiceService } from '../../services/invoiceService';
 import { useAuth } from '../../providers/AuthProvider';
 
 export const useBuyerStats = () => {
@@ -29,5 +30,16 @@ export const useMatchRadar = () => {
     queryKey: ['dashboard', 'matchRadar'],
     queryFn: () => dashboardService.getMatchRadar(),
     staleTime: 30 * 1000, // 30 seconds
+  });
+};
+
+export const useMyInvoices = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['invoices', 'my'],
+    queryFn: () => invoiceService.getMyInvoices(),
+    enabled: !!user,
+    staleTime: 30 * 1000,
   });
 };

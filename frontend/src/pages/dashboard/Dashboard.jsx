@@ -4,6 +4,7 @@ import { Button } from '../../components/common/Button';
 import { useBuyerStats, useSellerStats } from '../../hooks/queries/dashboardQueries';
 import { BuyerProjectsList } from '../../components/dashboard/BuyerProjectsList';
 import { PendingActions } from '../../components/dashboard/PendingActions';
+import { InvoiceList } from '../../components/dashboard/InvoiceList';
 import { MatchRadar } from './MatchRadar';
 
 export const Dashboard = () => {
@@ -52,6 +53,16 @@ export const Dashboard = () => {
             </button>
             <button
               className={`py-2 px-4 font-medium text-sm focus:outline-none whitespace-nowrap ${
+                activeTab === 'invoices'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('invoices')}
+            >
+              الفواتير (Invoices)
+            </button>
+            <button
+              className={`py-2 px-4 font-medium text-sm focus:outline-none whitespace-nowrap ${
                 activeTab === 'active_projects'
                   ? 'border-b-2 border-indigo-500 text-indigo-600'
                   : 'text-gray-500 hover:text-gray-700'
@@ -97,6 +108,16 @@ export const Dashboard = () => {
             </button>
             <button
               className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+                activeTab === 'invoices'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('invoices')}
+            >
+              الفواتير (Invoices)
+            </button>
+            <button
+              className={`py-2 px-4 font-medium text-sm focus:outline-none ${
                 activeTab === 'match_radar'
                   ? 'border-b-2 border-indigo-500 text-indigo-600'
                   : 'text-gray-500 hover:text-gray-700'
@@ -109,6 +130,7 @@ export const Dashboard = () => {
         )}
 
         {activeTab === 'stats' && <DashboardStats role={user?.role} />}
+        {activeTab === 'invoices' && <InvoiceList />}
         {activeTab === 'active_projects' && user?.role === 'buyer' && <BuyerProjectsList statusFilter="active" />}
         {activeTab === 'drafts' && user?.role === 'buyer' && <BuyerProjectsList statusFilter="draft" />}
         {activeTab === 'completed' && user?.role === 'buyer' && <BuyerProjectsList statusFilter="completed" />}
@@ -125,19 +147,22 @@ const DashboardStats = ({ role }) => {
   if (role === 'buyer' && buyerQuery.data) {
     const stats = buyerQuery.data.stats;
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">متوسط السعر</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.avgQuotePrice || 0} ريال</p>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">متوسط السعر</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.avgQuotePrice || 0} ريال</p>
+          </div>
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">الموردين الفريدين</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.uniqueSuppliers || 0}</p>
+          </div>
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">نسبة القبول</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.acceptanceRate || '0%'}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">الموردين الفريدين</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.uniqueSuppliers || 0}</p>
-        </div>
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">نسبة القبول</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.acceptanceRate || '0%'}</p>
-        </div>
+        <InvoiceList />
       </div>
     );
   }
@@ -145,22 +170,25 @@ const DashboardStats = ({ role }) => {
   if (role === 'seller' && sellerQuery.data) {
     const stats = sellerQuery.data.stats;
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">إجمالي العروض</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.totalQuotes || 0}</p>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">إجمالي العروض</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.totalQuotes || 0}</p>
+          </div>
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">العروض المقبولة</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.acceptedQuotes || 0}</p>
+          </div>
+          <div className="bg-white p-4 border rounded shadow-sm">
+            <h3 className="text-gray-500 text-sm">معدل الفوز</h3>
+            <p className="text-2xl font-bold text-gray-900">{stats?.winRate || '0%'}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">العروض المقبولة</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.acceptedQuotes || 0}</p>
-        </div>
-        <div className="bg-white p-4 border rounded shadow-sm">
-          <h3 className="text-gray-500 text-sm">معدل الفوز</h3>
-          <p className="text-2xl font-bold text-gray-900">{stats?.winRate || '0%'}</p>
-        </div>
+        <InvoiceList />
       </div>
     );
   }
 
-  return null;
+  return <InvoiceList />;
 };
