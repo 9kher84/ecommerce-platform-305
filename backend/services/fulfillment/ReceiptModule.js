@@ -54,13 +54,9 @@ class ReceiptModule {
 
     if (newStatus === "received" || receipt.status === "accepted") {
         emitOperationalEvent("PO_COMPLETED", "PurchaseOrder", receipt.purchaseOrderId, "system", buyerUserId, { purchaseOrderId: receipt.purchaseOrderId });
-        // Automatically issue real Invoice upon receipt completion
-        try {
-          const InvoiceService = require("../invoiceService");
-          await InvoiceService.createInvoiceFromPO(receipt.purchaseOrderId, { transaction });
-        } catch (invErr) {
-          console.error("Auto Invoice creation on Receipt error:", invErr);
-        }
+        // Automatically issue real Invoice upon receipt completion inside same transaction context
+        const InvoiceService = require("../invoiceService");
+        await InvoiceService.createInvoiceFromPO(receipt.purchaseOrderId, { transaction });
     }
 
     // Hand off to Inventory
