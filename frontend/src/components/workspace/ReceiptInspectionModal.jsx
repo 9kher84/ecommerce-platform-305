@@ -216,7 +216,8 @@ export const ReceiptInspectionModal = ({ isOpen, onClose, summaryData, onLogRece
                   );
                 })}
               </div>
-            )}
+            </div>
+          )}
           
         </form>
 
