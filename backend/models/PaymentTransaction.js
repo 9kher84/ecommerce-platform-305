@@ -17,9 +17,25 @@ module.exports = (sequelize) => {
       },
       dealId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: "deals",
+          key: "id",
+        },
+      },
+      purchaseOrderId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "PurchaseOrders",
+          key: "id",
+        },
+      },
+      invoiceId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "invoices",
           key: "id",
         },
       },

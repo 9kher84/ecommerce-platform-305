@@ -28,8 +28,10 @@ exports.logPaymentEvent = async (eventData) => {
       metadata,
     } = eventData;
 
+    const detailsString = (details && typeof details === 'object') ? JSON.stringify(details) : details;
+
     // Sanitize details for logging (remove sensitive data)
-    const sanitizedDetails = details ? sanitizeForLogging(details) : null;
+    const sanitizedDetails = detailsString ? sanitizeForLogging(detailsString) : null;
 
     // Encrypt the sanitized details
     const encryptedDetails = sanitizedDetails
@@ -86,11 +88,11 @@ exports.logPaymentCompleted = async (transaction, gatewayResponse) => {
     paymentTransactionId: transaction.id,
     userId: transaction.userId,
     action: "payment_completed",
-    details: {
+    details: JSON.stringify({
       amount: transaction.amount,
       currency: transaction.currency,
       completedAt: transaction.completedAt,
-    },
+    }),
     gateway: transaction.paymentGateway,
     gatewayTransactionId: transaction.transactionId,
     severity: "info",

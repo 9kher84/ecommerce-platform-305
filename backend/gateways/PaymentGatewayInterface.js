@@ -77,14 +77,15 @@ class PaymentGatewayInterface {
    * @returns {object} - Normalized response
    */
   normalizeResponse(gatewayResponse) {
+    if (!gatewayResponse) return { success: false, status: "unknown", gateway: this.gatewayName, timestamp: new Date().toISOString() };
     return {
-      success: false,
-      transactionId: null,
-      gatewayTransactionId: null,
-      status: "unknown",
-      amount: null,
-      currency: null,
-      message: null,
+      success: gatewayResponse.success ?? false,
+      transactionId: gatewayResponse.transactionId || null,
+      gatewayTransactionId: gatewayResponse.gatewayTransactionId || null,
+      status: gatewayResponse.status || "unknown",
+      amount: gatewayResponse.amount || null,
+      currency: gatewayResponse.currency || null,
+      message: gatewayResponse.message || null,
       rawResponse: gatewayResponse,
       gateway: this.gatewayName,
       timestamp: new Date().toISOString(),

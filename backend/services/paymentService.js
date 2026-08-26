@@ -78,6 +78,8 @@ class PaymentService {
   async initiatePayment(paymentData, req) {
     const {
       dealId,
+      purchaseOrderId,
+      invoiceId,
       userId,
       amount,
       currency = "SAR",
@@ -86,12 +88,33 @@ class PaymentService {
       metadata,
     } = paymentData;
 
-    // 1. Validation (Deal & User)
-    const deal = await Deal.findByPk(dealId);
-    if (!deal) {
-      throw new Error("Deal not found");
+    if (!purchaseOrderId && !invoiceId && !dealId) {
+      throw new Error("CANONICAL_PAYMENT_REQUIRED: Either purchaseOrderId, invoiceId, or dealId must be provided");
     }
-    const user = await User.findByPk(userId);
+
+    const { PurchaseOrder, Invoice, User: UserModel } = require("../sequelize_setup");
+    let resolvedPoId = purchaseOrderId || null;
+    let targetInvoice = null;
+
+    if (invoiceId) {
+      targetInvoice = await Invoice.findByPk(invoiceId);
+      if (!targetInvoice) throw new Error(`Invoice ${invoiceId} not found`);
+      if (parseFloat(targetInvoice.totalAmount) !== parseFloat(amount)) {
+        throw new Error(`PAYMENT_AMOUNT_MISMATCH: Provided amount ${amount} does not match Invoice total ${targetInvoice.totalAmount}`);
+      }
+      if (targetInvoice.buyerId !== userId) {
+        throw new Error("UNAUTHORIZED_PAYMENT: User does not own the target Invoice");
+      }
+      resolvedPoId = targetInvoice.purchaseOrderId || resolvedPoId;
+    } else if (purchaseOrderId) {
+      const targetPo = await PurchaseOrder.findByPk(purchaseOrderId);
+      if (!targetPo) throw new Error(`PurchaseOrder ${purchaseOrderId} not found`);
+      if (targetPo.buyerId !== userId) {
+        throw new Error("UNAUTHORIZED_PAYMENT: User does not own the target PurchaseOrder");
+      }
+    }
+
+    const user = await UserModel.findByPk(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -112,46 +135,44 @@ class PaymentService {
       amount,
       currency,
       callbackUrl: `${process.env.CLIENT_URL}/payment/callback/${transactionId}`,
-      referenceId: dealId,
+      referenceId: invoiceId || purchaseOrderId || dealId,
       customer: { id: userId, name: user.name, email: user.email },
     };
 
     // 5. Call Gateway API to Initiate Payment
     const gatewayResponse = await gateway.initiatePayment(gatewayPayload);
 
-    // 6. Create Payment Transaction in DB (after successful initiation from Gateway)
+    const targetInvoiceId = invoiceId ? parseInt(invoiceId, 10) : null;
+
+    // 6. Create Payment Transaction in DB
     const transaction = await PaymentTransaction.create({
       transactionId,
-      dealId,
+      dealId: dealId || null,
+      purchaseOrderId: resolvedPoId,
+      invoiceId: targetInvoiceId,
       userId,
       amount,
       currency,
       paymentMethodId,
       paymentGateway,
-      status:
-        gatewayResponse.status &&
-        [
-          "pending",
-          "processing",
-          "completed",
-          "failed",
-          "cancelled",
-          "refunded",
-        ].includes(gatewayResponse.status)
-          ? gatewayResponse.status
-          : "pending",
+      status: "pending",
       gatewayTransactionId: gatewayResponse.gatewayTransactionId,
       gatewayResponse: JSON.stringify(gatewayResponse),
       initiatedAt: new Date(),
       metadata: { ...metadata, paymentUrl: gatewayResponse.paymentUrl },
-      ipAddress: req.ip,
-      userAgent: req.get("user-agent"),
+      ipAddress: req?.ip,
+      userAgent: req?.get ? req.get("user-agent") : null,
     });
 
     // 7. Log and Return
-    await logPaymentInitiated(transaction, req);
+    if (req) {
+      try {
+        await logPaymentInitiated(transaction, req);
+      } catch (logErr) {
+        console.warn("[paymentService] Audit logging warning:", logErr.message);
+      }
+    }
 
-    // Return the payment URL/token needed for the client-side redirect/action
     return {
       transactionId: transaction.transactionId,
       status: transaction.status,
@@ -164,9 +185,6 @@ class PaymentService {
 
   /**
    * Handle payment callback from gateway
-   * @param {string} transactionId - Transaction ID
-   * @param {object} callbackData - Data from gateway callback
-   * @returns {Promise<object>} - Updated transaction
    */
   async handleCallback(transactionId, callbackData) {
     const transaction = await PaymentTransaction.findOne({
@@ -177,44 +195,59 @@ class PaymentService {
       throw new Error("Transaction not found");
     }
 
+    // Idempotency: Return immediately if already completed
     if (transaction.status === "completed") {
-      // Already processed
       return transaction;
     }
 
     try {
-      // Get gateway instance
       const merchantConfig = this.getMerchantConfig(transaction.userId);
       const gateway = paymentGatewayFactory.getGateway(
         transaction.paymentGateway,
         merchantConfig,
       );
 
-      // Verify callback with gateway
       const verificationResult = await gateway.verifyCallback(callbackData);
 
-      // Update transaction
+      if (verificationResult.success) {
+        const { Deal, Invoice, PurchaseOrder } = require("../sequelize_setup");
+
+        if (transaction.invoiceId) {
+          await Invoice.update({ status: "paid" }, { where: { id: transaction.invoiceId } });
+        }
+        if (transaction.purchaseOrderId) {
+          await PurchaseOrder.update({ businessStatus: "paid" }, { where: { id: transaction.purchaseOrderId } });
+        }
+        if (transaction.dealId) {
+          await Deal.update({ status: "paid" }, { where: { id: transaction.dealId } });
+        }
+      }
+
       transaction.status = verificationResult.success ? "completed" : "failed";
       transaction.gatewayResponse = JSON.stringify(verificationResult);
       transaction.completedAt = new Date();
       await transaction.save();
 
-      // ✅ تحديث حالة الصفقة عند نجاح الدفع
       if (verificationResult.success) {
-        await Deal.update(
-          { status: "paid" },
-          { where: { id: transaction.dealId } },
-        );
-        await logPaymentCompleted(transaction, verificationResult);
+        try {
+          await logPaymentCompleted(transaction, verificationResult);
+        } catch (logErr) {
+          console.warn("[paymentService] Audit logging completed warning:", logErr.message);
+        }
       } else {
-        await logPaymentFailed(
-          transaction,
-          new Error("Payment verification failed"),
-        );
+        try {
+          await logPaymentFailed(
+            transaction,
+            new Error("Payment verification failed"),
+          );
+        } catch (logErr) {}
       }
 
       return transaction;
+
+      return transaction;
     } catch (error) {
+      console.error("[paymentService] handleCallback error:", error);
       // Handle payment failure
       transaction.status = "failed";
       transaction.errorCode = error.code || "CALLBACK_ERROR";
@@ -458,18 +491,32 @@ class PaymentService {
       transaction.completedAt = new Date();
       await transaction.save();
 
-      // ✅ تحديث حالة الصفقة عند نجاح الدفع عبر Callback
+      // ✅ Update Invoice and PurchaseOrder status upon successful payment
       if (verificationResult.success) {
-        await Deal.update(
-          { status: "paid" },
-          { where: { id: transaction.dealId } },
-        );
-        await logPaymentCompleted(transaction, verificationResult);
+        const { Deal, Invoice, PurchaseOrder } = require("../sequelize_setup");
+
+        if (transaction.invoiceId) {
+          await Invoice.update({ status: "paid" }, { where: { id: transaction.invoiceId } });
+        }
+        if (transaction.purchaseOrderId) {
+          await PurchaseOrder.update({ businessStatus: "paid" }, { where: { id: transaction.purchaseOrderId } });
+        }
+        if (transaction.dealId) {
+          await Deal.update({ status: "paid" }, { where: { id: transaction.dealId } });
+        }
+
+        try {
+          await logPaymentCompleted(transaction, verificationResult);
+        } catch (logErr) {
+          console.warn("[paymentService] Audit logging completed warning:", logErr.message);
+        }
       } else {
-        await logPaymentFailed(
-          transaction,
-          new Error("Payment verification failed"),
-        );
+        try {
+          await logPaymentFailed(
+            transaction,
+            new Error("Payment verification failed"),
+          );
+        } catch (logErr) {}
       }
 
       return transaction;

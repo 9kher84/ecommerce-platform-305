@@ -18,8 +18,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       dealId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: "deal_id",
+      },
+      purchaseOrderId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: "purchase_order_id",
       },
       buyerId: {
         type: DataTypes.UUID,
@@ -66,6 +71,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(12, 2),
         allowNull: false,
         field: "total_amount",
+      },
+      subtotal: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: true,
+        field: "subtotal",
+      },
+      vatAmount: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: true,
+        field: "vat_amount",
       },
       taxAmount: {
         type: DataTypes.DECIMAL(12, 2),
@@ -144,6 +159,8 @@ module.exports = (sequelize, DataTypes) => {
 
   Invoice.associate = (models) => {
     Invoice.belongsTo(models.Deal, { foreignKey: "dealId", as: "deal" });
+    Invoice.belongsTo(models.PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
+    Invoice.hasMany(models.InvoiceLine, { foreignKey: "invoiceId", as: "lines" });
     Invoice.belongsTo(models.User, { foreignKey: "buyerId", as: "buyer" });
     Invoice.belongsTo(models.User, { foreignKey: "sellerId", as: "seller" });
     Invoice.hasMany(models.CommissionTransaction, {

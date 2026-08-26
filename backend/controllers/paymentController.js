@@ -48,6 +48,8 @@ exports.initiatePayment = asyncHandler(async (req, res) => {
 
   const {
     dealId,
+    purchaseOrderId,
+    invoiceId,
     amount,
     currency,
     paymentGateway,
@@ -55,15 +57,17 @@ exports.initiatePayment = asyncHandler(async (req, res) => {
     metadata,
   } = req.body;
 
-  if (!dealId || !amount || !paymentGateway) {
+  if ((!purchaseOrderId && !invoiceId && !dealId) || !amount || !paymentGateway) {
     res.status(400);
-    throw new Error("Missing required fields: dealId, amount, paymentGateway");
+    throw new Error("Missing required fields: purchaseOrderId/invoiceId/dealId, amount, paymentGateway");
   }
 
   try {
     const initiationResult = await paymentService.initiatePayment(
       {
         dealId,
+        purchaseOrderId,
+        invoiceId,
         userId: req.user.id,
         amount,
         currency: currency || "SAR",

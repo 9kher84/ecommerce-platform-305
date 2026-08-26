@@ -258,7 +258,12 @@ class BillingService {
         };
       }
 
-      // 4. Set Invoice metadata
+      // 4. Calculate Subtotal, 15% VAT, and Grand Total
+      const subtotalAmount = invoiceTotalAmount;
+      const vatRate = 0.15;
+      const vatAmount = Math.round(subtotalAmount * vatRate * 100) / 100;
+      const grandTotalAmount = Math.round((subtotalAmount + vatAmount) * 100) / 100;
+
       const dueDate = new Date();
       const dueDays = parseInt(process.env.INVOICE_DUE_DAYS) || 30;
       dueDate.setDate(dueDate.getDate() + dueDays);
@@ -276,8 +281,10 @@ class BillingService {
         status: "pending", // Current schema supports pending/paid/cancelled
         dueDate,
         autoCancelDate,
-        totalAmount: invoiceTotalAmount,
-        taxAmount: 0,
+        subtotal: subtotalAmount,
+        vatAmount: vatAmount,
+        totalAmount: grandTotalAmount,
+        taxAmount: vatAmount,
         currency: po.currency || "SAR",
         items: linesToCreate.map(l => ({
           description: `PO Item ${l.purchaseOrderLineId}`,

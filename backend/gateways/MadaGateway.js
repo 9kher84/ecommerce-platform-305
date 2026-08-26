@@ -200,17 +200,20 @@ class MadaGateway extends PaymentGatewayInterface {
   }
 
   getMockVerifyResponse(callbackData) {
-    return this.normalizeResponse({
-      success: true,
-      transactionId: callbackData.transaction_id,
-      gatewayTransactionId: callbackData.gateway_transaction_id,
-      status: "completed",
+    const isSuccess = callbackData.success !== false;
+    const res = this.normalizeResponse({
+      success: isSuccess,
+      transactionId: callbackData.transaction_id || callbackData.transactionId,
+      gatewayTransactionId: callbackData.gateway_transaction_id || callbackData.gatewayTransactionId,
+      status: isSuccess ? "completed" : "failed",
       amount: callbackData.amount,
       currency: callbackData.currency || "SAR",
-      message: "Payment verified successfully (TEST MODE)",
+      message: isSuccess ? "Payment verified successfully (TEST MODE)" : "Payment verification failed (TEST MODE)",
       cardBrand: "Mada",
       lastFourDigits: "1234",
     });
+    res.success = isSuccess;
+    return res;
   }
 
   getMockWebhookResponse(webhookData) {

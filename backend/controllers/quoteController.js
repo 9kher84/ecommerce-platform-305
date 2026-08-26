@@ -135,43 +135,14 @@ exports.respondToNegotiation = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * @desc    Accept a quote (creates deal)
- * @route   POST /api/quotes/:id/accept
- * @access  Private (Buyer - owner only)
- */
+// @desc    Accept a quote (DEPRECATED - Use Canonical /api/v2/negotiations Award Checkout)
+// @route   POST /api/quotes/:id/accept
+// @access  Private (Buyer - owner only)
 exports.acceptQuote = asyncHandler(async (req, res) => {
-  const quoteId = req.params.id;
-  const buyerId = req.user.id;
-  const { decision_reason, notes } = req.body;
-  const dealData = {
-    decision_reason,
-    notes,
-    organization_id: req.user.organization_id,
-  };
-
-  const deal = await QuoteService.acceptQuote(quoteId, buyerId, dealData);
-
-  try {
-    const { AuditLog } = require("../sequelize_setup");
-    await AuditLog.create({
-      user_id: buyerId,
-      organization_id: deal.organization_id || null,
-      action: "ACCEPT_QUOTE",
-      entity_type: "Deal",
-      entity_id: deal.id,
-      new_data: deal.toJSON ? deal.toJSON() : deal,
-    });
-  } catch (e) {}
-
-  const emailService = require("../services/emailService");
-  await emailService.notifySellerForAcceptance(quoteId);
-  await emailService.notifyPartiesForDeal(deal.id);
-
-  res.status(201).json({
-    success: true,
-    message: "Quote accepted! Deal created successfully.",
-    deal,
+  return res.status(410).json({
+    success: false,
+    errorCode: "DEPRECATED_LEGACY_ACCEPT",
+    message: "DEPRECATED_LEGACY_ACCEPT: Direct quote acceptance is deprecated. Please use the canonical B2B negotiation flow (/api/v2/negotiations/awards/checkout)."
   });
 });
 

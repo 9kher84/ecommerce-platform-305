@@ -69,6 +69,7 @@ const Shipment = require("./models/Shipment")(sequelize, DataTypes);
 const ShipmentLine = require("./models/ShipmentLine")(sequelize, DataTypes);
 const Receipt = require("./models/Receipt")(sequelize, DataTypes);
 const ReceiptLine = require("./models/ReceiptLine")(sequelize, DataTypes);
+const InvoiceLine = require("./models/InvoiceLine")(sequelize, DataTypes);
 const PriceQuote = require("./models/PriceQuote")(sequelize, DataTypes);
 const Deal = require("./models/Deal")(sequelize, DataTypes);
 const Rating = require("./models/Rating")(sequelize, DataTypes);
@@ -492,6 +493,16 @@ Receipt.hasMany(ReceiptLine, { foreignKey: "receiptId", as: "lines" });
 ReceiptLine.belongsTo(Receipt, { foreignKey: "receiptId", as: "receipt" });
 
 ReceiptLine.belongsTo(PurchaseOrderLine, { foreignKey: "purchaseOrderLineId", as: "purchaseOrderLine" });
+
+// --- B2B Billing Engine ---
+Invoice.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
+PurchaseOrder.hasMany(Invoice, { foreignKey: "purchaseOrderId", as: "invoices" });
+
+Invoice.hasMany(InvoiceLine, { foreignKey: "invoiceId", as: "lines" });
+InvoiceLine.belongsTo(Invoice, { foreignKey: "invoiceId", as: "invoice" });
+
+InvoiceLine.belongsTo(PurchaseOrderLine, { foreignKey: "purchaseOrderLineId", as: "purchaseOrderLine" });
+InvoiceLine.belongsTo(ReceiptLine, { foreignKey: "receiptLineId", as: "receiptLine" });
 // -----------------------------------
 // Price Quote
 PriceQuote.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
@@ -771,6 +782,7 @@ module.exports = {
   Sanction,
   AdminActionLog,
   Invoice,
+  InvoiceLine,
   SupervisorAssignment,
   SupervisorCommissionShare,
   SupervisorNotification,

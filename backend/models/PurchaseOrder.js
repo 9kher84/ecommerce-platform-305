@@ -41,7 +41,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       businessStatus: {
-        type: DataTypes.ENUM("draft", "issued", "accepted", "rejected", "counter_requested", "cancelled", "closed"),
+        type: DataTypes.ENUM("draft", "issued", "accepted", "rejected", "counter_requested", "cancelled", "paid", "closed"),
         defaultValue: "draft",
       },
       fulfillmentStatus: {
