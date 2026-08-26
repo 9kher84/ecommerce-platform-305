@@ -17,6 +17,18 @@ router.get("/public/:token", async (req, res, next) => {
 router.use(protect);
 
 /**
+ * @desc    Get B2B Invoice eligibility for a Purchase Order
+ * @route   GET /api/invoice/eligibility/:poId
+ */
+router.get("/eligibility/:poId", invoiceController.getPOInvoiceEligibility);
+
+/**
+ * @desc    Issue B2B Commercial Invoice from Purchase Order
+ * @route   POST /api/invoice/issue
+ */
+router.post("/issue", invoiceController.issuePOInvoice);
+
+/**
  * @desc    Store extracted OCR text from invoice securely
  * @route   POST /api/invoice/extract-text
  */

@@ -187,3 +187,23 @@ export const useAcceptReceipt = () => {
     }
   });
 };
+
+export const useInvoiceEligibility = (poId) => {
+  return useQuery({
+    queryKey: ['invoiceEligibility', poId],
+    queryFn: () => commercialService.getInvoiceEligibility(poId),
+    enabled: !!poId
+  });
+};
+
+export const useIssueInvoice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => commercialService.issueInvoice(payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['invoiceEligibility', variables.purchaseOrderId] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    }
+  });
+};

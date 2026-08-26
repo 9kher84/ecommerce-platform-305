@@ -16,9 +16,14 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
         allowNull: false,
       },
+      purchaseOrderId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: "purchase_order_id",
+      },
       dealId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: "deal_id",
       },
       buyerId: {
