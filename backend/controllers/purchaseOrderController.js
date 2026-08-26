@@ -99,12 +99,22 @@ exports.rejectPO = catchAsync(async (req, res, next) => {
 // @route   GET /api/v2/purchase-orders/seller
 // @access  Private (Seller)
 exports.getSellerPOs = catchAsync(async (req, res, next) => {
-  const sellerOrgId = req.user?.organization_id || req.user?.organizationId;
+  let sellerOrgId = req.user?.organization_id || req.user?.organizationId;
+
+  if (!sellerOrgId && req.user?.id) {
+    const { OrganizationUser } = require("../sequelize_setup");
+    const activeMember = await OrganizationUser.findOne({
+      where: { user_id: req.user.id, status: "active" },
+      order: [["is_primary", "DESC"], ["createdAt", "ASC"]]
+    });
+    sellerOrgId = activeMember?.organization_id || null;
+  }
 
   if (!sellerOrgId) {
-    return res.status(400).json({
+    return res.status(422).json({
       success: false,
-      message: "Seller organization identification missing. Please complete organization setup.",
+      errorCode: "ORGANIZATION_CONTEXT_REQUIRED",
+      message: "ORGANIZATION_CONTEXT_REQUIRED: Seller organization identification missing. Please complete organization setup or provide valid organization context.",
       data: []
     });
   }

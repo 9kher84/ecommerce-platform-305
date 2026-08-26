@@ -155,7 +155,6 @@ const AdminActionLog = require("./models/AdminActionLog")(
   Sequelize.DataTypes,
 );
 const Invoice = require("./models/Invoice")(sequelize, Sequelize.DataTypes);
-const InvoiceLine = require("./models/InvoiceLine")(sequelize, Sequelize.DataTypes);
 const SupervisorAssignment = require("./models/SupervisorAssignment")(
   sequelize,
   Sequelize.DataTypes,
@@ -616,19 +615,6 @@ RegionAssignment.belongsTo(User, {
 });
 RegionAssignment.belongsTo(User, { foreignKey: "assigned_by", as: "assigner" });
 
-// B2B Canonical Billing Associations
-PurchaseOrder.hasMany(Invoice, { foreignKey: "purchaseOrderId", as: "invoices" });
-Invoice.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder" });
-
-Invoice.hasMany(InvoiceLine, { foreignKey: "invoiceId", as: "lines" });
-InvoiceLine.belongsTo(Invoice, { foreignKey: "invoiceId", as: "invoice" });
-
-PurchaseOrderLine.hasMany(InvoiceLine, { foreignKey: "purchaseOrderLineId", as: "invoiceLines" });
-InvoiceLine.belongsTo(PurchaseOrderLine, { foreignKey: "purchaseOrderLineId", as: "poLine" });
-
-ReceiptLine.hasMany(InvoiceLine, { foreignKey: "receiptLineId", as: "invoiceLines" });
-InvoiceLine.belongsTo(ReceiptLine, { foreignKey: "receiptLineId", as: "receiptLine" });
-
 // ============================================================
 // 🔥 INIT
 // ============================================================
@@ -785,7 +771,6 @@ module.exports = {
   Sanction,
   AdminActionLog,
   Invoice,
-  InvoiceLine,
   SupervisorAssignment,
   SupervisorCommissionShare,
   SupervisorNotification,

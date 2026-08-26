@@ -44,18 +44,28 @@ class CheckoutAwardsUseCase {
         let sellerOrgId = sellerParty?.organizationId;
 
         if (!buyerOrgId && buyerParty?.userId) {
-          const bOrg = await OrganizationUserModel.findOne({ where: { user_id: buyerParty.userId }, transaction });
+          const bOrg = await OrganizationUserModel.findOne({ where: { user_id: buyerParty.userId, status: 'active' }, transaction });
           buyerOrgId = bOrg?.organization_id || null;
         }
         if (!sellerOrgId && sellerParty?.userId) {
-          const sOrg = await OrganizationUserModel.findOne({ where: { user_id: sellerParty.userId }, transaction });
+          const sOrg = await OrganizationUserModel.findOne({ where: { user_id: sellerParty.userId, status: 'active' }, transaction });
           sellerOrgId = sOrg?.organization_id || null;
         }
 
         if (!buyerOrgId || !sellerOrgId) {
-          const defaultOrg = await OrganizationModel.findOne({ transaction });
-          if (!buyerOrgId) buyerOrgId = defaultOrg?.id;
-          if (!sellerOrgId) sellerOrgId = defaultOrg?.id;
+          const AppError = require('../../../../../utils/appError');
+          throw new AppError(
+            "ORGANIZATION_CONTEXT_REQUIRED: Cannot checkout award without valid, distinct Buyer and Seller Organization contexts.",
+            422
+          );
+        }
+
+        if (buyerOrgId === sellerOrgId) {
+          const AppError = require('../../../../../utils/appError');
+          throw new AppError(
+            "SAME_BUYER_SELLER_ORGANIZATION: Buyer and Seller cannot belong to the same Organization in a B2B process.",
+            422
+          );
         }
 
         const dummyQuotationId = uuidv4();

@@ -105,16 +105,5 @@ export const commercialService = {
   acceptReceipt: async (receiptId) => {
     const response = await apiClient.post(`/api/v2/receipts/${receiptId}/accept`);
     return response.data;
-  },
-
-  // B2B Billing & Invoicing Operations
-  getInvoiceEligibility: async (poId) => {
-    const response = await apiClient.get(`/api/invoice/eligibility/${poId}`);
-    return response.data;
-  },
-
-  issueInvoice: async (payload) => {
-    const response = await apiClient.post('/api/invoice/issue', payload);
-    return response.data;
   }
 };

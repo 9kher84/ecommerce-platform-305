@@ -107,9 +107,47 @@ exports.protect = catchAsync(async (req, res, next) => {
   // Attach expiration for calculating TTL
   req.user.exp = decoded.exp;
 
-  // Attach primary organization_id
-  if (currentUser.organizations && currentUser.organizations.length > 0) {
-    req.user.organization_id = currentUser.organizations[0].id;
+  // Explicit Organization Context Resolution via X-Organization-Context header or active membership
+  const reqOrgContext = req.headers["x-organization-context"] || req.headers["X-Organization-Context"];
+
+  if (reqOrgContext === "individual") {
+    req.user.organization_id = null;
+    req.user.contextType = "INDIVIDUAL";
+  } else if (reqOrgContext) {
+    const { OrganizationUser } = require("../sequelize_setup");
+    const activeMember = await OrganizationUser.findOne({
+      where: {
+        user_id: currentUser.id,
+        organization_id: reqOrgContext,
+        status: "active"
+      }
+    });
+
+    if (activeMember) {
+      req.user.organization_id = activeMember.organization_id;
+      req.user.contextType = "ORGANIZATION";
+    } else {
+      req.user.organization_id = null;
+      req.user.contextType = "INVALID_ORGANIZATION_CONTEXT";
+    }
+  } else {
+    // If no header, resolve primary active organization from OrganizationUser pivot, or leave null (NO default organizations[0] fallback)
+    const { OrganizationUser } = require("../sequelize_setup");
+    const primaryActivePivot = await OrganizationUser.findOne({
+      where: {
+        user_id: currentUser.id,
+        status: "active"
+      },
+      order: [["is_primary", "DESC"], ["createdAt", "ASC"]]
+    });
+
+    if (primaryActivePivot) {
+      req.user.organization_id = primaryActivePivot.organization_id;
+      req.user.contextType = "ORGANIZATION";
+    } else {
+      req.user.organization_id = null;
+      req.user.contextType = "UNSPECIFIED";
+    }
   }
 
   next();

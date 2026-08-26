@@ -11,8 +11,7 @@ import {
   useStartPreparation,
   useMarkReadyToShip,
   useCreateShipment,
-  useDispatchShipment,
-  useIssueInvoice
+  useDispatchShipment
 } from '../../hooks/queries/commercialQueries';
 
 export const SellerPlatformConsole = () => {
@@ -433,48 +432,6 @@ export const SellerPlatformConsole = () => {
                                 ✓ تم شحن أمر الشراء بالكامل (Shipped)
                               </span>
                             )}
-
-                            {/* Seller B2B Commercial Invoicing Action */}
-                            <Button
-                              onClick={async () => {
-                                try {
-                                  const res = await commercialService.getInvoiceEligibility(po.id);
-                                  const eligibility = res?.data || {};
-                                  const totalEligible = eligibility.totalEligibleAmount || 0;
-                                  const eligibleLines = (eligibility.lines || []).filter(l => l.eligibleQuantity > 0);
-
-                                  if (totalEligible <= 0 || eligibleLines.length === 0) {
-                                    alert('لا توجد كميات مقبولة من المشتري قابلة للفوترة حالياً لهذا الطلب.');
-                                    return;
-                                  }
-
-                                  const confirmMsg = `تفاصيل استحقاق الفاتورة التجارية:\n\n` +
-                                    `• المبلغ الإجمالي القابل للفوترة: ${totalEligible} SAR\n` +
-                                    `• الأصناف القابلة للفوترة: ${eligibleLines.length} صنف\n\n` +
-                                    `هل ترغب في إصدار الفاتورة التجارية الرسمية الآن؟`;
-
-                                  if (window.confirm(confirmMsg)) {
-                                    const issuePayload = {
-                                      purchaseOrderId: po.id,
-                                      lines: eligibleLines.map(l => ({
-                                        purchaseOrderLineId: l.purchaseOrderLineId,
-                                        quantity: l.eligibleQuantity
-                                      }))
-                                    };
-
-                                    const issueRes = await commercialService.issueInvoice(issuePayload);
-                                    if (issueRes?.success) {
-                                      alert(`🎉 تم إصدار الفاتورة التجارية بنجاح!\nرقم الفاتورة: ${issueRes.data.invoiceNumber}\nالإجمالي: ${issueRes.data.totalAmount} SAR`);
-                                      window.location.reload();
-                                    }
-                                  }
-                                } catch (err) {
-                                  alert(err?.response?.data?.message || err?.message || 'حدث خطأ أثناء فحص استحقاق أو إصدار الفاتورة.');
-                                }
-                              }}
-                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20">
-                              📄 فحص وإصدار الفاتورة التجارية (Issue Invoice)
-                            </Button>
                           </>
                         )}
                       </div>

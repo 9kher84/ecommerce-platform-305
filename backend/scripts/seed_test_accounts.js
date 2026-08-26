@@ -76,13 +76,33 @@ async function seedTestAccounts() {
     ];
 
     for (let acc of accounts) {
-      const existing = await User.findOne({ where: { email: acc.email } });
-      if (!existing) {
-        await User.create(acc);
+      let user = await User.findOne({ where: { email: acc.email } });
+      if (!user) {
+        user = await User.create(acc);
         console.log(`✅ Created ${acc.role}: ${acc.email}`);
       } else {
-        await existing.update({ password: acc.password, organization_id: acc.organization_id });
+        await user.update({ password: acc.password, organization_id: acc.organization_id });
         console.log(`🔄 Updated ${acc.role}: ${acc.email}`);
+      }
+
+      if (acc.organization_id) {
+        const { OrganizationUser } = require("../sequelize_setup");
+        const existingPivot = await OrganizationUser.findOne({
+          where: { user_id: user.id, organization_id: acc.organization_id }
+        });
+        if (!existingPivot) {
+          await OrganizationUser.create({
+            user_id: user.id,
+            organization_id: acc.organization_id,
+            role: acc.role,
+            is_primary: true,
+            status: "active"
+          });
+          console.log(`   └─ 🔗 Created OrganizationUser pivot for ${acc.email}`);
+        } else {
+          await existingPivot.update({ status: "active", is_primary: true, role: acc.role });
+          console.log(`   └─ 🔗 Active OrganizationUser pivot verified for ${acc.email}`);
+        }
       }
     }
 
